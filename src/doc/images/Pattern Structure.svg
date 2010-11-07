@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="220"
+   height="300"
+   id="svg5284"
+   version="1.1"
+   inkscape:version="0.47 r22583"
+   sodipodi:docname="pattern_structure.png">
+  <defs
+     id="defs5286">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 240 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="640 : 240 : 1"
+       inkscape:persp3d-origin="320 : 160 : 1"
+       id="perspective5292" />
+    <inkscape:perspective
+       id="perspective5328"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective5383"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective5425"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective5483"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective5516"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.75"
+     inkscape:cx="110"
+     inkscape:cy="150"
+     inkscape:current-layer="layer1"
+     inkscape:document-units="px"
+     showgrid="false"
+     inkscape:window-width="1280"
+     inkscape:window-height="750"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     showborder="true"
+     height="1052.36px" />
+  <metadata
+     id="metadata5289">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     transform="translate(0,-179.99996)">
+    <rect
+       style="fill:none;stroke:#000000;stroke-width:1.49546063;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       id="rect5298"
+       width="200.55214"
+       height="266.74268"
+       x="11.20011"
+       y="202.15245"
+       ry="20.256235" />
+    <text
+       xml:space="preserve"
+       style="font-size:18px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+       x="76.571426"
+       y="198.47615"
+       id="text5300"><tspan
+         sodipodi:role="line"
+         id="tspan5302"
+         x="76.571426"
+         y="198.47615">Pattern</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+       x="20.857141"
+       y="221.42854"
+       id="text5304"><tspan
+         sodipodi:role="line"
+         id="tspan5306"
+         x="20.857141"
+         y="221.42854">Definition</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+       x="27.333334"
+       y="233.61903"
+       id="text5308"><tspan
+         sodipodi:role="line"
+         x="27.333334"
+         y="233.61903"
+         id="tspan5318">Describes symbolic structure of pattern</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+       x="20.864956"
+       y="339.92487"
+       id="text5304-5"><tspan
+         sodipodi:role="line"
+         id="tspan5306-2"
+         x="20.864956"
+         y="339.92487">Guard</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+       x="27.341145"
+       y="352.11536"
+       id="text5308-7"><tspan
+         sodipodi:role="line"
+         x="27.341145"
+         y="352.11536"
+         id="tspan5366">Describes constraints to symbols of </tspan><tspan
+         sodipodi:role="line"
+         x="27.341145"
+         y="364.61536"
+         id="tspan5457">the definition</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+       x="20.198288"
+       y="254.70967"
+       id="text5304-2"><tspan
+         sodipodi:role="line"
+         x="20.198288"
+         y="254.70967"
+         id="tspan5409">Definition checker</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+       x="26.674479"
+       y="266.90018"
+       id="text5308-2"><tspan
+         sodipodi:role="line"
+         x="26.674479"
+         y="266.90018"
+         id="tspan5318-1">Define algorithm for definition recognition</tspan></text>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1.00701332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 18.193983,319.7178 186.373937,0 0,0.75488"
+       id="path5415" />
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+       x="20.779785"
+       y="383.93042"
+       id="text5304-5-6"><tspan
+         sodipodi:role="line"
+         id="tspan5306-2-8"
+         x="20.779785"
+         y="383.93042">Guard checker</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+       x="27.255974"
+       y="396.12091"
+       id="text5308-7-5"><tspan
+         sodipodi:role="line"
+         x="27.255974"
+         y="396.12091"
+         id="tspan5366-6">Define algorithm for checking if given</tspan><tspan
+         sodipodi:role="line"
+         x="27.255974"
+         y="408.62091"
+         id="tspan5459">definition in time series satisfy guard's</tspan><tspan
+         sodipodi:role="line"
+         x="27.255974"
+         y="421.12091"
+         id="tspan5473">constraints</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+       x="18.413273"
+       y="287.09152"
+       id="text5304-2-1"><tspan
+         sodipodi:role="line"
+         x="18.413273"
+         y="287.09152"
+         id="tspan5409-8">Definition compiler</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+       x="24.889462"
+       y="299.28201"
+       id="text5308-2-9"><tspan
+         sodipodi:role="line"
+         x="24.889462"
+         y="299.28201"
+         id="tspan5318-1-2">Compile definition described in some</tspan><tspan
+         sodipodi:role="line"
+         x="24.889462"
+         y="311.78201"
+         id="tspan5506">human-readable form</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:14px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+       x="21.170527"
+       y="436.12088"
+       id="text5304-2-1-7"><tspan
+         sodipodi:role="line"
+         x="21.170527"
+         y="436.12088"
+         id="tspan5409-8-9">Guard compiler</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:10px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"
+       x="27.646715"
+       y="448.31137"
+       id="text5308-2-9-5"><tspan
+         sodipodi:role="line"
+         x="27.646715"
+         y="448.31137"
+         id="tspan5318-1-2-4">Compile guard described in some</tspan><tspan
+         sodipodi:role="line"
+         x="27.646715"
+         y="460.81137"
+         id="tspan5506-3">human-readable form</tspan></text>
+  </g>
+</svg>

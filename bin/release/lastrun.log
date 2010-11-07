@@ -1,0 +1,26 @@
+Log started
+
+Info: FL::Watcher created
+Info: Environment loading from config.env... 
+Info: Environment loaded OK
+Info: Initializing Fractal Library... 
+Info: Fractal library initialized OK
+Info: Initializing GUI...
+Info: QtRender: Init OK
+Info: GUI initialized OK
+Debug: Loading time series from ../../data/csv/MICEX_100929_101014.csv... OK
+Debug: Loading patterns from ../../data/patterns/temp.pat... 
+Debug: Pattern compiled:
+	(up)
+(,)
+	(up)
+
+Debug: Pattern compiled:
+(a)
+
+Debug: Pattern compiled:
+(true)
+OK (2 patterns loaded)
+Info: QtRender: Destroy OK
+Info: FL::Watcher destroyed
+Log ended
