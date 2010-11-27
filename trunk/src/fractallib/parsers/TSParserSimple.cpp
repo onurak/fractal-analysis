@@ -24,6 +24,8 @@ ParseResult TSParserSimple::parse(ParseTreeSet &trees,
                                   PatternCollection &patterns,
                                   FL::TimeSeries *ts,
                                   FL::Patterns::GroupChecker &checker,
+                                  int tsBegin,
+                                  int tsEnd,
                                   WorkMode mode)
 {
     ParseResult result;
@@ -45,6 +47,15 @@ ParseResult TSParserSimple::parse(ParseTreeSet &trees,
     if (trees.size() != 1)
     {
         GError(GCritical, "TSParserSimple", 0, "Can only parse single tree");
+        return result;
+    }
+
+    if (tsEnd == -1)
+        tsEnd = ts->dimSize(0)-1;
+
+    if (tsBegin < 0 || tsBegin > tsEnd || tsEnd > ts->dimSize(0)-1)
+    {
+        GError(GCritical, "TSParserSimple", 0, "Invalid interval to parse");
         return result;
     }
 

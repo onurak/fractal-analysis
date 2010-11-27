@@ -39,7 +39,7 @@ public:
     TSMarkerAxiomatic();
 
     /*! \copydoc TSMarker::analyse(TimeSeries*) */
-    virtual ParseTree* analyse(TimeSeries *ts);
+    //virtual ParseTree* analyse(TimeSeries *ts);
 };
 
 /*@}*/

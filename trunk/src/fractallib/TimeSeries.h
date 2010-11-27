@@ -57,14 +57,11 @@ public:
     }
 
     //! Removes from time series value number @index. Do nothing in case of error
-    void remove(int index) {
+    void remove(int index)
+    {
         int dsz = dimSize(0);
-        if (dsz != -1 && index >= 0 && index < dsz) {
-            std::vector<double>::iterator p;
-            for (p = data[0].begin(); index > 0 && p != data[0].end(); )
-                index--, p++;
-            data[0].erase(p);
-        }
+        if (dsz != -1 && index >= 0 && index < dsz)
+            data[0].erase(data[0].begin() + index);
 
     }
 };

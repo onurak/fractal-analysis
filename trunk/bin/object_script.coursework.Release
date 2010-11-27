@@ -29,11 +29,15 @@ INPUT(
 ./release\GroupCheckerSingle.o
 ./release\GuardCompilerRPN.o
 ./release\TreeFilter.o
+./release\TSDataSourceFileCSV.o
+./release\TSDynamicParserIdeal.o
+./release\OpenDTSFromFileDialog.o
 ./release\moc_MainWindow.o
 ./release\moc_QtRender.o
 ./release\moc_PatternEditor.o
 ./release\moc_DebugWindow.o
 ./release\moc_WorkerThreads.o
 ./release\moc_FLGraphicsView.o
+./release\moc_OpenDTSFromFileDialog.o
 ./release\qrc_resources.o
 );

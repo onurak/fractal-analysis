@@ -76,11 +76,15 @@ public:
     virtual ~Watcher();
 
     //! Markup time series with terminals
-    /*! Run marker specified with "marker" option. Previous parse trees will be deleted
+    /*! Run marker specified with "marker" option. Previous parse trees of the
+      * specified segment will be deleted.
+      * \param tsBegin Begin of time series segment that must be merked up (default is 0)
+      * \param tsEnd End of time series segment that must be merked up (default
+      * is -1 which means up to the end of time series)
       * \return true in case of success, false otherwise. If safe_mode option is
       * disabled, than in case of error exception might be thrown
       */
-    bool markup();
+    bool markup(int tsBegin = 0, int tsEnd = -1);
 
     //! Parse to nearest figure. Not implemented yet.
     bool parseFigure(Pattern **t = NULL);
@@ -204,6 +208,9 @@ public:
     {
         return m_parserList;
     }
+
+    //! Clear parse trees nodes that overlays with time series segment
+    void clearParseTreesSegment(int tsBegin, int tsEnd);
 private:
     //! Current time series
     TimeSeries *m_timeSeries;
@@ -243,7 +250,6 @@ private:
 
     //! Default section name in settings
     std::string SECTION;
-
 };
 
 } // namespace

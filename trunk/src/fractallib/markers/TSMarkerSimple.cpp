@@ -25,7 +25,7 @@ TSMarkerSimple::TSMarkerSimple()
 {
 }
 
-void TSMarkerSimple::analyse(TimeSeries *ts, ParseTreeSet &trees)
+void TSMarkerSimple::analyse(TimeSeries *ts, ParseTreeSet &trees, int tsBegin, int tsEnd)
 {
     // check params
     if (!ts || ts->size() == 0)
@@ -33,25 +33,33 @@ void TSMarkerSimple::analyse(TimeSeries *ts, ParseTreeSet &trees)
         GError(GCritical, "", 0, "Time series is NULL or have invalid dimension size");
         return;
     }
+    if (tsEnd == -1)
+        tsEnd = ts->dimSize(0)-1;
+    if (tsBegin < 0 || tsBegin > tsEnd || tsEnd > ts->dimSize(0)-1)
+    {
+        GError(GCritical, "TSMarkerSimple", 0, "Invalid interval to markup");
+        return;
+    }
+
     std::vector<double> v;
     ts->getTSByIndex(v, 0);
     if (v.size() < 2)
     {
         GError(GCritical, "", 0, "Time series have less than 2 values");
+        return;
     }
-    ParseTree* result = new ParseTree(&trees);
-    std::vector<double>::iterator p;
-
-    // analyse
-    int index = 0;
-    std::string name;
-    for (p = v.begin(); p+1 != v.end(); p++, index++)
+    if (trees.size() == 0)
+        trees.add(new ParseTree(&trees));
+    ParseTreeSet::Iterator tree;
+    for_each_(tree, trees.trees)
     {
-        name = (*p <= *(p+1)) ? "a" : "b";
-        ParseTreeNode *newNode = new ParseTreeNode(name, NULL, 0, index, index);
-        result->addNode( newNode );
-
+        // analyse
+        std::string name;
+        for (int index = tsBegin; index != tsEnd; index++)
+        {
+            name = (v[index] <= v[index+1]) ? "a" : "b";
+            ParseTreeNode *newNode = new ParseTreeNode(name, NULL, 0, index, index);
+            (*tree)->addNode( newNode );
+        }
     }
-
-    trees.add(result);
 }

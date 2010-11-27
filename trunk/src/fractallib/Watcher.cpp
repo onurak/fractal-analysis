@@ -71,7 +71,7 @@ Watcher::~Watcher()
     logg.info("FL::Watcher destroyed");
 }
 
-bool Watcher::markup()
+bool Watcher::markup(int tsBegin, int tsEnd)
 {
     if (m_timeSeries == NULL)
     {
@@ -84,10 +84,10 @@ bool Watcher::markup()
         return false;
     }
 
-    m_parseTreeSet.clear();
+    clearParseTreesSegment(tsBegin, tsEnd);
     SAFE_MODE_SECTION
             (
-                m_marker->analyse(m_timeSeries, m_parseTreeSet);
+                m_marker->analyse(m_timeSeries, m_parseTreeSet, tsBegin, tsEnd);
                 return true;
             )
 }
@@ -143,6 +143,15 @@ bool Watcher::parseAll(int *levelsCount)
 bool Watcher::analyse(int *levelsCount)
 {
     return markup() && parseAll(levelsCount);
+}
+
+void Watcher::clearParseTreesSegment(int tsBegin, int tsEnd)
+{
+    if (tsEnd == -1)
+        tsEnd = m_timeSeries->size()-1;
+    ParseTreeSet::Iterator tree;
+    for_each_(tree, m_parseTreeSet.trees)
+        (*tree)->clearSegment(tsBegin, tsEnd);
 }
 
 bool Watcher::setOption(const std::string &option, const GVariant &value)

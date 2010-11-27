@@ -31,6 +31,9 @@
 #include "io/FilePAT.h"
 #include "markers/TSMarkerSimple.h"
 #include "parsers/TSParserSimple.h"
+#include "parsers/TSParserIdeal.h"
+#include "parsers/TSDynamicParserIdeal.h"
+#include "fractallib/tsdatasource/TSDataSourceFileCSV.h"
 #include "TimeSeries.h"
 #include "Watcher.h"
 

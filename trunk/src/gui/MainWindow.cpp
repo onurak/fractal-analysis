@@ -25,6 +25,8 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    m_valuesAdded = 0;
+    m_tsDataSource = NULL;
     if (QFile::exists("config.env"))
         if (!env.loadFromFile("config.env"))
             showError("Error loading environment (it must be invalid file format)");
@@ -40,6 +42,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
 MainWindow::~MainWindow()
 {
+    timerDynamicTS.stop();
+    if (m_tsDataSource)
+        delete m_tsDataSource;
     delete graphicsView;
     delete render;
     delete progressBar;
@@ -57,9 +62,9 @@ void MainWindow::on_actionNext_level_triggered()
     // Try analyse
     if (watcher.patterns().size() > 0)
     {
-        WorkerThreadLevelAnalyser *thread = new WorkerThreadLevelAnalyser(watcher);
+        WorkerThreadLevelAnalyser *thread
+                = new WorkerThreadLevelAnalyser(watcher, m_valuesAdded);
         beginProgress(tr("Looking for fractal level..."), 0, 100, thread);
-        draw();
     }
     else
     {
@@ -80,9 +85,10 @@ void MainWindow::on_actionBuild_trees_triggered()
     // Try analyse
     if (watcher.patterns().size() > 0)
     {
-        WorkerThreadFullAnalyser *thread = new WorkerThreadFullAnalyser(watcher);
+        WorkerThreadFullAnalyser *thread = new WorkerThreadFullAnalyser(watcher, m_valuesAdded);
         beginProgress(tr("Looking for fractal level..."), 0, 100, thread);
         draw();
+        m_valuesAdded = 0;
     }
     else
     {
@@ -277,4 +283,104 @@ void MainWindow::on_action_Debug_window_triggered()
 {
     DebugWindow wnd(this);
     wnd.exec();
+}
+
+void MainWindow::on_actionLoad_dynamic_time_series_triggered()
+{
+    // Open file, choose column
+    QString fileName =
+         QFileDialog::getOpenFileName(this, "Open CSV file", defaultTSPath(), "*.csv");
+    if (fileName.isEmpty())
+        return;
+
+    /*
+    FL::FileCSV fileCsv;
+    if (!fileCsv.loadFromFile(fileName))
+    {
+        showError("Error loading from file");
+        return;
+    }
+
+    // Look for column
+    QString column = env["TimeSeries"].valueOf("Column", "");
+    if ( column == "" || !find_(STR(column), fileCsv.header()) )
+    {
+        // Prepare columns list
+        QStringList columns;
+        for (unsigned int i = 0; i < fileCsv.header().size(); i++)
+            columns.append(QSTR(fileCsv.header()[i]));
+
+        // Ask user
+        bool ok;
+        column = QInputDialog::getItem(this,
+                tr("Load Time Series"),
+                tr("Wich column of file contains data?"),
+                columns, 0, false, &ok
+                );
+        if (!ok) return;
+    }
+
+    // Set dynamic time series
+    FL::TimeSeries *ts = new FL::TimeSeries();
+    FL::TSDataSourceFileCSV *ds = new FL::TSDataSourceFileCSV(ts);
+    if (!ds->openFile(fileName, STR(column)))
+    {
+        delete ds;
+        delete ts;
+        showError("Error loading from file");
+        return;
+    }
+    */
+    OpenDTSFromFileDialog dlg(env);
+    dlg.setFileName(fileName);
+    if (dlg.exec())
+    {
+        timerDynamicTS.stop();
+        if (m_tsDataSource)
+            delete m_tsDataSource;
+        watcher.setTimeSeries(dlg.staticTimeSeries());
+        render->setTimeSeries(dlg.staticTimeSeries());
+        m_tsDataSource = dlg.dataSource();
+    }
+    refreshDynamicTS();
+    draw();
+}
+
+void MainWindow::on_actionDynamic_Time_Series_Run_triggered()
+{
+    if (m_tsDataSource)
+    {
+        refreshDynamicTS();
+        timerDynamicTS.start(1000);
+    }
+}
+
+void MainWindow::on_actionDynamic_Time_Series_Stop_triggered()
+{
+    refreshDynamicTS();
+    timerDynamicTS.stop();
+}
+
+void MainWindow::on_actionDynamic_Time_Series_Step_triggered()
+{
+    if (state != STATE_READY)
+    {
+        setStatus("Can't step while analysis is in progress", 5000);
+        return;
+    }
+    if (m_tsDataSource == NULL)
+    {
+        setStatus("Can't step because data source not loaded", 5000);
+        return;
+    }
+    double value;
+    if (m_tsDataSource->next(value))
+    {
+        watcher.timeSeries()->add(value);
+        draw();
+    }
+    else
+    {
+        setStatus("No new values in data source");
+    }
 }

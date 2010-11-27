@@ -24,6 +24,8 @@ ParseResult TSParserIdeal::parse(ParseTreeSet &trees,
                                  PatternCollection &patterns,
                                  FL::TimeSeries *ts,
                                  FL::Patterns::GroupChecker &checker,
+                                 int tsBegin,
+                                 int tsEnd,
                                  WorkMode mode)
 {
     ParseResult result;
@@ -40,6 +42,13 @@ ParseResult TSParserIdeal::parse(ParseTreeSet &trees,
     if (ts == NULL)
     {
         GError(GCritical, "TSParserIdeal", 0, "No time series loaded");
+        return result;
+    }
+    if (tsEnd == -1)
+        tsEnd = ts->dimSize(0)-1;
+    if (tsBegin < 0 || tsBegin > tsEnd || tsEnd > ts->dimSize(0)-1)
+    {
+        GError(GCritical, "TSParserIdeal", 0, "Invalid interval to parse");
         return result;
     }
 

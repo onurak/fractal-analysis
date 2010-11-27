@@ -463,9 +463,16 @@
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <widget class="QMenu" name="menuOpen_dynamic_time_series">
+     <property name="title">
+      <string>Open &amp;dynamic time series</string>
+     </property>
+     <addaction name="actionOpen_DTS_from_file"/>
+    </widget>
     <addaction name="actionOpen_Environment"/>
     <addaction name="actionOpen_Patterns"/>
     <addaction name="actionOpen_Time_Series"/>
+    <addaction name="menuOpen_dynamic_time_series"/>
     <addaction name="separator"/>
     <addaction name="action_Quit"/>
    </widget>
@@ -479,7 +486,7 @@
    </widget>
    <widget class="QMenu" name="menu_Tests">
     <property name="title">
-     <string>&amp;Tests</string>
+     <string>T&amp;ests</string>
     </property>
     <addaction name="actionGenerate_time_series"/>
    </widget>
@@ -499,11 +506,20 @@
      <string>Fi&amp;lters</string>
     </property>
    </widget>
+   <widget class="QMenu" name="menuTime_series">
+    <property name="title">
+     <string>&amp;Time series</string>
+    </property>
+    <addaction name="actionDynamic_Time_Series_Run"/>
+    <addaction name="actionDynamic_Time_Series_Step"/>
+    <addaction name="actionDynamic_Time_Series_Stop"/>
+   </widget>
    <addaction name="menu_File"/>
    <addaction name="menu_View"/>
    <addaction name="menu_Analysis"/>
-   <addaction name="menu_Tests"/>
+   <addaction name="menuTime_series"/>
    <addaction name="menuFilters"/>
+   <addaction name="menu_Tests"/>
   </widget>
   <action name="actionOpen_Time_Series">
    <property name="icon">
@@ -641,30 +657,6 @@
     <string>Ctrl+-</string>
    </property>
   </action>
-  <action name="action_Run_step_by_step">
-   <property name="text">
-    <string>&amp;Run step by step</string>
-   </property>
-   <property name="shortcut">
-    <string>F5</string>
-   </property>
-  </action>
-  <action name="action_Step">
-   <property name="text">
-    <string>&amp;Step</string>
-   </property>
-   <property name="shortcut">
-    <string>F10</string>
-   </property>
-  </action>
-  <action name="actionStop">
-   <property name="text">
-    <string>Stop</string>
-   </property>
-   <property name="shortcut">
-    <string>Shift+F5</string>
-   </property>
-  </action>
   <action name="action_Debug_window">
    <property name="text">
     <string>&amp;Debug window</string>
@@ -693,6 +685,44 @@
    </property>
    <property name="toolTip">
     <string>Show/hide analysis properties window</string>
+   </property>
+  </action>
+  <action name="actionOpen_DTS_from_file">
+   <property name="text">
+    <string>From &amp;file...</string>
+   </property>
+   <property name="toolTip">
+    <string>Open dynamic time series from file</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+D</string>
+   </property>
+  </action>
+  <action name="actionDynamic_Time_Series_Run">
+   <property name="text">
+    <string>Run</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+R</string>
+   </property>
+  </action>
+  <action name="actionDynamic_Time_Series_Stop">
+   <property name="text">
+    <string>Stop</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+S</string>
+   </property>
+  </action>
+  <action name="actionDynamic_Time_Series_Step">
+   <property name="text">
+    <string>Step</string>
+   </property>
+   <property name="toolTip">
+    <string>Get next single value of dynamic time series</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+N</string>
    </property>
   </action>
  </widget>

@@ -42,6 +42,24 @@ void WorkerThreadLevelAnalyser::run()
     }
     else
     {
+        // Markup unmarked part
+        if (m_unmarkedSize > 0)
+        {
+            if (watcher.markup(watcher.timeSeries()->dimSize(0) - m_unmarkedSize))
+            {
+                logg << "New values marked up (" << m_unmarkedSize << " points)";
+            }
+            else
+            {
+                m_result = R_ERROR;
+                m_resultDescription = QSTR(watcher.lastExceptionMsg());
+                logg << "Error marking up new values: " << watcher.lastExceptionMsg();
+                emit finished(this);
+                return;
+            }
+        }
+
+        // Parse all level
         logg.info("Parsing level with parser '") << watcher.option("parser").toString() << "'... ";
         FL::ParseResult result;
         watcher.parser()->onProgress = delegate(this, &WorkerThreadLevelAnalyser::onFLProgress);
@@ -95,6 +113,23 @@ void WorkerThreadFullAnalyser::run()
             m_result = R_ERROR;
             m_resultDescription = QSTR(watcher.lastExceptionMsg());
             logg << "Markup completed: Failed (" << watcher.lastExceptionMsg() << ")";
+        }
+    }
+
+    // Markup unmarked part
+    if (m_unmarkedSize > 0)
+    {
+        if (watcher.markup(watcher.timeSeries()->size()-m_unmarkedSize))
+        {
+            logg << "New values marked up (" << m_unmarkedSize << " points)";
+        }
+        else
+        {
+            m_result = R_ERROR;
+            m_resultDescription = QSTR(watcher.lastExceptionMsg());
+            logg << "Error marking up new values: " << watcher.lastExceptionMsg();
+            emit finished(this);
+            return;
         }
     }
 

@@ -41,9 +41,11 @@ public:
     //! Markup time series with terminals. In case of error EAnalyze will be thrown
     /*! \param ts Time series to markup
       * \param trees Set of parse trees whereto marked tree will be added
+      * \param tsBegin Begin of segment of time series to analyse
+      * \param tsEnd End of segment of time series to analyse (-1 to analyse whole time series)
       * \throws EAnalyze
       */
-    virtual void analyse(TimeSeries *ts, ParseTreeSet &trees) = 0;
+    virtual void analyse(TimeSeries *ts, ParseTreeSet &trees, int tsBegin = 0, int tsEnd = -1) = 0;
 };
 
 /*@}*/

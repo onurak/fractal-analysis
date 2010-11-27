@@ -17,6 +17,7 @@
  */
 
 #include "QtRender.h"
+#include <QLinearGradient>
 
 using namespace FL;
 
@@ -133,10 +134,15 @@ void QtRender::draw()
     if (m_timeSeries)
     {
         drawTS(m_timeSeries, m_tsdim);
+
         std::vector<ParseTreeReg>::iterator i;
         int no;
         for (no = 0, i = m_trees.begin(); i != m_trees.end(); ++i, ++no)
             drawTree(*(i->tree), no, i->settings);
+
+        std::vector<Forecast*>::iterator f;
+        for_each_(f, m_forecasts)
+            drawForecast(*f);
     }
     swap();
 }
@@ -179,6 +185,30 @@ void QtRender::remTree(ParseTree *tree)
 void QtRender::clearTrees()
 {
     m_trees.clear();
+}
+
+void QtRender::addForecast(Forecast *forecast)
+{
+    if (!find_(forecast, m_forecasts))
+        m_forecasts.push_back( forecast );
+}
+
+void QtRender::remForecast(Forecast *forecast)
+{
+    std::vector<Forecast*>::iterator i;
+    for (i = m_forecasts.begin(); i != m_forecasts.end(); ++i)
+    {
+        if (*i == forecast)
+        {
+            m_forecasts.erase(i);
+            return;
+        }
+    }
+}
+
+void QtRender::clearForecasts()
+{
+    m_forecasts.clear();
 }
 
 void QtRender::setTimeSeries(FL::TimeSeries *ts, int dimension)
@@ -404,12 +434,13 @@ void QtRender::drawLayer(ParseTree::ConstLayer &layer, int treeNo,
 
         // If starting point of node is invisible than it is don't make
         // any sense drawing this node and all next to this nodes
-        int startX = tx(start) - tsFirstVisible;
-        if (startX < 0)
+        int endX = tx(end+1) - tsFirstVisible;
+        if (endX < 0)
             continue;
+        int startX = tx(start) - tsFirstVisible;
         if (startX > xMax)
             break;
-        int endX = tx(end+1) - tsFirstVisible;
+
 
         pen1.setColor(colorMarked);
         pen2.setColor(colorMarked);
@@ -479,4 +510,61 @@ void QtRender::drawParseContext(ParseContext &context)
         drawTree(*context.tree, 0, DRAW_ALL);
     }
     swap();
+}
+
+void QtRender::drawForecast(Forecast *forecast)
+{
+    QColor color(100, 100, 150, 255);
+    QColor colorAlpha(100, 100, 150, 100);
+    QPen dashedPen(Qt::DashDotLine);
+    dashedPen.setColor(color);
+
+    int tsFirstVisible = tx(m_horScrollerPos) - m_xborder;
+
+    // Calc possible pattern position
+    int xStart = tx(forecast->position()) - tsFirstVisible;
+    int xEnd = xStart + tx(forecast->maxDuration());
+    if (xEnd < 0 || xStart > tx(m_maxX))
+        return;
+
+    // Draw forecast pattern
+    int yPos = ty(m_minY + m_yrange/2);
+    int yTSPos = yPos;
+    if (m_timeSeries && forecast->position() >= 0 &&
+        forecast->position() < m_timeSeries->dimSize(m_tsdim))
+    {
+        std::vector<double> vec;
+        if (m_timeSeries->getTSByIndex(vec, m_tsdim))
+            yTSPos = ty(vec[forecast->position()]);
+    }
+    int yForecastStart = ty(forecast->maxValue());
+
+    /*
+    QLinearGradient gradient(xStart, yPos, xEnd, yPos);
+    gradient.setCoordinateMode(QGradient::ObjectBoundingMode);
+    gradient.setColorAt(0, QColor(100, 100, 255, 255));
+    gradient.setColorAt(1, QColor(100, 100, 255, 0));
+    m_painter.setBrush(gradient);
+    m_painter.setPen(QPen(gradient, 0));
+    */
+    m_painter.setPen(color);
+    m_painter.setBrush(color);
+    m_painter.drawLine(xStart, yPos, xEnd, yPos);
+    if (forecast->pattern() && forecast->pattern()->description())
+        m_painter.drawText(xStart, yPos+12, QSTR(forecast->pattern()->description()->name()));
+    else
+        m_painter.drawText(xStart, yPos+12, QSTR("Unknown"));
+    m_painter.setPen(dashedPen);
+    m_painter.drawLine(xStart, yPos, xStart, yTSPos);
+    m_painter.drawLine(xEnd, yPos, xEnd, yForecastStart);
+
+
+    // Calc forecast edge points, clockwise, starting with left bottom point
+    QPoint p0( xStart + tx(forecast->minDuration()),   yForecastStart );
+    QPoint p1( xEnd,   ty(forecast->minValue()) );
+
+    // Draw forecast area
+    m_painter.setBrush(colorAlpha);
+    m_painter.setPen(Qt::NoPen);
+    m_painter.drawRect(QRect(p0, p1));
 }

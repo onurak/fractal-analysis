@@ -24,7 +24,9 @@ TSMarkerAxiomatic::TSMarkerAxiomatic()
 {
 }
 
+/*
 ParseTree* TSMarkerAxiomatic::analyse(TimeSeries *ts)
 {
     return NULL;
 }
+*/
