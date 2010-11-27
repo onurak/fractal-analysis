@@ -48,7 +48,7 @@ public:
     /*! \param fileName File name to load
       * \throw EFile
       */
-    void loadFromFile(const std::string & fileName);
+    bool loadFromFile(const std::string & fileName);
 
     //! Save to file
     /*! \param fileName File name to save
@@ -72,7 +72,6 @@ public:
     //! Return selected row as vector of variants
     /*! \param rowNo Row no
       * \return Row as vector of variants
-      * \throw EFile
       */
     std::vector<GVariant>& operator[](int rowNo)
     {
@@ -83,17 +82,50 @@ public:
         }
     }
 
+    //! Return selected row as vector of variants
+    /*! \param rowNo Row no
+      * \return Row as vector of variants
+      */
+    std::vector<GVariant>& row(int rowNo)
+    {
+        if (rowNo >= 0 && rowNo < int(m_strings.size()))
+            return m_strings[rowNo];
+        else {
+            throw 0;
+        }
+    }
+
+    //! Return rows count
+    int rowCount() const
+    {
+        return int(m_strings.size());
+    }
+
+    //! Return column count
+    int columnCount() const
+    {
+        return int(m_header.size());
+    }
+
     //! Trying guess column with needed data
     /*! \return Number of column with time series values or -1
       * \throw EFile
       */
-    int guessTimeSeries();
+    int guessTimeSeries() const;
 
     //! Load specified column to zero dimension of time series
     /*! \param ts Time series
       * \param columnIndex Index of column to load
       */
     void loadTimeSeries(FL::TimeSeries *ts, int columnIndex);
+
+    //! Clear loaded data
+    void clear()
+    {
+        m_header.clear();
+        m_strings.clear();
+    }
+
 private:
     //! File header
     std::vector<std::string> m_header;

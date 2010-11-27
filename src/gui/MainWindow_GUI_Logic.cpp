@@ -29,7 +29,7 @@ void MainWindow::initializeControls()
     ui->action_Debug_window->setVisible(false);
     #endif
     refreshFilters();
-
+    refreshDynamicTS();
 
     // Setup render
     graphicsView = new FLGraphicsView(this->centralWidget());
@@ -66,6 +66,7 @@ void MainWindow::initializeControls()
             this, SLOT(spc_on_analysisPropertiesChanged()));
     connect(ui->analysisPropertiesWidget, SIGNAL(dockLocationChanged(Qt::DockWidgetArea)),
             this, SLOT(spc_on_drawingWindowSizeChanged()));
+    connect(&timerDynamicTS, SIGNAL(timeout()), this, SLOT(dynamicTSCollectValues()));
 
     // Ready
     logg.info("GUI initialized OK");
@@ -116,7 +117,6 @@ void MainWindow::updateProgress(int step)
 
 void MainWindow::endProgress()
 {
-    setStatus("");
     progressBar->setVisible(false);
 }
 
@@ -155,6 +155,8 @@ void MainWindow::workerThreadFinished(WorkerThread *thread)
             setStatus("Last level parsed!");
             break;
     }
+    //m_valuesAdded -= watcher.marker();
+    m_valuesAdded = 0;
 }
 
 void MainWindow::showError(QString msg)
@@ -179,6 +181,10 @@ void MainWindow::draw()
         FL::ParseTree *tree = (FL::ParseTree*) watcher.parseTreeSet()[treeNo];
         render->addTree(tree, 0, treeDrawingSettings());
     }
+
+    render->clearForecasts();
+    //render->addForecast(new FL::Forecast(NULL, NULL, 5, 1, 3, 15, 1400, 1453));
+
     render->draw();    
 }
 
@@ -390,5 +396,30 @@ void MainWindow::spc_action_ExecuteFilter(QAction *action)
         watcher.parseTreeSet().trees[i] = createRootsMarkupFromTree(tree);
         delete tree;
     }
+    draw();
+}
+
+void MainWindow::refreshDynamicTS()
+{
+    if (m_tsDataSource == NULL)
+    {
+        ui->actionDynamic_Time_Series_Run->setEnabled(false);
+        ui->actionDynamic_Time_Series_Step->setEnabled(false);
+        ui->actionDynamic_Time_Series_Stop->setEnabled(false);
+    }
+    else
+    {
+        //bool enable = timerDynamicTS.isActive();
+        //ui->actionDynamic_Time_Series_Run->setEnabled(!enable);
+        //ui->actionDynamic_Time_Series_Step->setEnabled(enable);
+        //ui->actionDynamic_Time_Series_Stop->setEnabled(enable);
+        ui->actionDynamic_Time_Series_Step->setEnabled(true);
+    }
+}
+
+void MainWindow::dynamicTSCollectValues()
+{
+    m_valuesAdded += 1;
+    setStatus(QString("Added: %1").arg(m_valuesAdded), 10000);
     draw();
 }

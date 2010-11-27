@@ -81,7 +81,12 @@ HEADERS += gui/MainWindow.h \
     fractallib/predicates/Sum.h \
     fractallib/predicates/ExtractPrev.h \
     gui/TreeFilter.h \
-    fractallib/PatternParameter.h
+    fractallib/PatternParameter.h \
+    fractallib/tsdatasource/TSDataSource.h \
+    fractallib/tsdatasource/TSDataSourceFileCSV.h \
+    fractallib/parsers/TSDynamicParser.h \
+    fractallib/parsers/TSDynamicParserIdeal.h \
+    gui/OpenDTSFromFileDialog.h
 SOURCES += main.cpp \
     fractallib/io/FileCSV.cpp \
     fractallib/io/FilePAT.cpp \
@@ -113,10 +118,14 @@ SOURCES += main.cpp \
     fractallib/groupcheckers/GroupCheckerUniversal.cpp \
     fractallib/groupcheckers/GroupCheckerSingle.cpp \
     fractallib/GuardCompilerRPN.cpp \
-    gui/TreeFilter.cpp
+    gui/TreeFilter.cpp \
+    fractallib/tsdatasource/TSDataSourceFileCSV.cpp \
+    fractallib/parsers/TSDynamicParserIdeal.cpp \
+    gui/OpenDTSFromFileDialog.cpp
 FORMS += gui/MainWindow.ui \
     gui/PatternEditor.ui \
-    gui/DebugWindow.ui
+    gui/DebugWindow.ui \
+    gui/OpenDTSFromFileDialog.ui
 RESOURCES += gui/resources.qrc
 
 OTHER_FILES += \

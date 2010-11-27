@@ -31,6 +31,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QTimer>
 #include "fractallib/FL.h"
 #include "fractallib/QtRender.h"
 #include "fractallib/flqt.h"
@@ -39,6 +40,7 @@
 #include "FLGraphicsView.h"
 #include "DebugWindow.h"
 #include "TreeFilter.h"
+#include "OpenDTSFromFileDialog.h"
 
 namespace Ui {
     class MainWindow;
@@ -57,6 +59,8 @@ public:
     FL::Watcher watcher;
     FL::Environment env;
     WorkerThread *currentWorker;
+    FL::TSDataSource *m_tsDataSource;
+    int m_valuesAdded;
 private:
     void initializeFractalLibrary();
     void loadTimeSeries(QString fileName);
@@ -64,6 +68,7 @@ private:
     void loadEnvironment();
     void haltAnalysis();
     FL::ParseTree* createRootsMarkupFromTree(FL::ParseTree *tree);
+
 
 /*### Graphical User Interface Section ###*/
 public:
@@ -81,6 +86,7 @@ private:
     int treeNo; //!< Current ParseTree index
     ProgramState state;
     FLGraphicsView *graphicsView;
+    QTimer timerDynamicTS;
 private:
     void initializeControls();
     void setStatus(QString text, int timeout = 3000);
@@ -100,6 +106,7 @@ private:
     void readAnalysisProperties();
     void writeAnalysisProperties();
     void refreshFilters();
+    void refreshDynamicTS();
 /* GUI Events */
 private:
     virtual void resizeEvent(QResizeEvent *event);
@@ -109,9 +116,14 @@ public slots:
     void workerThreadProgress(int progress, QString msg);
     void workerThreadFinished(WorkerThread *thread);
     void workerThreadDebugParser(FL::TSParser::DebugEvent event);
+    void dynamicTSCollectValues();
 private:
 
 private slots:
+    void on_actionDynamic_Time_Series_Step_triggered();
+    void on_actionDynamic_Time_Series_Stop_triggered();
+    void on_actionDynamic_Time_Series_Run_triggered();
+    void on_actionLoad_dynamic_time_series_triggered();
     void on_action_Debug_window_triggered();
     void on_actionShow_Analysys_properties_triggered();
     void on_actionCreate_markup_from_roots_triggered();

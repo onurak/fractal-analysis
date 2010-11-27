@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'MainWindow.ui'
 **
-** Created: Sun 7. Nov 00:57:42 2010
+** Created: Sun 21. Nov 18:40:12 2010
 **      by: Qt User Interface Compiler version 4.7.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!
@@ -49,13 +49,14 @@ public:
     QAction *action_Quit;
     QAction *actionZoom_in;
     QAction *actionZoom_out;
-    QAction *action_Run_step_by_step;
-    QAction *action_Step;
-    QAction *actionStop;
     QAction *action_Debug_window;
     QAction *action_Fit_time_series;
     QAction *actionCreate_markup_from_roots;
     QAction *actionShow_Analysys_properties;
+    QAction *actionOpen_DTS_from_file;
+    QAction *actionDynamic_Time_Series_Run;
+    QAction *actionDynamic_Time_Series_Stop;
+    QAction *actionDynamic_Time_Series_Step;
     QWidget *centralwidget;
     QGridLayout *gridLayout_2;
     QScrollBar *timeSeriesHorizontalScroller;
@@ -100,10 +101,12 @@ public:
     QSpacerItem *verticalSpacer_2;
     QMenuBar *menubar;
     QMenu *menu_File;
+    QMenu *menuOpen_dynamic_time_series;
     QMenu *menu_Analysis;
     QMenu *menu_Tests;
     QMenu *menu_View;
     QMenu *menuFilters;
+    QMenu *menuTime_series;
 
     void setupUi(QMainWindow *MainWindow)
     {
@@ -158,12 +161,6 @@ public:
         QIcon icon8;
         icon8.addFile(QString::fromUtf8(":/icons/resources/zoom_out.png"), QSize(), QIcon::Normal, QIcon::Off);
         actionZoom_out->setIcon(icon8);
-        action_Run_step_by_step = new QAction(MainWindow);
-        action_Run_step_by_step->setObjectName(QString::fromUtf8("action_Run_step_by_step"));
-        action_Step = new QAction(MainWindow);
-        action_Step->setObjectName(QString::fromUtf8("action_Step"));
-        actionStop = new QAction(MainWindow);
-        actionStop->setObjectName(QString::fromUtf8("actionStop"));
         action_Debug_window = new QAction(MainWindow);
         action_Debug_window->setObjectName(QString::fromUtf8("action_Debug_window"));
         action_Fit_time_series = new QAction(MainWindow);
@@ -176,6 +173,14 @@ public:
         actionShow_Analysys_properties = new QAction(MainWindow);
         actionShow_Analysys_properties->setObjectName(QString::fromUtf8("actionShow_Analysys_properties"));
         actionShow_Analysys_properties->setCheckable(true);
+        actionOpen_DTS_from_file = new QAction(MainWindow);
+        actionOpen_DTS_from_file->setObjectName(QString::fromUtf8("actionOpen_DTS_from_file"));
+        actionDynamic_Time_Series_Run = new QAction(MainWindow);
+        actionDynamic_Time_Series_Run->setObjectName(QString::fromUtf8("actionDynamic_Time_Series_Run"));
+        actionDynamic_Time_Series_Stop = new QAction(MainWindow);
+        actionDynamic_Time_Series_Stop->setObjectName(QString::fromUtf8("actionDynamic_Time_Series_Stop"));
+        actionDynamic_Time_Series_Step = new QAction(MainWindow);
+        actionDynamic_Time_Series_Step->setObjectName(QString::fromUtf8("actionDynamic_Time_Series_Step"));
         centralwidget = new QWidget(MainWindow);
         centralwidget->setObjectName(QString::fromUtf8("centralwidget"));
         gridLayout_2 = new QGridLayout(centralwidget);
@@ -399,6 +404,8 @@ public:
         menubar->setGeometry(QRect(0, 0, 771, 21));
         menu_File = new QMenu(menubar);
         menu_File->setObjectName(QString::fromUtf8("menu_File"));
+        menuOpen_dynamic_time_series = new QMenu(menu_File);
+        menuOpen_dynamic_time_series->setObjectName(QString::fromUtf8("menuOpen_dynamic_time_series"));
         menu_Analysis = new QMenu(menubar);
         menu_Analysis->setObjectName(QString::fromUtf8("menu_Analysis"));
         menu_Tests = new QMenu(menubar);
@@ -407,6 +414,8 @@ public:
         menu_View->setObjectName(QString::fromUtf8("menu_View"));
         menuFilters = new QMenu(menubar);
         menuFilters->setObjectName(QString::fromUtf8("menuFilters"));
+        menuTime_series = new QMenu(menubar);
+        menuTime_series->setObjectName(QString::fromUtf8("menuTime_series"));
         MainWindow->setMenuBar(menubar);
 
         toolBar->addAction(actionOpen_Environment);
@@ -422,13 +431,16 @@ public:
         menubar->addAction(menu_File->menuAction());
         menubar->addAction(menu_View->menuAction());
         menubar->addAction(menu_Analysis->menuAction());
-        menubar->addAction(menu_Tests->menuAction());
+        menubar->addAction(menuTime_series->menuAction());
         menubar->addAction(menuFilters->menuAction());
+        menubar->addAction(menu_Tests->menuAction());
         menu_File->addAction(actionOpen_Environment);
         menu_File->addAction(actionOpen_Patterns);
         menu_File->addAction(actionOpen_Time_Series);
+        menu_File->addAction(menuOpen_dynamic_time_series->menuAction());
         menu_File->addSeparator();
         menu_File->addAction(action_Quit);
+        menuOpen_dynamic_time_series->addAction(actionOpen_DTS_from_file);
         menu_Analysis->addAction(actionNext_level);
         menu_Analysis->addAction(actionBuild_trees);
         menu_Analysis->addAction(actionCreate_markup_from_roots);
@@ -439,6 +451,9 @@ public:
         menu_View->addSeparator();
         menu_View->addAction(actionShow_Analysys_properties);
         menu_View->addAction(action_Debug_window);
+        menuTime_series->addAction(actionDynamic_Time_Series_Run);
+        menuTime_series->addAction(actionDynamic_Time_Series_Step);
+        menuTime_series->addAction(actionDynamic_Time_Series_Stop);
 
         retranslateUi(MainWindow);
 
@@ -492,12 +507,6 @@ public:
         actionZoom_out->setToolTip(QApplication::translate("MainWindow", "Zoom out", 0, QApplication::UnicodeUTF8));
 #endif // QT_NO_TOOLTIP
         actionZoom_out->setShortcut(QApplication::translate("MainWindow", "Ctrl+-", 0, QApplication::UnicodeUTF8));
-        action_Run_step_by_step->setText(QApplication::translate("MainWindow", "&Run step by step", 0, QApplication::UnicodeUTF8));
-        action_Run_step_by_step->setShortcut(QApplication::translate("MainWindow", "F5", 0, QApplication::UnicodeUTF8));
-        action_Step->setText(QApplication::translate("MainWindow", "&Step", 0, QApplication::UnicodeUTF8));
-        action_Step->setShortcut(QApplication::translate("MainWindow", "F10", 0, QApplication::UnicodeUTF8));
-        actionStop->setText(QApplication::translate("MainWindow", "Stop", 0, QApplication::UnicodeUTF8));
-        actionStop->setShortcut(QApplication::translate("MainWindow", "Shift+F5", 0, QApplication::UnicodeUTF8));
         action_Debug_window->setText(QApplication::translate("MainWindow", "&Debug window", 0, QApplication::UnicodeUTF8));
         action_Fit_time_series->setText(QApplication::translate("MainWindow", "&Fit time series", 0, QApplication::UnicodeUTF8));
         actionCreate_markup_from_roots->setText(QApplication::translate("MainWindow", "Create markup from roots", 0, QApplication::UnicodeUTF8));
@@ -505,6 +514,20 @@ public:
 #ifndef QT_NO_TOOLTIP
         actionShow_Analysys_properties->setToolTip(QApplication::translate("MainWindow", "Show/hide analysis properties window", 0, QApplication::UnicodeUTF8));
 #endif // QT_NO_TOOLTIP
+        actionOpen_DTS_from_file->setText(QApplication::translate("MainWindow", "From &file...", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        actionOpen_DTS_from_file->setToolTip(QApplication::translate("MainWindow", "Open dynamic time series from file", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        actionOpen_DTS_from_file->setShortcut(QApplication::translate("MainWindow", "Alt+D", 0, QApplication::UnicodeUTF8));
+        actionDynamic_Time_Series_Run->setText(QApplication::translate("MainWindow", "Run", 0, QApplication::UnicodeUTF8));
+        actionDynamic_Time_Series_Run->setShortcut(QApplication::translate("MainWindow", "Alt+R", 0, QApplication::UnicodeUTF8));
+        actionDynamic_Time_Series_Stop->setText(QApplication::translate("MainWindow", "Stop", 0, QApplication::UnicodeUTF8));
+        actionDynamic_Time_Series_Stop->setShortcut(QApplication::translate("MainWindow", "Alt+S", 0, QApplication::UnicodeUTF8));
+        actionDynamic_Time_Series_Step->setText(QApplication::translate("MainWindow", "Step", 0, QApplication::UnicodeUTF8));
+#ifndef QT_NO_TOOLTIP
+        actionDynamic_Time_Series_Step->setToolTip(QApplication::translate("MainWindow", "Get next single value of dynamic time series", 0, QApplication::UnicodeUTF8));
+#endif // QT_NO_TOOLTIP
+        actionDynamic_Time_Series_Step->setShortcut(QApplication::translate("MainWindow", "Alt+N", 0, QApplication::UnicodeUTF8));
         gbInfo->setTitle(QApplication::translate("MainWindow", "Info", 0, QApplication::UnicodeUTF8));
         label->setText(QApplication::translate("MainWindow", "Parse Trees:", 0, QApplication::UnicodeUTF8));
         label_2->setText(QApplication::translate("MainWindow", "of", 0, QApplication::UnicodeUTF8));
@@ -531,10 +554,12 @@ public:
         cbShowParseTreeTimeSeries->setText(QApplication::translate("MainWindow", "Show parse tree time series", 0, QApplication::UnicodeUTF8));
         cbShowParseTreeRoots->setText(QApplication::translate("MainWindow", "Show parse tree roots", 0, QApplication::UnicodeUTF8));
         menu_File->setTitle(QApplication::translate("MainWindow", "&File", 0, QApplication::UnicodeUTF8));
+        menuOpen_dynamic_time_series->setTitle(QApplication::translate("MainWindow", "Open &dynamic time series", 0, QApplication::UnicodeUTF8));
         menu_Analysis->setTitle(QApplication::translate("MainWindow", "&Analysis", 0, QApplication::UnicodeUTF8));
-        menu_Tests->setTitle(QApplication::translate("MainWindow", "&Tests", 0, QApplication::UnicodeUTF8));
+        menu_Tests->setTitle(QApplication::translate("MainWindow", "T&ests", 0, QApplication::UnicodeUTF8));
         menu_View->setTitle(QApplication::translate("MainWindow", "&View", 0, QApplication::UnicodeUTF8));
         menuFilters->setTitle(QApplication::translate("MainWindow", "Fi&lters", 0, QApplication::UnicodeUTF8));
+        menuTime_series->setTitle(QApplication::translate("MainWindow", "&Time series", 0, QApplication::UnicodeUTF8));
     } // retranslateUi
 
 };

@@ -72,7 +72,7 @@ namespace CSV
     };
 
     // парсер
-    void parse(const std::string & fileName,
+    bool parse(const std::string & fileName,
                std::vector<std::string> *header,
                std::vector< std::vector<GVariant> > *data)
     {
@@ -80,7 +80,7 @@ namespace CSV
         if (data == NULL || header == NULL)
         {
             GError(GCritical, "FileCSV", 0, "CSV parser internal error: Invalid data or header");
-            return;
+            return false;
         }
         m_data = data;
         m_header = header;
@@ -93,15 +93,15 @@ namespace CSV
         if (r == EParserCantOpenFile)
         {
             GError(GCritical, "FileCSV", 0, ECantOpenFile + fileName);
-            return;
+            return false;
         }
         else if (r >= 0)
         {
             GError(GCritical, "FileCSV", 0, EInvalidFileFormat + fileName);
-            return;
+            return false;
         }
         else
-            ;
+            return true;
     }
 
 } // namespace
@@ -113,11 +113,14 @@ FileCSV::FileCSV(const std::string & fileName)
         loadFromFile(fileName);
 }
 
-void FileCSV::loadFromFile(const std::string & fileName)
+bool FileCSV::loadFromFile(const std::string & fileName)
 {
     m_header.clear();
     m_strings.clear();
-    CSV::parse(fileName, &m_header, &m_strings);
+    bool ret = CSV::parse(fileName, &m_header, &m_strings);
+    if (!ret)
+        clear();
+    return ret;
 }
 
 void FileCSV::saveToFile(const std::string & fileName)
@@ -158,7 +161,7 @@ void FileCSV::saveToFile(const std::string & fileName, TimeSeries *ts, int dimen
     file.close();
 }
 
-int FileCSV::guessTimeSeries()
+int FileCSV::guessTimeSeries() const
 {
     /*if (m_strings.size() == 0 || m_header.size() == 0)
         return -1;

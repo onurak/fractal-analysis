@@ -51,10 +51,11 @@ const int R_LAST_LEVEL = -3;
 class WorkerThreadLevelAnalyser: public WorkerThread
 {
 public:
-    WorkerThreadLevelAnalyser(FL::Watcher &watcher, bool debugMode = false)
+    WorkerThreadLevelAnalyser(FL::Watcher &watcher, int unmarkedSize, bool debugMode = false)
         : watcher(watcher), m_debugMode(debugMode)
     {
         qRegisterMetaType<FL::TSParser::DebugEvent>("FL::TSParser::DebugEvent");
+        m_unmarkedSize = unmarkedSize;
     }
 public:
     void run();
@@ -64,15 +65,17 @@ private:
     bool onFLDebug(FL::TSParser::DebugEvent event);
     bool m_debugMode;
     mutable QMutex m_mutex;
+    int m_unmarkedSize;
 };
 
 class WorkerThreadFullAnalyser: public WorkerThread
 {
 public:
-    WorkerThreadFullAnalyser(FL::Watcher &watcher, bool debugMode = false)
+    WorkerThreadFullAnalyser(FL::Watcher &watcher, int unmarkedSize, bool debugMode = false)
         : watcher(watcher), m_debugMode(debugMode)
     {
         qRegisterMetaType<FL::TSParser::DebugEvent>("FL::TSParser::DebugEvent");
+        m_unmarkedSize = unmarkedSize;
     }
 public:
     void run();
@@ -81,6 +84,7 @@ private:
     void onFLProgress(int progress);
     bool onFLDebug(FL::TSParser::DebugEvent event);
     bool m_debugMode;
+    int m_unmarkedSize;
     mutable QMutex m_mutex;
 };
 

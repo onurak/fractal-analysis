@@ -298,12 +298,12 @@ ParseTree::ConstLayer& ParseTree::roots()
 
     if (m_leafes.size() != 0)
     {
-        // Walk arround all leafes, for each looking for root of his subtree.
+        // For each leaf find root of its subtree.
         // If this root not in result yet, than add it
         ConstLayer::iterator node;
-        for (node = m_leafes.begin(); node != m_leafes.end(); ++node)
+        for_each_(node,  m_leafes)
         {
-            // looking for root
+            // find root
             ParseTreeNode *root = *node;
             if (root != NULL)
             {
@@ -311,6 +311,7 @@ ParseTree::ConstLayer& ParseTree::roots()
                 while ((parent = nodeParent(root)) != NULL)
                     root = parent;
             }
+
             // adding it (if it's not yet added)
             if (root != NULL && !find_(root, m_roots))
                 m_roots.push_back(root);
@@ -318,6 +319,38 @@ ParseTree::ConstLayer& ParseTree::roots()
     }
 
     return m_roots;
+}
+
+ParseTree::ConstLayer& ParseTree::roots(int tsBegin, int tsEnd)
+{
+    static ParseTree::Layer rootsOnSegment;
+    rootsOnSegment.clear();
+
+    // For each leaf on segment: find root of its subtree.
+    // If this root not in result yet, than add it
+    if (m_leafes.size() != 0)
+    {
+        ConstLayer::iterator node;
+        for_each_(node, m_leafes)
+        {
+            // find root
+            ParseTreeNode *root = *node;
+            if (root != NULL)
+            {
+                if ( ! isSegmentsOverlay(tsBegin, tsEnd, root->tsBegin, root->tsEnd) )
+                    continue;
+                ParseTreeNode *parent;
+                while ((parent = nodeParent(root)) != NULL)
+                    root = parent;
+            }
+
+            // adding it (if it's not yet added)
+            if (root != NULL && !find_(root, m_roots))
+                m_roots.push_back(root);
+        }
+    }
+
+    return rootsOnSegment;
 }
 
 void ParseTree::clear()
@@ -425,6 +458,43 @@ ParseTreeNode* ParseTree::addNode(ParseTreeNode *node)
     return node;
 }
 
+void ParseTree::excludeNode(ParseTreeNode *node)
+{
+    if (node != NULL)
+    {
+        ParseTree::Layer::iterator it;
+        it = std::find( m_allNodes.begin(), m_allNodes.end(), node );
+        if (it != m_allNodes.end())
+        {
+            // remove from cache
+            m_allNodes.erase(it);
+
+            it = std::find( m_leafes.begin(), m_leafes.end(), node );
+            if (it != m_leafes.end())
+                m_leafes.erase(it);
+
+            it = std::find( m_roots.begin(), m_roots.end(), node );
+            if (it != m_roots.end())
+                m_roots.erase(it);
+
+            // recalc levels
+            if (m_maxLevel == node->level || m_minLevel == node->level)
+            {
+                int max = m_minLevel, min = m_maxLevel;
+                for_each_(it, m_allNodes)
+                {
+                    if ((*it)->level > max)
+                        max = (*it)->level;
+                    if ((*it)->level < min)
+                        min = (*it)->level;
+                }
+                m_minLevel = min;
+                m_maxLevel = max;
+            }
+        }
+    }
+}
+
 ParseTreeNode* ParseTree::hasNode(const ParseTreeNode *node) const
 {
     ConstLayer::const_iterator it;
@@ -435,6 +505,19 @@ ParseTreeNode* ParseTree::hasNode(const ParseTreeNode *node) const
             return *it;
     }
     return NULL;
+}
+
+void ParseTree::clearSegment(int tsBegin, int tsEnd)
+{
+    ParseTree::Layer::iterator node;
+    for_each_(node, m_allNodes)
+    {
+        if ( isSegmentsOverlay(tsBegin, tsEnd, (*node)->tsBegin, (*node)->tsEnd) )
+        {
+            excludeNode(*node);
+            delete *node;
+        }
+    }
 }
 
 #endif

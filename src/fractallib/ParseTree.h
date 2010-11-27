@@ -258,7 +258,20 @@ public:
     }
 
     //! Add node to tree
+    /*! After you had set parent, children and other parameters of node you must
+      * call this function because ParseTree using internal caching of its nodes.
+      * Otherwise node will not be included in roots(), leafes(), minLevel(),
+      * maxLevel() and other function's return values.
+      * \return Node passed as parameter
+      */
     ParseTreeNode* addNode(ParseTreeNode *node);
+
+    //! Remove node form tree
+    /*! If you suggest that node could be part of ParseTree you must call
+      * excludeNode before deleting node. It will excelude this node from
+      * internal ParseTree's cache. Otherwise memory errors are possible
+      */
+    void excludeNode(ParseTreeNode *node);
 
     //! Get parent of the node
     /*! Nodes can have various structure and there is no guarantee that
@@ -281,6 +294,9 @@ public:
 
     //! Get roots of the tree (list of nodes nearest to possible root, left to right order)
     ConstLayer& roots();
+
+    //! Get roots of tree on given segment (list of nodes nearest to possible root, left to right order)
+    ConstLayer& roots(int tsBegin, int tsEnd);
 
     //! Returns layer of all nodes with selected level, or NULL
     ConstLayer* getLevel(int level)
@@ -311,6 +327,9 @@ public:
     {
         return m_maxLevel;
     }
+
+    //! Clear all nodes that overlays with specified segment
+    void clearSegment(int tsBegin, int tsEnd);
 
     friend class ParseTreeSet;
 private:
@@ -424,6 +443,12 @@ inline ParseTree::ConstLayer::const_iterator
     return result;
 }
 
+inline bool isSegmentsOverlay(int seg1Begin, int seg1End, int seg2Begin, int seg2End)
+{
+    /* first check if there is no overlay */
+    // (  )   [  ] or [  ]  (  )
+    return ! ( (seg1End < seg2Begin) || (seg2End < seg1Begin) );
+}
 
 } // namespace
 

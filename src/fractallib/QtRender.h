@@ -26,6 +26,7 @@
 #include "Environment.h"
 #include "ParseTree.h"
 #include "ParseContext.h"
+#include "parsers/TSDynamicParser.h"
 #include "flqt.h"
 #include "G/GLogger.h"
 #include "G/GDelegate.h"
@@ -145,6 +146,14 @@ public:
       */
     void drawParseContext(ParseContext &context);
 
+    //! Add new forecast to draw
+    void addForecast(Forecast *forecast);
+
+    //! Remove registered forecast
+    void remForecast(Forecast *forecast);
+
+    //! Clear all forecasts
+    void clearForecasts();
 public:
     //! Getter for Qt scene object
     QtScene* scene() { return m_scene; }
@@ -239,6 +248,9 @@ protected:
     //! Draw whole parse tree
     void drawTree(ParseTree &tree, int treeNo, TreeDrawingSettings dSettings);
 
+    //! Draw forecast
+    void drawForecast(Forecast *forecast);
+
     //! Update scrolling info
     void updateScroller();
 private:
@@ -265,6 +277,9 @@ private:
 
     //! Registered trees
     std::vector<ParseTreeReg> m_trees;
+
+    //! Registered forecasts
+    std::vector<Forecast*> m_forecasts;
 
     double m_minX, m_maxX, m_minY, m_maxY, m_xrange, m_yrange, m_width, m_height;
     double m_xborder, m_yborder;

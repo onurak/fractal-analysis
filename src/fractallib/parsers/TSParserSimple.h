@@ -44,6 +44,8 @@ public:
                       PatternCollection &patterns,
                       FL::TimeSeries *ts,
                       FL::Patterns::GroupChecker &checker,
+                      int tsBegin = 0,
+                      int tsEnd = -1,
                       WorkMode mode = WorkNormal);
 protected:
     //! Appling pattern at point

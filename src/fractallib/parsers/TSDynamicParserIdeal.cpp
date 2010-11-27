@@ -16,36 +16,16 @@
  * along with Fractal Libray.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TSMARKERSIMPLE_H
-#define TSMARKERSIMPLE_H
+#include "TSDynamicParserIdeal.h"
 
-#include "TSMarker.h"
+using namespace FL;
 
-namespace FL {
-
-/*! \addtogroup FLAlgorithm
-  */
-/*@{*/
-
-
-/*! \class TSMarkerSimple
-  * \brief Simplest ab markup.
-  *
-  * Recognize two types of time series segments [Xi, Xi+1]:
-  *  - a - if Xi <= Xi+1
-  *  - b - otherwise.
-  */
-class TSMarkerSimple : public TSMarker
+int TSDynamicParserIdeal::analyse(
+        ParseTreeSet &trees,
+        ForecastSet &forecasts,
+        PatternCollection &patterns,
+        TimeSeries *ts,
+        Patterns::GroupChecker &gc)
 {
-public:
-    TSMarkerSimple();
 
-    //! \copydoc FL::TSMarker::analyse()
-    void analyse(TimeSeries *ts, ParseTreeSet &trees, int tsBegin = 0, int tsEnd = -1);
-};
-
-/*@}*/
-
-} //namespace
-
-#endif // TSMARKERSIMPLE_H
+}

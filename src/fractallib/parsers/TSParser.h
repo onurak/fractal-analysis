@@ -77,12 +77,16 @@ public:
       * \param patterns Set of patterns to parse
       * \param ts Time series
       * \param checker Used checking algorithm
+      * \param tsBegin First point of time series segment that have to be analysed (default 0)
+      * \param tsEnd Last point of time series segment that have to be analysed (default -1 means whole time series)
       * \param mode Runing mode
       */
     virtual ParseResult parse(ParseTreeSet &trees,
                               PatternCollection &patterns,
                               FL::TimeSeries *ts,
                               FL::Patterns::GroupChecker &checker,
+                              int tsBegin = 0,
+                              int tsEnd = -1,
                               WorkMode mode = WorkNormal) = 0;
 
     //! Some algorithms can trigger this event while progress (argument - percent of completion)
