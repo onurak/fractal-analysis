@@ -164,7 +164,9 @@ bool EbnfChecker::rcheck(Expression *expr, const SynonymsTable &synonyms, Node *
             return false;
         }
         if (expr->current != NULL &&
-            synonyms.isSynonyms(expr->current->name, m_structure->table[node->concr]->name))
+            synonyms.isSynonyms(
+                    expr->current->nameId,
+                    m_structure->table[node->concr]->nameId))
         {
             expr->current->no = m_structure->table[node->concr]->no;
             expr->next();
@@ -339,7 +341,8 @@ namespace EBNFGrammar {
     };
 } // namespace
 
-bool EbnfCompiler::compile(const std::string &text, DescriptionStructure& description)
+bool EbnfCompiler::compile(const std::string &text,
+                           DescriptionStructure& description)
 {
     errorPos = -1;
     EbnfStructure *ebnf = dynamic_cast<EbnfStructure*>(&description);

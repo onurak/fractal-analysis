@@ -173,7 +173,12 @@ bool Watcher::setOption(const std::string &option, const GVariant &value)
             (
                 m_patterns.clear();
                 FilePAT file;
-                file.loadFromFile(value, m_patterns);
+                if (!file.loadFromFile(value, m_patterns))
+                {
+                    m_lastExceptionMsg = file.lastErrorDescription();
+                    m_patterns.clear();
+                    return false;
+                }
                 return true;
             )
     }

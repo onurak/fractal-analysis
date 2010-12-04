@@ -22,6 +22,7 @@
 #include "SynonymsTable.h"
 #include "TimeSeries.h"
 #include "PatternParameter.h"
+#include "UniqueNamer.h"
 
 /*! \addtogroup FLAlgorithm
   */
@@ -38,18 +39,23 @@ class CheckContext
 {
 public:
     //! Default constructor
-    CheckContext(ParseTree::ConstLayer *roots,
+    CheckContext(ParseTree *tree,
+                 ParseTree::ConstLayer *roots,
                  ParseTree::ConstLayer::const_iterator &iRoot,
                  ParseTree::Layer &modification,
+                 ParseTreeNode *&candidateNode,
                  ParseTree::Layer &lastParsed,
                  SynonymsTable *synonyms,
                  Patterns::ParameterSet *parameters,
                  TimeSeries *ts)
-        : roots(roots), iRoot(iRoot), modification(modification),
-          lastParsed(lastParsed), synonyms(synonyms), parameters(parameters),
-          ts(ts)
+        : tree(tree), roots(roots), iRoot(iRoot), modification(modification),
+          candidateNode(candidateNode), lastParsed(lastParsed),
+          synonyms(synonyms), parameters(parameters),  ts(ts)
     {
     }
+
+    //! Parse tree
+    ParseTree *tree;
 
     //! Analysing level
     ParseTree::ConstLayer *roots;
@@ -59,6 +65,9 @@ public:
 
     //! Parsed nodes sequence (means new founded patterns)
     ParseTree::Layer &modification;
+
+    //! Currently checking node
+    ParseTreeNode *&candidateNode;
 
     //! Last extracted nodes sequence
     ParseTree::Layer &lastParsed;
@@ -79,48 +88,16 @@ public:
     TimeSeries *ts;
 
     //! Return all nodes from vector with specified parameteres
-    inline std::vector<ParseTreeNode*>& getNodes(const std::string &name, int no,
-                                                 ParseTree::Layer &nodes) const
-    {
-        m_cashedNodes.clear();
-        ParseTree::Layer::const_iterator i;
-        if (name != "*")
-        {
-            for (i = nodes.begin(); i != nodes.end(); ++i)
-                if ((*i)->no == no && (*i)->name == name)
-                    m_cashedNodes.push_back(*i);
-        }
-        else
-        {
-            for (i = nodes.begin(); i != nodes.end(); ++i)
-                if ((*i)->no == no)
-                    m_cashedNodes.push_back(*i);
-        }
-        return m_cashedNodes;
-    }
+    std::vector<ParseTreeNode*>& getNodes(int nameId, int no, ParseTree::Layer &nodes) const;
 
     //! Return all nodes from lastParsed with specified parameteres
-    inline std::vector<ParseTreeNode*>& getNodes(const std::string &name, int no) const
-    {
-        return getNodes(name, no, lastParsed);
-    }
+    std::vector<ParseTreeNode*>& getNodes(int nameId, int no) const;
 
     //! Return first node from nodes with specified parameteres
-    inline ParseTreeNode* getNode(const std::string &name, int no,
-                                  ParseTree::Layer &nodes) const
-    {
-        ParseTree::Layer::const_iterator i;
-        for (i = nodes.begin(); i != nodes.end(); ++i)
-            if ((*i)->no == no && (*i)->name == name)
-                return *i;
-        return NULL;
-    }
+    ParseTreeNode* getNode(int nameId, int no, ParseTree::Layer &nodes) const;
 
     //! Return first node from lastParsed with specified parameteres
-    inline ParseTreeNode* getNode(const std::string &name, int no) const
-    {
-        return getNode(name, no, lastParsed);
-    }
+    ParseTreeNode* getNode(int nameId, int no) const;
 private:
     //! Temporary result, used by getNode and getNodes
     mutable std::vector<ParseTreeNode*> m_cashedNodes;
@@ -133,6 +110,7 @@ class DescriptionStructure
 {
 protected:
     std::string m_name;
+    int m_id;
 public:
     //! Destructor
     /*! Destroy nothing. Just to be polymorphic.
@@ -142,8 +120,15 @@ public:
     //! Get pattern's name
     const std::string& name() const { return m_name; }
 
-    //! Set pattern's name
-    void setName(const std::string &value) { m_name = value; }
+    //! Set pattern's name. It also set ID
+    void setName(const std::string &value)
+    {
+        m_name = value;
+        m_id = FL::UniqueNamer::id_of_name(value);
+    }
+
+    //! Get pattern's ID
+    int id() const { return m_id; }
 };
 
 /*! \class DescriptionChecker
@@ -161,6 +146,7 @@ public:
       */
     DescriptionChecker(DescriptionStructure *structure)
     {
+        structure = NULL;
     }
 
     //! Set the structure to check
@@ -277,6 +263,9 @@ public:
 
     //! Setter for structure's name
     void setName(std::string value) { m_structure->setName(value); }
+
+    //! Get pattern's ID
+    int id() const { return m_structure->id(); }
 };
 
 

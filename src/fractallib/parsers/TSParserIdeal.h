@@ -47,11 +47,10 @@ protected:
     //! Appling pattern at point
     /*! \param context parse context with current parsing state
       * \param p pattern to apply
-      * \param patternSize size of applied pattern (if any)
       * \param newContext variable whereto new context will be writen
       * \return true if pattern applicable, false otherwise
       */
-    bool applyPattern(ParseContext &context, Pattern *p, int &patternSize, ParseContext **newContext);
+    bool applyPattern(ParseContext &context, Pattern *p, ParseContext *&newContext);
 
 private:
     //! Number of ran brunches

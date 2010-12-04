@@ -51,7 +51,6 @@ HEADERS += gui/MainWindow.h \
     fractallib/predicates/Min.h \
     fractallib/predicates/Max.h \
     fractallib/predicates/Value.h \
-    fractallib/predicates/Previous.h \
     fractallib/predicates/ArgCnt.h \
     fractallib/predicates/All.h \
     fractallib/Logging.h \
@@ -64,7 +63,6 @@ HEADERS += gui/MainWindow.h \
     gui/DebugWindow.h \
     gui/WorkerThreads.h \
     fractallib/predicates/Value.h \
-    fractallib/predicates/Previous.h \
     fractallib/predicates/Min.h \
     fractallib/predicates/Max.h \
     fractallib/predicates/ArgCnt.h \
@@ -75,18 +73,24 @@ HEADERS += gui/MainWindow.h \
     fractallib/groupcheckers/GroupCheckerSingle.h \
     fractallib/groupcheckers/GroupCheckerFactory.h \
     gui/FLGraphicsView.h \
-    fractallib/predicates/ExtractPrev.h \
     fractallib/predicates/Sum.h \
     fractallib/GuardCompilerRPN.h \
     fractallib/predicates/Sum.h \
-    fractallib/predicates/ExtractPrev.h \
     gui/TreeFilter.h \
     fractallib/PatternParameter.h \
     fractallib/tsdatasource/TSDataSource.h \
     fractallib/tsdatasource/TSDataSourceFileCSV.h \
     fractallib/parsers/TSDynamicParser.h \
     fractallib/parsers/TSDynamicParserIdeal.h \
-    gui/OpenDTSFromFileDialog.h
+    gui/OpenDTSFromFileDialog.h \
+    fractallib/predicates/Prev.h \
+    fractallib/predicates/IsPrev.h \
+    fractallib/UniqueNamer.h \
+    fractallib/predicates/Self.h \
+    fractallib/predicates/AtOneLine.h \
+    fractallib/predicates/StartTime.h \
+    fractallib/predicates/EndTime.h \
+    fractallib/io/AbstractCompiler.h
 SOURCES += main.cpp \
     fractallib/io/FileCSV.cpp \
     fractallib/io/FilePAT.cpp \
@@ -121,7 +125,11 @@ SOURCES += main.cpp \
     gui/TreeFilter.cpp \
     fractallib/tsdatasource/TSDataSourceFileCSV.cpp \
     fractallib/parsers/TSDynamicParserIdeal.cpp \
-    gui/OpenDTSFromFileDialog.cpp
+    gui/OpenDTSFromFileDialog.cpp \
+    fractallib/PatternDescription.cpp \
+    fractallib/Predicates.cpp \
+    fractallib/UniqueNamer.cpp \
+    fractallib/io/AbstractCompiler.cpp
 FORMS += gui/MainWindow.ui \
     gui/PatternEditor.ui \
     gui/DebugWindow.ui \

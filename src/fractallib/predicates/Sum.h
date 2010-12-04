@@ -41,13 +41,14 @@ public:
 
     //! Call operator
     virtual const GVariant& operator()(Patterns::CheckContext& context, PredicateArgs& args)
+            throw (EPredicate)
     {
         double sum = 0.0;
         for (int i = 0; i < int(args.size()); ++i)
             if ((*args[i]).canCastTo(G_VAR_DOUBLE))
                 sum += double(*args[i]);
             else
-                return m_result = 0.0;
+                throw EPredicate(m_name, INVALID_ARGS);
         return m_result = sum;
     }
 };

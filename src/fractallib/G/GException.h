@@ -98,13 +98,23 @@ inline void GError(GErrorType type,
 class GException
 {
 public:
+    GException() {}
+
     GException(int errNo, const std::string &msg)
         : m_errNo(errNo), m_msg(msg)
     {
-        logg.endl();
-        logg << "Error " << errNo << ": " << msg;
+        report();
     }
-private:
+
+    int errNo() const { return m_errNo; }
+
+    const std::string& msg() const { return m_msg; }
+protected:
+    void report() const
+    {
+        logg.endl();
+        logg << "Error " << m_errNo << ": " << m_msg;
+    }
     int m_errNo;
     std::string m_msg;
 };

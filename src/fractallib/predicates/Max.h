@@ -42,12 +42,10 @@ public:
 
     //! Call operator
     virtual GVariant& operator()(Patterns::CheckContext& context, PredicateArgs& args)
+            throw (EPredicate)
     {
         if (args.size() == 0)
-        {
-            GError(GCritical, m_name, 0, EInvalidTermArgs);
-            return m_result = 0.0;
-        }
+            throw EPredicate(m_name, INVALID_ARGS);
 
         std::vector<double> vec;
         context.ts->getTSByIndex(vec, 0);
@@ -60,10 +58,7 @@ public:
         {
             node = **arg;
             if (node == NULL)
-            {
-                GError(GWarning, m_name, 0, "NULL node passed");
-                continue;
-            }
+                throw EPredicate(m_name, INVALID_NODE);
             for (int i = node->tsBegin; i <= node->tsEnd + 1; i++)
                 if (vec[i] > result)
                     result = vec[i];

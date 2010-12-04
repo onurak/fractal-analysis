@@ -548,7 +548,9 @@ namespace GuardGrammar
             if (lex != LEX_LBRACE)
                 throw ParseException(1, "'(' expected");
             gl();
-            int argCount = arg();
+            int argCount = 0;
+            if (lex != LEX_RBRACE)
+                argCount = arg();
             while (lex == LEX_COMMA)
             {
                 gl();
@@ -574,7 +576,7 @@ namespace GuardGrammar
                 if ( Predicates::PredicateFactory::predicateByName(m_lexical.name) )
                     function();
                 else {
-                    addOperand(m_lexical.name);
+                    addOperand( UniqueNamer::id_of_name(m_lexical.name) );
                     gl();
                 }
             }
@@ -613,10 +615,6 @@ namespace GuardGrammar
                 else
                     addInstruction(LOAD_NODE, opIndex);
 
-            }
-            else if (lex == LEX_NAME)
-            {
-                gl();
             }
             else
                 throw ParseException(1, "Unknown function argument");

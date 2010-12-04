@@ -24,6 +24,7 @@
 #include <vector>
 #include "ProjectSettings.h"
 #include "Exceptions.h"
+#include "UniqueNamer.h"
 
 #ifdef FL_ENABLE_PARSE_TREE_OPTIMIZATION
     #include "HyperTree.h"
@@ -39,10 +40,20 @@ struct ParseTreeNode
 {
 
     //! Default constructor
+    ParseTreeNode(int nameId = UniqueNamer::INVALID_ID, ParseTreeNode *parent = NULL, int level = -1,
+                  int tsBegin = -1, int tsEnd = -1)
+        : nameId(nameId), no(-1), parent(parent), tsBegin(tsBegin), tsEnd(tsEnd), level(level)
+    {
+        name = UniqueNamer::name_of_id(nameId);
+    }
+
+    //! Default constructor
     ParseTreeNode(const std::string &name = "", ParseTreeNode *parent = NULL, int level = -1,
                   int tsBegin = -1, int tsEnd = -1)
         : name(name), no(-1), parent(parent), tsBegin(tsBegin), tsEnd(tsEnd), level(level)
-    {}
+    {
+        nameId = UniqueNamer::id_of_name(name);
+    }
 
     /*
     //! Default constructor
@@ -57,6 +68,7 @@ struct ParseTreeNode
     ParseTreeNode(const ParseTreeNode &node)
     {
         name = node.name;
+        nameId = node.nameId;
         no = node.no;
         tsBegin = node.tsBegin;
         tsEnd = node.tsEnd;
@@ -78,6 +90,7 @@ struct ParseTreeNode
     }
 
     std::string name; //!< Name of symbol (terminal or nonterminal) wich related with this node
+    int nameId; //!< Unique ID of this name
     int no; //!< Symbol number
     ParseTreeNode *parent; //!< Parent of the node
     int tsBegin; //!< First index of segment of time series

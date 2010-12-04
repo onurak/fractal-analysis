@@ -187,7 +187,8 @@ namespace FL {
                 INVALID_GOTO_LABEL, //!< Goto references to unknown place
                 INVALID_OPERATION, //!< Unknown operation code in OPERATION instruction
                 INVALID_INSTRUCTION, //!< Unknown instruction type
-                DIVISION_BY_ZERO   //! Division by zero in math op
+                DIVISION_BY_ZERO,   //! Division by zero in math op
+                PREDICATE_ERROR   //! If error code >= PREDICATE_ERROR than its one of FL::Predicates::Error code
             };
         public:
             //! Constructor
@@ -283,6 +284,13 @@ namespace FL {
             GVariant error(Errors errCode)
             {
                 m_lastError = errCode;
+                return GVariant(false);
+            }
+
+            //! Program error
+            GVariant error(Predicates::EPredicate &e)
+            {
+                m_lastError = (GuardCheckerRPN::Errors) (PREDICATE_ERROR + e.errNo());
                 return GVariant(false);
             }
 

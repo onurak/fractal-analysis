@@ -33,15 +33,21 @@ namespace FL { namespace Predicates {
   */
 class Value : public Predicate
 {
+private:
+    int m_no_min;
+    int m_no_max;
 public:
     //! Default constructor
     Value()
     {
         m_name = "Value";
+        m_no_min = UniqueNamer::id_of_name("min");
+        m_no_max = UniqueNamer::id_of_name("max");
     }
 
     //! Call operator
     virtual const GVariant& operator()(Patterns::CheckContext& context, PredicateArgs& args)
+            throw (EPredicate)
     {
         if (args.size() == 0)
             return m_result = 0.0;
@@ -51,30 +57,16 @@ public:
             MIN, MAX
         } multiFuncType;
 
-        if (args.size() > 1)
+        if (args.size() == 1)
         {
-            const std::string &minmax = *args[args.size()-1];
-            if (minmax == "min")
-                multiFuncType = MIN;
-            else if (minmax == "max")
-                multiFuncType = MIN;
-            else
-            {
-                GError(GCritical, m_name, 0, EInvalidTermArgs);
-                return m_result = 0.0;
-            }
-        }
+            std::vector<double> vec;
+            context.ts->getTSByIndex(vec, 0);
 
-        std::vector<double> vec;
-        context.ts->getTSByIndex(vec, 0);
+            double min = 10e10, max = -10e10;
+            ParseTreeNode* node = *args[0];
 
-        double min = 10e10, max = -10e10, nodeValue;
-        double result = multiFuncType == MAX ? -10e10 : 10e10;
-        std::vector<GVariant*>::const_iterator arg;
-        for (arg = args.begin(); arg != args.end() - 1; ++arg)
-        {
-            ParseTreeNode *node = **arg;
-
+            if (node == NULL)
+                throw EPredicate(m_name, INVALID_ARGS);
             // find minimum and maximum of node's time series segment
             for (int i = node->tsBegin; i <= node->tsEnd + 1; i++)
             {
@@ -83,24 +75,60 @@ public:
                 if (vec[i] > max)
                     max = vec[i];
             }
-
-            // calc node value
-            nodeValue = (max - min);
-            if (arg == args.begin())
-                result = nodeValue;
-            else if (multiFuncType == MAX)
-            {
-                if (nodeValue > result)
-                    result = nodeValue;
-            }
-            else
-            {
-                if (nodeValue < result)
-                    result = nodeValue;
-            }
+            return m_result = max - min;
         }
+        else
+        {
+            int minmax = *args[args.size()-1];
+            if (minmax == m_no_min)
+                multiFuncType = MIN;
+            else if (minmax == m_no_max)
+                multiFuncType = MIN;
+            else
+                throw EPredicate(m_name, INVALID_ARGS);
 
-        return m_result = result;
+            std::vector<double> vec;
+            context.ts->getTSByIndex(vec, 0);
+
+            double min = 10e10, max = -10e10, nodeValue;
+            double result = multiFuncType == MAX ? -10e10 : 10e10;
+            std::vector<GVariant*>::const_iterator arg;
+            for (arg = args.begin(); arg != args.end()-1; ++arg)
+            {
+                ParseTreeNode *node = **arg;
+
+                if (node == NULL)
+                {
+                    GError(GWarning, m_name, 0, EInvalidTermArgs);
+                    continue;
+                }
+                // find minimum and maximum of node's time series segment
+                for (int i = node->tsBegin; i <= node->tsEnd + 1; i++)
+                {
+                    if (vec[i] < min)
+                        min = vec[i];
+                    if (vec[i] > max)
+                        max = vec[i];
+                }
+
+                // calc node value
+                nodeValue = (max - min);
+                if (arg == args.begin())
+                    result = nodeValue;
+                else if (multiFuncType == MAX)
+                {
+                    if (nodeValue > result)
+                        result = nodeValue;
+                }
+                else
+                {
+                    if (nodeValue < result)
+                        result = nodeValue;
+                }
+            }
+
+            return m_result = result;
+        }
     }
 };
 

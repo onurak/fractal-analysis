@@ -16,56 +16,45 @@
  * along with Fractal Libray.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef MIN_H
-#define MIN_H
+#ifndef ENDTIME_H
+#define ENDTIME_H
 
 #include "../Predicates.h"
 
 namespace FL { namespace Predicates {
 
-/*! \class Min
-  * \brief Minimum of the time series segment
+/*! \class EndTime
+  * \brief Return time of ending of node
   *
   * Arguments:
-  *  - args[0] -- IndexedName
+  *  - args[0] - ParsTreeNode*
+  * Returns: end time of node
+  *
   */
-class Min : public Predicate
+class EndTime : public Predicate
 {
 public:
+
     //! Default constructor
-    Min()
+    EndTime()
     {
-        m_name = "Min";
+        m_name = "EndTime";
     }
 
     //! Call operator
-    virtual const GVariant& operator()(Patterns::CheckContext& context, PredicateArgs& args)
+    virtual GVariant& operator()(Patterns::CheckContext& context, PredicateArgs& args)
             throw (EPredicate)
     {
-        if (args.size() == 0)
+        if (args.size() != 1)
             throw EPredicate(m_name, INVALID_ARGS);
+        ParseTreeNode *node = *args[0];
 
-        std::vector<double> vec;
-        context.ts->getTSByIndex(vec, 0);
-
-        double result = 10e10; // maximum!
-        FL::ParseTreeNode *node;
-
-        std::vector<GVariant*>::const_iterator arg;
-        for_each_(arg, args)
-        {
-            node = **arg;
-            if (node == NULL)
-                throw EPredicate(m_name, INVALID_NODE);
-            for (int i = node->tsBegin; i <= node->tsEnd + 1; i++)
-                if (vec[i] < result)
-                    result = vec[i];
-        }
-        return m_result = result;
+        return m_result = node->tsEnd;
     }
 };
 
+}} // namespaces
 
-} } // namespaces
 
-#endif // MIN_H
+
+#endif // ENDTIME_H
