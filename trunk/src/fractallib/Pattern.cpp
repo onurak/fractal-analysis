@@ -20,6 +20,7 @@
 #include "PatternDescriptionEbnf.h"
 #include "PatternGuardRPN.h"
 #include "GuardCompilerRPN.h"
+#include "UniqueNamer.h"
 
 using namespace FL;
 
@@ -63,14 +64,75 @@ Pattern::CheckResult Pattern::check(Patterns::CheckContext &context)
     }
     logg << "successful";
 
+    // Fill 'Self' node
+    createCandidateNode(context);
+
     // Check guard
     logg.debug("    Checking guard... ");
     if ( !m_guard->check(context) )
     {
+        rollbackCandidateNode(context);
         logg << "failure";
         return crInvalidGuard;
     }
     logg << "successful";
+    commitCandidateNode(context);
 
     return crOK;
+}
+
+void Pattern::createCandidateNode(Patterns::CheckContext &context)
+{
+    // create new node
+    ParseTreeNode *newNode = new ParseTreeNode(
+        name(),                           // name of node = name of applied pattern
+        NULL,                             // no parent
+        -1,                               // level will be set later
+        (*context.iRoot)->tsBegin,        // begin of time series segment
+        (*context.lastNode)->tsEnd);      // end of time series segment
+
+    logg.debug("Pattern position: ") << (*(context.iRoot))->tsBegin << "-"
+            << (*context.lastNode)->tsEnd;
+    int maxLevel = -1;
+
+    // set for every node in pattern parent to just created node,
+    // looking for maximal level among them
+    ParseTree::Layer::const_iterator node;
+    for (node = context.iRoot; node != context.lastNode + 1; ++node)
+    {
+        newNode->children.push_back(*node);
+        if ((*node)->level > maxLevel)
+            maxLevel = (*node)->level;
+    }
+    newNode->level = maxLevel + 1; // set new node's level to max+1 (it will be new maximum)
+
+    context.candidateNode = newNode;
+}
+
+void Pattern::commitCandidateNode(Patterns::CheckContext &context)
+{
+    ParseTree::Layer::const_iterator node;
+    for (node = context.iRoot; node != context.lastNode+1 && node != context.roots->end(); ++node)
+        context.tree->setNodeParent(*node, context.candidateNode);
+    context.modification.push_back(context.candidateNode);
+    context.tree->addNode(context.candidateNode);
+}
+
+void Pattern::rollbackCandidateNode(Patterns::CheckContext &context)
+{
+    if (context.candidateNode)
+    {
+        delete context.candidateNode;
+        context.candidateNode = NULL;
+    }
+}
+
+int PatternCollection::idOfPattern(const std::string & name) const
+{
+    return UniqueNamer::id_of_name(name);
+}
+
+const std::string & PatternCollection::patternNameOfID(int id) const
+{
+    return UniqueNamer::name_of_id(id);
 }

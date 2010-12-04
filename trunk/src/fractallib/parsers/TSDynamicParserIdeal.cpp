@@ -27,5 +27,5 @@ int TSDynamicParserIdeal::analyse(
         TimeSeries *ts,
         Patterns::GroupChecker &gc)
 {
-
+    return 0;
 }

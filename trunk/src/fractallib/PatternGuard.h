@@ -69,6 +69,7 @@ public:
       */
     GuardChecker(GuardStructure *structure)
     {
+        structure = NULL;
     }
 
     //! Set the structure to check

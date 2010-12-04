@@ -94,8 +94,10 @@ public:
       *
       * Contains record about single used name
       */
-    struct TableElement {
+    struct TableElement
+    {
         std::string name; //!< element's name
+        int nameId; //!< element name's id
         int no;      //!< element's no
         std::string indexName; //!< element's index name (if any)
 
@@ -103,8 +105,11 @@ public:
         /*! \param name new name
           * \param no new no
           */
-        void set(const std::string &name, int no) {
-            this->name = name; this->no = no;
+        void set(int nameId, int no)
+        {
+            this->nameId = nameId;
+            this->no = no;
+            this->name = UniqueNamer::name_of_id(nameId);
         }
     };
 
@@ -158,11 +163,12 @@ public:
       */
     int getOrCreateName(const std::string &name, int no = -1)
     {
+        int nameId = UniqueNamer::id_of_name(name);
         for (int i = 0; i < int(table.size()); i++)
-            if (table[i]->name == name && table[i]->no == no)
+            if (table[i]->nameId == nameId && table[i]->no == no)
                 return i;
         TableElement *elem = new TableElement();
-        elem->set(name, no);
+        elem->set(nameId, no);
         elem->indexName = "";
         table.push_back(elem);
         return table.size() - 1;
@@ -319,7 +325,8 @@ public:
     //! Compile string to EBNF tree
     /*! \copydoc FL::Patterns::DescriptionCompiler::compile(const std::string &text, DescriptionStructure& description)
       */
-    virtual bool compile(const std::string &text, DescriptionStructure& description);
+    virtual bool compile(const std::string &text,
+                         DescriptionStructure& description);
 
     //! Optimize EBNF tree
     /*! На данный момент оптимизируются следующие случаи:

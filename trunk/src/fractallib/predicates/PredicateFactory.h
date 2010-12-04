@@ -21,7 +21,6 @@
 
 #include <map>
 #include "../Predicates.h"
-#include "All.h"
 
 namespace FL { namespace Predicates {
 
@@ -33,32 +32,14 @@ class PredicateFactory
 private:
     static std::map<std::string, Predicate*> m_predicates;
 public:
-    static Predicate* predicateByName(std::string name)
-    {
-        if (m_predicates.size() == 0)
-            registerStandartPredicates();
-        name = lowerCase(name);
-        if (m_predicates.find(name) != m_predicates.end())
-            return m_predicates[name];
-        return NULL;
-    }
+    //! Return registered predicate by its name
+    static Predicate* predicateByName(std::string name);
 
-    static void registerPredicate(Predicate* predicate)
-    {
-        logg.info("PredicateFactory: predicate ") << predicate->name() << " registered";
-        m_predicates[lowerCase(predicate->name())] = predicate;
-    }
+    //! Register predicate
+    static void registerPredicate(Predicate* predicate);
 
-    static void registerStandartPredicates()
-    {
-        registerPredicate(new ArgCnt());
-        registerPredicate(new Min());
-        registerPredicate(new Max());
-        registerPredicate(new Previous());
-        registerPredicate(new Value());
-        registerPredicate(new ExtractPrev());
-        registerPredicate(new Sum());
-    }
+    //! Register all known predicates
+    static void registerStandartPredicates();
 };
 
 /*! \class PredicateCall

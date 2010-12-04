@@ -21,6 +21,7 @@
 
 #include <map>
 #include <string>
+#include "UniqueNamer.h"
 
 namespace FL {
 
@@ -39,15 +40,27 @@ public:
     }
 
     //! Add pair (name1 == name2)
-    inline void add(std::string name1, std::string name2)
+    inline void add(const std::string &name1, const std::string &name2)
     {
-        // make it double to faster search
+        add(UniqueNamer::id_of_name(name1), UniqueNamer::id_of_name(name2));
+    }
+
+    //! Add pair (name1 == name2)
+    inline void add(int name1, int name2)
+    {
+        // make it double for faster search
         m_synonyms.insert(std::make_pair(name1, name2));
         m_synonyms.insert(std::make_pair(name2, name1));
     }
 
     //! Check if names are synonyms
     inline bool isSynonyms(const std::string &name1, const std::string &name2) const
+    {
+        return isSynonyms(UniqueNamer::id_of_name(name1), UniqueNamer::id_of_name(name2));
+    }
+
+    //! Check if name's id are synonyms
+    inline bool isSynonyms(int name1, int name2) const
     {
         if (name1 == name2)
             return true;
@@ -64,8 +77,8 @@ public:
         return false;
     }
 private:
-    typedef std::multimap<std::string, std::string> Container;
-    //! Real table of synonyms
+    typedef std::multimap<int, int> Container;
+    //! Real tables of synonyms
     Container m_synonyms;
 };
 

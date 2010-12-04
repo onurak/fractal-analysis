@@ -104,7 +104,6 @@ ParseResult TSParserIdeal::parse(ParseTreeSet &trees,
 void TSParserIdeal::ranalyse(ParseContext *context, int no)
 {
     PatternCollection::iterator t;
-    int patternSize;
     ParseContext *newContext;
 
     // Do analysis
@@ -113,10 +112,10 @@ void TSParserIdeal::ranalyse(ParseContext *context, int no)
     {
         for_each_(t, *(context->patterns))
         {
-            if (applyPattern(*context, *t, patternSize, &newContext))
+            if (applyPattern(*context, *t, newContext))
                 newBranch(newContext);
             if (t != context->patterns->end()-1)
-                logg.debug("Trying next pattern");
+                logg.debug("Trying next pattern: ") << (*(t+1))->name();
         }
         logg.debug("Move to one step");
         ++(context->iRoot);
@@ -160,51 +159,59 @@ void TSParserIdeal::ranalyse(ParseContext *context, int no)
     m_completedBranches++;
 }
 
-bool TSParserIdeal::applyPattern(ParseContext &context, Pattern *p,
-                                 int &patternSize, ParseContext **newContext)
+bool TSParserIdeal::applyPattern(ParseContext &context, Pattern *p, ParseContext *&newContext)
 {
-    // check
-    if (p->check(*context.cc) == Pattern::crOK)
+    // We have to create candidate node for new context so we cant use p->check() method
+    //logg.debug("Checking description... ");
+
+    // CHECK DESCRIPTION
+    if (p->description()->check(*context.cc))
     {
-        logg.debug("Creating new node");
-        // creating new node
-        ParseTreeNode *newNode = new ParseTreeNode(
-            p->name(),                      // node name = name of pattern
-            NULL,                           // no parent
-            -1,                             // level will be set later
-            (*(context.iRoot))->tsBegin,    // begin of time series segment
-            (*context.cc->lastNode)->tsEnd  // end of time series segment
-        );
-        logg.debug("Pattern position: ") << (*(context.iRoot))->tsBegin << "-"
-                << (*context.cc->lastNode)->tsEnd;
-
         // Create copy of current context for new analysis branch
-        *newContext = new ParseContext(context);
+        newContext = new ParseContext(context);
 
-        // set parent for every node in pattern up to just created node,
-        // looking for maximal level among them
+        // Can't just use p->createCandidateNode()
+        // CREATE CANDIDATE NODE, FILL lastParsed FOR newContext
+        ParseTreeNode *newNode = new ParseTreeNode(
+            p->name(),                           // name of node = name of applied pattern
+            NULL,                                // no parent
+            -1,                                  // level will be set later
+            (*context.iRoot)->tsBegin,           // begin of time series segment
+            (*context.cc->lastNode)->tsEnd);     // end of time series segment
+        newContext->candidateNode = newNode;
+        logg << "OK";
+
         int maxLevel = -1;
-        ParseTree::ConstLayer::const_iterator node = (*newContext)->iRoot,
+        newContext->lastParsed.clear();
+        ParseTree::ConstLayer::const_iterator node = newContext->iRoot,
                                               prevNode = context.iRoot;
         for (; prevNode != context.cc->lastNode + 1; ++node, ++prevNode)
         {
-            (*newContext)->tree->setNodeParent(*node, newNode);
+            newContext->lastParsed.push_back(*node);
             newNode->children.push_back(*node);
             if ((*node)->level > maxLevel)
                 maxLevel = (*node)->level;
         }
-        (*newContext)->iRoot = node;
         newNode->level = maxLevel + 1;
-        if ((*newContext)->iRoot == (*newContext)->roots->end() - 1)
-            (*newContext)->iRoot++;
+        newContext->cc->lastNode = node;
+        newContext->cc->lastNode--;
 
-        // don't forget to add node to modification
-        (*newContext)->modification.push_back(newNode);
+        // CHECK GUARD
+        logg.debug("Checking guard... ");
+        if (p->guard()->check(*newContext->cc))
+        {
+            logg << "OK";
+            p->commitCandidateNode( *newContext->cc );
+            // Move iRoot to next position
+            newContext->iRoot = newContext->cc->lastNode+1;
+            if (newContext->iRoot == newContext->roots->end() - 1)
+                newContext->iRoot++;
+            return true;
+        }
 
-        // add new node to tree
-        (*newContext)->tree->addNode(newNode);
-        return true;
+        p->rollbackCandidateNode( *newContext->cc );
     }
+    logg << "Fail";
     return false;
 }
 

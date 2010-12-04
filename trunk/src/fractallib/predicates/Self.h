@@ -16,19 +16,43 @@
  * along with Fractal Libray.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ALL_H
-#define ALL_H
+#ifndef SELF_H
+#define SELF_H
 
-#include "Self.h"
-#include "Prev.h"
-#include "IsPrev.h"
-#include "ArgCnt.h"
-#include "Max.h"
-#include "Min.h"
-#include "Value.h"
-#include "Sum.h"
-#include "AtOneLine.h"
-#include "StartTime.h"
-#include "EndTime.h"
+#include "../Predicates.h"
 
-#endif // ALL_H
+namespace FL { namespace Predicates {
+
+/*! \class Self
+  * \brief Return current recognizing pattern
+  *
+  * Usage exmaple:
+  * \code
+  *   p = a b a @ value(self()) > 100;
+  * \endcode
+  * Arguments:
+  *  - no args
+  */
+class Self : public Predicate
+{
+public:
+    //! Default constructor
+    Self()
+    {
+        m_name = "Self";
+    }
+
+    //! Call operator
+    virtual const GVariant& operator()(Patterns::CheckContext& context, PredicateArgs& args)
+            throw (EPredicate)
+    {
+        if (args.size() != 0)
+            throw EPredicate(m_name, INVALID_ARGS);
+        return m_result = context.candidateNode;
+    }
+};
+
+
+} } // namespaces
+
+#endif // SELF_H

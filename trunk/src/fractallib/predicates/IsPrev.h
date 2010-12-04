@@ -16,14 +16,14 @@
  * along with Fractal Libray.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef PREVIOUS_H
-#define PREVIOUS_H
+#ifndef ISPREV_H
+#define ISPREV_H
 
 #include "../Predicates.h"
 
 namespace FL { namespace Predicates {
 
-/*! \class Previous
+/*! \class IsPrev
   * \brief Check if previous to current pattern is the passed in parameter
   *
   * Arguments:
@@ -33,31 +33,38 @@ namespace FL { namespace Predicates {
   *  - args[1] -- (optional) "exact" if don't look for synonyms
   *  - args[2] -- (optional) "nospace" if no spaces allowed between this two patterns
   */
-class Previous : public Predicate
+class IsPrev : public Predicate
 {
+private:
+    int m_no_wildcard;
+    int m_no_none;
+    int m_no_exact;
+    int m_no_nospace;
 public:
     //! Default constructor
-    Previous()
+    IsPrev()
     {
-        m_name = "Previous";
+        m_name = "IsPrev";
+        m_no_wildcard = UniqueNamer::id_of_name("*");
+        m_no_none = UniqueNamer::id_of_name("NONE");
+        m_no_exact = UniqueNamer::id_of_name("exact");
+        m_no_nospace = UniqueNamer::id_of_name("nospace");
     }
 
     //! Call operator
     virtual const GVariant& operator()(Patterns::CheckContext& context, PredicateArgs& args)
+            throw (EPredicate)
     {
         if (args.size() != 1 && args.size() != 2 && args.size() != 3)
-        {
-            GError(GCritical, m_name, 0, EInvalidTermArgs);
-            return m_result = false;
-        }
+            throw EPredicate(m_name, INVALID_ARGS);
 
-        const std::string & wantPrevName = *args[0];
+        int wantPrevName = *args[0];
         // If no patterns were recognized
         if (context.modification.size() == 0)
         {
-            if (wantPrevName == "*")
+            if (wantPrevName == m_no_wildcard)
                 return m_result = false;
-            if (wantPrevName == "NONE")
+            if (wantPrevName == m_no_none)
                 return m_result = true;
         }
         ParseTreeNode *prev = context.modification.back();
@@ -66,9 +73,9 @@ public:
         bool exact = false;
         bool nospace = true;
         if (args.size() > 1)
-            exact = std::string("exact").compare((char*)(*args[1])) == 0;
+            exact = m_no_exact == (int)*args[1];
         if (args.size() > 2)
-            nospace = std::string("nospace").compare((char*)(*args[2])) == 0;
+            nospace = m_no_nospace == (int)*args[2];
 
         // If "nospace" set than check that patterns cover adjacent segment
         if (nospace && prev->tsEnd != context.lastParsed.front()->tsBegin - 1)
@@ -76,12 +83,12 @@ public:
 
         // Is "exact" set than check exact name of previous pattern, otherwise it can be any synonym
         if (!exact)
-            return m_result = context.synonyms->isSynonyms(prev->name, wantPrevName) ? true : false;
+            return m_result = context.synonyms->isSynonyms(prev->nameId, wantPrevName) ? true : false;
         else
-            return m_result = prev->name == wantPrevName ? true : false;
+            return m_result = prev->nameId == wantPrevName ? true : false;
     }
 };
 
 }} // namespaces
 
-#endif // PREVIOUS_H
+#endif // ISPREV_H

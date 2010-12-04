@@ -40,6 +40,7 @@ public:
 
     //! Call operator
     virtual const GVariant& operator()(Patterns::CheckContext& context, PredicateArgs& args)
+            throw (EPredicate)
     {
         return m_result = double(args.size());
     }

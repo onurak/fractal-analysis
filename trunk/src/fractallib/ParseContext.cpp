@@ -28,6 +28,7 @@ ParseContext::ParseContext(ParseContext &c)
     synonyms = c.synonyms;
     patterns = c.patterns;
     result = c.result;
+    candidateNode = c.candidateNode;
 
     // make copy of tree
     tree = new ParseTree(treeSet);
@@ -36,14 +37,21 @@ ParseContext::ParseContext(ParseContext &c)
         c.tree->copyTo(tree);
         roots = new ParseTree::ConstLayer(*c.roots);
     #else
+        // make tree copy
         std::map<ParseTreeNode*, ParseTreeNode*> assoc;
         c.tree->copyTo(tree, &assoc);
         ParseTree::ConstLayer::const_iterator node;
+
+        // make roots copy
         roots = new ParseTree::ConstLayer();
         ParseTree::Layer *tmpRoots = const_cast<ParseTree::Layer*>(roots);
         for_each_(node, *c.roots)
             tmpRoots->push_back(assoc[*node]);
         iRoot = std::find(roots->begin(), roots->end(), assoc[*c.iRoot]);
+
+        // make modification copy
+        for_each_(node, c.modification)
+            modification.push_back(assoc[*node]);
     #endif
 
     m_ownRoots = true;
@@ -60,5 +68,34 @@ ParseContext::ParseContext(ParseContext &c)
 
     // create check context
     cc = new FL::Patterns::CheckContext(
-            roots, iRoot, modification, lastParsed, synonyms, parameters, ts);
+            tree, roots, iRoot, modification, candidateNode, lastParsed,
+            synonyms, parameters, ts);
+}
+
+std::vector<ParseTreeNode*>& ParseContext::getNodes(const std::string &name, int no) const
+{
+    m_cashedNodes.clear();
+    ParseTree::Layer::const_iterator i;
+    if (name != "*")
+    {
+        for (i = lastParsed.begin(); i != lastParsed.end(); ++i)
+            if ((*i)->no == no && (*i)->name == name)
+                m_cashedNodes.push_back(*i);
+    }
+    else
+    {
+        for (i = lastParsed.begin(); i != lastParsed.end(); ++i)
+            if ((*i)->no == no)
+                m_cashedNodes.push_back(*i);
+    }
+    return m_cashedNodes;
+}
+
+ParseTreeNode* ParseContext::getNode(const std::string &name, int no) const
+{
+    ParseTree::Layer::const_iterator i;
+    for (i = lastParsed.begin(); i != lastParsed.end(); ++i)
+        if ((*i)->no == no && (*i)->name == name)
+            return *i;
+    return NULL;
 }

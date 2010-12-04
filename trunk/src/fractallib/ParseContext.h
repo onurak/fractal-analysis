@@ -54,7 +54,7 @@ public:
                  PatternCollection *patterns = NULL, ParseTree::ConstLayer *roots = NULL,
                  SynonymsTable *synonyms = NULL, Patterns::ParameterSet *parameters = NULL,
                  ParseResult *result = NULL)
-        : treeSet(treeSet), tree(tree), ts(ts), roots(roots),
+        : treeSet(treeSet), tree(tree), ts(ts), roots(roots), candidateNode(NULL),
           synonyms(synonyms), parameters(parameters), patterns(patterns),
           result(result)
     {
@@ -63,7 +63,8 @@ public:
             iRoot = roots->begin();
         // create check context
         cc = new FL::Patterns::CheckContext(
-                roots, iRoot, modification, lastParsed, synonyms, parameters, ts);
+                tree, roots, iRoot, modification, candidateNode, lastParsed,
+                synonyms, parameters, ts);
     }
 
     //! Copy constructor
@@ -101,6 +102,9 @@ public:
     //! Pointer to current analyzed element of roots
     ParseTree::ConstLayer::const_iterator iRoot;
 
+    //! Currently checking node that pass description check and going to check for guard
+    ParseTreeNode *candidateNode;
+
     //! Last recognized sequence. Need by guards
     ParseTree::Layer lastParsed;
 
@@ -123,34 +127,10 @@ public:
     FL::Patterns::CheckContext *cc;
     
     //! Return all elements from lastParsed with specified parameteres
-    inline std::vector<ParseTreeNode*>& getNodes(const std::string &name, int no) const
-    {
-        m_cashedNodes.clear();
-        ParseTree::Layer::const_iterator i;
-        if (name != "*")
-        {
-            for (i = lastParsed.begin(); i != lastParsed.end(); ++i)
-                if ((*i)->no == no && (*i)->name == name)
-                    m_cashedNodes.push_back(*i);
-        }
-        else
-        {
-            for (i = lastParsed.begin(); i != lastParsed.end(); ++i)
-                if ((*i)->no == no)
-                    m_cashedNodes.push_back(*i);
-        }
-        return m_cashedNodes;
-    }
+    std::vector<ParseTreeNode*>& getNodes(const std::string &name, int no) const;
 
     //! Return first element from lastParsed with specified parameteres
-    inline ParseTreeNode* getNode(const std::string &name, int no) const
-    {
-        ParseTree::Layer::const_iterator i;
-        for (i = lastParsed.begin(); i != lastParsed.end(); ++i)
-            if ((*i)->no == no && (*i)->name == name)
-                return *i;
-        return NULL;
-    }
+    ParseTreeNode* getNode(const std::string &name, int no) const;
 private:
     //! Temporary result, used by getNode and getNodes
     mutable std::vector<ParseTreeNode*> m_cashedNodes;

@@ -17,133 +17,16 @@
  */
 
 #include "FilePAT.h"
+#include "AbstractCompiler.h"
 #include "../tools/spirit.h"
 #include "../PatternGuardRPN.h"
 
 using namespace FL;
 
 
-class EParse
-{
-public:
-    EParse(const std::string msg): msg(msg) {}
-    std::string msg;
-};
-
-/*
-namespace PATGrammar {
-
-    FL::Pattern *m_pattern;
-    FL::PatternCollection *m_patterns;
-    std::string m_fileName, m_synLeft;
-
-    void onDescription(std::string description)
-    {
-        m_pattern = new FL::Pattern(m_patterns->synonyms, m_patterns->parameters);
-        if (!description.empty())
-        {
-            Patterns::DescriptionCompiler *compiler = m_pattern->description()->compiler();
-            if ( !compiler->compile(description, *(m_pattern->description()->structure())) )
-            {
-                delete m_pattern;
-                throw EParse(EInvalidFileFormat);
-            }
-            m_pattern->description()->setSourceText(description, false);
-        }
-    }
-
-    void onGuard(std::string guard)
-    {
-        if (!guard.empty())
-        {
-            Patterns::GuardCompiler *compiler = m_pattern->guard()->compiler();
-            if ( !compiler->compile(guard, *(m_pattern->guard()->structure())) )
-            {
-                delete m_pattern;
-                throw EParse(EInvalidFileFormat);
-            }
-            m_pattern->guard()->setSourceText(guard, false);
-            m_patterns->push_back(m_pattern);
-        } else
-            delete m_pattern;
-
-    }
-
-    void onSynLeft(std::string name)
-    {
-        m_synLeft = name;
-    }
-
-    void onSynRight(std::string name)
-    {
-        m_patterns->synonyms.add(m_synLeft, name);
-    }
-
-    template <typename Iterator>
-    struct Grammar : qi::grammar<Iterator>
-    {
-        Grammar() : Grammar::base_type(file)
-        {
-            using ascii::alpha;
-            using ascii::alnum;
-            using ascii::char_;
-            using qi::eps;
-            using qi::eol;
-            using boost::spirit::lit;
-
-            file              = patterns_section >> -synonyms_section;
-            patterns_section  = lit("PATTERNS") >> *space >> ":" >> +pattern;
-            pattern           = *space >>
-                                description[onDescription] >> *space >>
-                                lit("@")                   >> *space >>
-                                guard[onGuard]             >> *space >>
-                                lit(";")                   >> *space >>
-                                -comment;
-            description      %= +(char_ - char_('@') - char_('#'));
-            guard            %= +(char_ - char_(';') - char_('#'));
-            synonyms_section  = lit("SYNONYMS") >> *space >> ":" >> +synonym;
-            synonym           = *space >>
-                                pattern_name[onSynLeft]  >> *space >>
-                                lit("=")                 >> *space >>
-                                pattern_name[onSynRight] >> *space >>
-                                lit(";")                 >> *space >>
-                                -comment;
-            pattern_name     %= alpha >> *alnum;
-            comment           = lit("#") >> *(char_ - eol) >> eol;
-            space             = lit(' ') | lit('\t') | lit('\n');
-        }
-
-        qi::rule<Iterator>
-            file, patterns_section, synonyms_section,
-            pattern, synonym, comment, space;
-        qi::rule<Iterator, std::string()>
-            description, guard, pattern_name;
-    };
-
-} // namespace
-*/
-
-class ParseException
-{
-public:
-    ParseException(int errNo, const std::string &description, int ln = -1, int col = -1)
-        : m_errNo(errNo), m_description(description), m_ln(ln), m_col(col)
-    {
-
-    }
-    int errNo() const { return m_errNo; }
-    const std::string& description() const { return m_description; }
-    int line() const { return m_ln; }
-    int column() const { return m_col; }
-private:
-    int m_errNo;
-    std::string m_description;
-    int m_ln;
-    int m_col;
-};
-
 namespace PATGrammar
 {
+    using namespace FL::Compilers;
     FL::PatternCollection *m_patterns;
 
     /* Grammar:
@@ -161,63 +44,36 @@ namespace PATGrammar
      * comment             = "#" (anychar - "\n")* "\n"
      */
     //**** LEXEMES *****
-    enum Lexeme
-    {
-        LEX_PARAMETERS,
-        LEX_PATTERNS,
-        LEX_SYNONYMS,
-        LEX_NAME,
-        LEX_AT,
-        LEX_SEMI,
-        LEX_FLOAT,
-        LEX_DECIMAL,
-        LEX_COLON,
-        LEX_EQ,
-        LEX_EOI,
-        LEX_NONE,
-        LEX_UNKNOWN
-    };
+    const Lexeme LEX_PARAMETERS = 1;
+    const Lexeme LEX_PATTERNS   = 2;
+    const Lexeme LEX_SYNONYMS   = 3;
+    const Lexeme LEX_AT         = 4;
+    const Lexeme LEX_SEMI       = 5;
+    const Lexeme LEX_COLON      = 6;
+    const Lexeme LEX_EQ         = 7;
 
     //****** LEXICAL ANALYSER *******
-    /*! \class LexicalAnalyser
+    /*! \class PATLexicalAnalyser
       */
-    class LexicalAnalyser
+    class PATLexicalAnalyser : public LexicalAnalyser
     {
     public:
-        ~LexicalAnalyser() { close(); }
 
-        bool useIter(std::string::const_iterator &iter, std::string::const_iterator &end)
+        PATLexicalAnalyser()
         {
-            close();
-            this->iter = &iter;
-            this->end  = &end;
-            if (this->iter && this->end)
-            {
-                m_c = iter != end ? *iter : LEX_EOI;
-                return true;
-            }
-            else
-            {
-                c = LEX_NONE;
-                return false;
-            }
+            m_oneLineComment ='#';
         }
 
-        void close()
+        virtual Lexeme igl() throw (ParseException)
         {
-            c = LEX_NONE;
-        }
+            m_lex = LEX_NONE;
 
-        Lexeme gl()
-        {
-            c = LEX_NONE;
-
-            while (c == LEX_NONE)
+            while (m_lex == LEX_NONE)
             {
                 // eof
-                if (*iter == *end)
+                if (iter == end)
                 {
-                    c = LEX_EOI;
+                    m_lex = LEX_EOI;
                 }
                 // spaces
                 else if (isspace(m_c))
@@ -227,62 +83,40 @@ namespace PATGrammar
                 // names
                 else if (isalpha(m_c))
                 {
-                    name = m_c;
+                    m_name = m_c;
                     while ( isalnum(gc()) )
-                        name += m_c;
-                    if (name == "PARAMETRES")
-                        c = LEX_PARAMETERS;
-                    else if (name == "PATTERNS")
-                        c = LEX_PATTERNS;
-                    else if (name == "SYNONYMS")
-                        c = LEX_SYNONYMS;
+                        m_name += m_c;
+                    if (m_name == "PARAMETRES")
+                        m_lex = LEX_PARAMETERS;
+                    else if (m_name == "PATTERNS")
+                        m_lex = LEX_PATTERNS;
+                    else if (m_name == "SYNONYMS")
+                        m_lex = LEX_SYNONYMS;
                     else
-                        c = LEX_NAME;
-                }
-                // numbers
-                else if (isdigit(m_c))
-                {
-                    name = m_c;
-                    while ( isdigit(gc()) )
-                        name += m_c;
-                    if (m_c == '.')
-                    {
-                        name += m_c;
-                        while (isdigit(gc()))
-                            name += m_c;
-                        number = atof(name.c_str());
-                        c = LEX_FLOAT;
-                    }
-                    else
-                    {
-                        number = double(atoi(name.c_str()));
-                        c = LEX_DECIMAL;
-                    }
-
-
+                        m_lex = LEX_NAME;
                 }
                 // semicolon
                 else if (m_c == ';')
                 {
-                    c = LEX_SEMI;
+                    m_lex = LEX_SEMI;
                     gc();
                 }
                 // colon
                 else if (m_c == ':')
                 {
-                    c = LEX_COLON;
+                    m_lex = LEX_COLON;
                     gc();
                 }
                 // at
                 else if (m_c == '@')
                 {
-                    c = LEX_AT;
+                    m_lex = LEX_AT;
                     gc();
                 }
                 // eq
                 else if (m_c == '=')
                 {
-                    c = LEX_EQ;
+                    m_lex = LEX_EQ;
                     gc();
                 }
                 // comment
@@ -291,45 +125,19 @@ namespace PATGrammar
                     while (m_c != '\n' && (*iter != *end))
                         gc();
                 }
-                else
-                    c = LEX_UNKNOWN;
+                // number
+                else if (!p_number())
+                    m_lex = LEX_UNKNOWN;
+
             }
-            return c;
+            return m_lex;
         }
 
-        std::string getRaw(const std::string &overs)
-        {
-            std::string result;
-            while (!in_overs(m_c, overs) && *iter != *end)
-            {
-                if (m_c == '#')
-                    while (m_c != '\n' && *iter != *end)
-                        gc();
-                result += m_c;
-                gc();
-            }
-            return result;
-        }
 
-        Lexeme c;         //!< Current lexeme
-        std::string name; //!< Current name (if c is LEX_NAME)
-        double number;    //!< Current double (if c is LEX_FLOAT or LEX_DECIMAL)
+
+
     private:
-        std::string::const_iterator *iter, *end;
 
-        char m_c;
-
-        char gc()
-        {
-            ++(*iter);
-            return m_c = (*iter != *end ? **iter : LEX_EOI);
-        }
-
-        bool in_overs(char c, const std::string &overs)
-        {
-            return find_(c, overs);
-
-        }
     };
 
     //****** SYNTAX ANALYSER *******
@@ -337,26 +145,17 @@ namespace PATGrammar
 
       *
       */
-    class SyntaxAnalyser
+    class PATSyntaxAnalyser : public SyntaxAnalyser
     {
     public:
-        int analyse(std::string::const_iterator &i, std::string::const_iterator &end)
+        PATSyntaxAnalyser ()
         {
-            if (!m_lexical.useIter(i, end))
-                return 0;
-            gl();
-            try {
-                S();
-            } catch (ParseException &e) {
-                return e.errNo();
-            }
-
-            if (lex == LEX_EOI)
-                return -1;
-            return 0;
+            m_lexical = new PATLexicalAnalyser();
         }
 
-        void S()
+    protected:
+
+        virtual void S()
         {
             file();
         }
@@ -368,23 +167,23 @@ namespace PATGrammar
             {
                 gl();
                 if (lex != LEX_COLON)
-                    throw ParseException(1, "':' expected");
+                    throw ParseException("':' expected");
                 gl();
                 parameters_section();
             }
             // patterns
             if (lex != LEX_PATTERNS)
-                throw ParseException(1, "'PATTERNS' expected");
+                throw ParseException("'PATTERNS' expected");
             gl();
             if (lex != LEX_COLON)
-                throw ParseException(1, "':' expected");
+                throw ParseException("':' expected");
             patterns_section();
             // synonyms
             if (lex == LEX_SYNONYMS)
             {
                 gl();
                 if (lex != LEX_COLON)
-                    throw ParseException(1, "':' expected");
+                    throw ParseException("':' expected");
                 gl();
                 synonyms_section();
             }
@@ -400,7 +199,7 @@ namespace PATGrammar
         void patterns_section()
         {
             pattern();
-            while (lex != LEX_SYNONYMS)
+            while (lex != LEX_SYNONYMS && lex != LEX_EOI)
                 pattern();
         }
 
@@ -414,135 +213,141 @@ namespace PATGrammar
         void parameter()
         {
             if (lex != LEX_NAME)
-                throw ParseException(1, "Name expected");
-            std::string paramName = m_lexical.name;
+                throw ParseException("Name expected");
+            std::string paramName = m_lexical->name();
             gl();
             if (lex != LEX_EQ)
-                throw ParseException(1, "'=' expected");
+                throw ParseException("'=' expected");
             gl();
 
             GVariant paramValue;
-            if (lex == LEX_DECIMAL || lex == LEX_FLOAT)
-                paramValue = m_lexical.number;
+            if (lex == LEX_INTEGER || lex == LEX_FLOAT)
+                paramValue = m_lexical->number();
             else if (lex == LEX_NAME)
-                paramValue = m_lexical.name;
+                paramValue = m_lexical->name();
             else
-                throw ParseException(1, "Name or number expected");
+                throw ParseException("Name or number expected");
 
             gl();
             if (lex != LEX_SEMI)
-                throw ParseException(1, "';' expected");
+                throw ParseException("';' expected");
             gl();
 
             m_patterns->parameters.add(paramName, paramValue);
         }
 
         void pattern()
-        {
-            FL::Pattern *pattern =
-                    new FL::Pattern(m_patterns->synonyms, m_patterns->parameters);
-            // Description
-            std::string description = m_lexical.getRaw("@");
-            if (!description.empty())
+        {            
+            if (m_lexical->lookForwardFor('@') != -1)
             {
-                Patterns::DescriptionCompiler *compiler =
+                FL::Pattern *pattern =
+                        new FL::Pattern(m_patterns->synonyms, m_patterns->parameters);
+
+                // Description
+                std::string description = m_lexical->getRaw("@");
+                Patterns::DescriptionCompiler *dCompiler =
                         pattern->description()->compiler();
-                if ( !compiler->compile(description, *(pattern->description()->structure())) )
+                if ( !dCompiler->compile(description, *(pattern->description()->structure())) )
                 {
                     delete pattern;
-                    throw ParseException(1, EInvalidFileFormat);
+                    throw ParseException("invalid pattern's description");
                 }
                 pattern->description()->setSourceText(description, false);
-            }
-            gl();
-            if (lex != LEX_AT)
-            {
-                delete pattern;
-                throw ParseException(1, EInvalidFileFormat);
-            }
-
-            // Guard
-            std::string guard = m_lexical.getRaw(";");
-            if (!description.empty())
-            {
-                Patterns::GuardCompiler *compiler =
-                        pattern->guard()->compiler();
-                if ( !compiler->compile(guard, *(pattern->guard()->structure())) )
+                gl();
+                if (lex != LEX_AT)
                 {
                     delete pattern;
-                    throw ParseException(1, EInvalidFileFormat);
+                    throw ParseException("'@' expected");
+                }
+                // Guard
+                std::string guard = m_lexical->getRaw(";");
+                Patterns::GuardCompiler *gCompiler =
+                    pattern->guard()->compiler();
+                if ( !gCompiler->compile(guard, *(pattern->guard()->structure())) )
+                {
+                    delete pattern;
+                    throw ParseException("invalid pattern's guard");
                 }
                 pattern->guard()->setSourceText(description, false);
-            }
-            gl();
-            if (lex != LEX_SEMI)
-            {
-                delete pattern;
-                throw ParseException(1, EInvalidFileFormat);
-            }
+                gl();
+                if (lex != LEX_SEMI)
+                {
+                    delete pattern;
+                    throw ParseException(EInvalidFileFormat);
+                }
 
-            // Ready
-            m_patterns->push_back(pattern);
+                // Ready
+                m_patterns->push_back(pattern);
+            }
+            else
+                gl();
         }
 
         void synonym()
         {
             if (lex != LEX_NAME)
-                throw ParseException(1, "Name expected");
-            std::string left = m_lexical.name;
+                throw ParseException("Name expected");
+            std::string left = m_lexical->name();
             gl();
             if (lex != LEX_EQ)
-                throw ParseException(1, "'=' expected");
+                throw ParseException("'=' expected");
             gl();
 
             if (lex != LEX_NAME)
-                throw ParseException(1, "Name expected");
-            std::string right = m_lexical.name;
+                throw ParseException("Name expected");
+            std::string right = m_lexical->name();
 
             gl();
             if (lex != LEX_SEMI)
-                throw ParseException(1, "';' expected");
+                throw ParseException("';' expected");
             gl();
 
             m_patterns->synonyms.add(left, right);
         }
-    private:
-        LexicalAnalyser m_lexical;
-        Lexeme lex;
-        Lexeme gl()
-        {
-            return lex = m_lexical.gl();
-        }
+
     };
 } // namespace
 
-void FilePAT::loadFromString(const std::string &text, PatternCollection &patterns)
+bool FilePAT::loadFromString(const std::string &text, PatternCollection &patterns)
 {
     patterns.synonyms.clear();
     PATGrammar::m_patterns = &patterns;
-    std::string::const_iterator it = text.begin(), end = text.end();
-    PATGrammar::SyntaxAnalyser analyser;
-    analyser.analyse(it, end);
+    PATGrammar::PATSyntaxAnalyser analyser;
+    if (!analyser.analyse(text.begin(), text.end()))
+    {
+        char err[200];
+        sprintf(err, "Error at pos (%d, %d): %s",
+                analyser.pos().line,
+                analyser.pos().column,
+                analyser.lastErrorDescription().c_str());
+        GError(GCritical, "FilePAT", 1, err);
+        m_lastErrorDescription = err;
+        return false;
+    }
+    return true;
 }
 
 
-void FilePAT::loadFromFile(const std::string &fileName, PatternCollection &patterns)
+bool FilePAT::loadFromFile(const std::string &fileName, PatternCollection &patterns)
 {
     std::ifstream in(fileName.c_str(), std::ios_base::in);
 
     if (!in.is_open())
-        return;
+    {
+        m_lastErrorDescription = std::string("Can't open file: ") + fileName;
+        return false;
+    }
 
     std::string text;
-    in.unsetf(std::ios::skipws); // не пропускаем пробелы
+    in.unsetf(std::ios::skipws); // don't skip whitespaces
     copy(
             std::istream_iterator<char>(in),
             std::istream_iterator<char>(),
             std::back_inserter(text)
             );
 
-    loadFromString(text, patterns);
-
+    bool result = loadFromString(text, patterns);
     in.close();
+    return result;
 }
 

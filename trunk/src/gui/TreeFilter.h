@@ -1,7 +1,7 @@
 #ifndef TREEFILTER_H
 #define TREEFILTER_H
 
-#include "../fractallib/fl.h"
+#include "../fractallib/FL.h"
 #include "../fractallib/groupcheckers/GroupCheckerFactory.h"
 #include <QFile>
 

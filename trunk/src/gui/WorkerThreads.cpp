@@ -1,4 +1,4 @@
-/* Author: Vladimir Belikov
+m/* Author: Vladimir Belikov
  *
  * This file is part of Fractal Library.
  *

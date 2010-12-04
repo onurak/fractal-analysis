@@ -105,6 +105,15 @@ public:
       * crInvalidGuard in case of unapplicable guard.
       */
     CheckResult check(Patterns::CheckContext &context);
+
+    //! Create candidate node filled with info about last parsed node
+    void createCandidateNode(Patterns::CheckContext &context);
+
+    //! Commit candidate node
+    void commitCandidateNode(Patterns::CheckContext &context);
+
+    //! Rollback candidate node
+    void rollbackCandidateNode(Patterns::CheckContext &context);
 private:
     //! Guard of pattern
     Patterns::Guard *m_guard;
@@ -127,12 +136,25 @@ public:
     typedef PatternCollection::iterator Iterator;
     typedef PatternCollection::const_iterator ConstIterator;
 public:
+    PatternCollection()
+    {
+    }
+
     //! Synonyms table
     SynonymsTable synonyms;
 
     //! Parameters set
     Patterns::ParameterSet parameters;
 
+    //! Get ID assigned to pattern name
+    /*! If this name is not registered than it will be
+      */
+    int idOfPattern(const std::string & name) const;
+
+    //! Get name of patterns assigned to ID
+    /*! In case of unknown ID it will return empty string ""
+      */
+    const std::string & patternNameOfID(int id) const;
 };
 
 /*@}*/

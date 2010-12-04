@@ -119,34 +119,7 @@ ParseTreeNode* TSParserSimple::applyPattern(ParseContext &context, Pattern *p, i
     if (p->check(*context.cc) == Pattern::crOK)
     {
         patternSize = context.cc->patternSize;
-        // create new node
-        ParseTreeNode *newNode = new ParseTreeNode(
-            p->name(),                        // name of node = name of applied pattern
-            NULL,                             // no parent
-            -1,                               // level will be set later
-            (*(context.iRoot))->tsBegin,      // begin of time series segment
-            (*context.cc->lastNode)->tsEnd);  // end of time series segment
-
-        logg.debug("Pattern position: ") << (*(context.iRoot))->tsBegin << "-"
-                << (*context.cc->lastNode)->tsEnd;
-        int maxLevel = -1;
-
-        // set for every node in pattern parent to just created node,
-        // looking for maximal level among them
-        ParseTree::Layer::const_iterator node;
-        for (node = context.iRoot; node != context.cc->lastNode + 1; ++node)
-        {
-            context.tree->setNodeParent(*node, newNode);
-            newNode->children.push_back(*node);
-            if ((*node)->level > maxLevel)
-                maxLevel = (*node)->level;
-        }
-        newNode->level = maxLevel + 1; // set new node's level to max+1 (it will be new maximum)
-
-        context.modification.push_back(newNode);
-
-        context.tree->addNode(newNode);
-        return newNode;
+        return context.candidateNode;
     }
     return NULL;
 }

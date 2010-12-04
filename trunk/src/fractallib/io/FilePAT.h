@@ -52,14 +52,18 @@ public:
       * \param patterns Patterns collection whereto patterns from file will be added
       * \throws EParse
       */
-    void loadFromFile(const std::string &fileName, PatternCollection &patterns);
+    bool loadFromFile(const std::string &fileName, PatternCollection &patterns);
     
     //! Load patterns from string
     /*! \param text Text to load
       * \param patterns Patterns collection whereto patterns from file will be added
       * \throws EParse
       */
-    void loadFromString(const std::string &text, PatternCollection &patterns);
+    bool loadFromString(const std::string &text, PatternCollection &patterns);
+
+    const std::string & lastErrorDescription() const { return m_lastErrorDescription; }
+private:
+    std::string m_lastErrorDescription;
 };
 
 /*@}*/

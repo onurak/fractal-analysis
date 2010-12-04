@@ -50,7 +50,8 @@ void DebugWindow::createFakeCheckContext()
 {
     deleteFakeContext();
     FL::ParseTree::Layer *roots = new FL::ParseTree::Layer();
-    roots->push_back(new FL::ParseTreeNode("a"));
+    FL::ParseTreeNode *rootNode = new FL::ParseTreeNode("a");
+    roots->push_back(rootNode);
     FL::ParseTree::ConstLayer::const_iterator iRoot = roots->begin();
     FL::ParseTree::Layer *modification = new FL::ParseTree::Layer();
     FL::ParseTree::Layer *lastParsed = new FL::ParseTree::Layer();
@@ -60,7 +61,7 @@ void DebugWindow::createFakeCheckContext()
 
 
     m_fakeContext = new FL::Patterns::CheckContext(
-             roots, iRoot, *modification, *lastParsed, table, params, ts);
+             NULL, roots, iRoot, *modification, rootNode, *lastParsed, table, params, ts);
 }
 
 void DebugWindow::deleteFakeContext()
