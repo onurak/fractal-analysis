@@ -20,6 +20,7 @@
 #define PATTERN_GUARD_H
 
 #include "PatternDescription.h"
+#include "io/AbstractCompiler.h"
 
 namespace FL {
     namespace Patterns {
@@ -51,7 +52,8 @@ public:
 
     virtual bool compile(const std::string &text, GuardStructure &guard) = 0;
 
-    int errorPos;
+    FL::Compilers::Position errorPos;
+    std::string errorDescription;
 };
 
 /*! \class GuardChecker

@@ -120,16 +120,15 @@ public slots:
 private:
 
 private slots:
+    void on_actionOpen_DTS_from_file_triggered();
     void on_actionDynamic_Time_Series_Step_triggered();
     void on_actionDynamic_Time_Series_Stop_triggered();
     void on_actionDynamic_Time_Series_Run_triggered();
-    void on_actionLoad_dynamic_time_series_triggered();
     void on_action_Debug_window_triggered();
     void on_actionShow_Analysys_properties_triggered();
     void on_actionCreate_markup_from_roots_triggered();
     void on_action_Fit_time_series_triggered();
     void on_actionBuild_trees_triggered();
-    void on_action_Run_step_by_step_triggered();
     void on_actionOpen_Environment_triggered();
     void on_actionZoom_out_triggered();
     void on_actionZoom_in_triggered();
@@ -146,6 +145,7 @@ private slots:
     void spc_on_analysisPropertiesChanged();
     void spc_on_drawingWindowSizeChanged();
     void spc_action_ExecuteFilter(QAction* action);
+    void spc_on_action_Run_step_by_step_triggered();
 };
 
 #endif // MAINWINDOW_H

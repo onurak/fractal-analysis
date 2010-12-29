@@ -32,6 +32,10 @@ INPUT(
 ./debug\TSDataSourceFileCSV.o
 ./debug\TSDynamicParserIdeal.o
 ./debug\OpenDTSFromFileDialog.o
+./debug\PatternDescription.o
+./debug\Predicates.o
+./debug\UniqueNamer.o
+./debug\AbstractCompiler.o
 ./debug\moc_MainWindow.o
 ./debug\moc_QtRender.o
 ./debug\moc_PatternEditor.o

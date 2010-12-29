@@ -161,6 +161,7 @@ void TSParserIdeal::ranalyse(ParseContext *context, int no)
 
 bool TSParserIdeal::applyPattern(ParseContext &context, Pattern *p, ParseContext *&newContext)
 {
+    newContext = NULL;
     // We have to create candidate node for new context so we cant use p->check() method
     //logg.debug("Checking description... ");
 
@@ -211,6 +212,8 @@ bool TSParserIdeal::applyPattern(ParseContext &context, Pattern *p, ParseContext
 
         p->rollbackCandidateNode( *newContext->cc );
     }
+
+    delete newContext;
     logg << "Fail";
     return false;
 }

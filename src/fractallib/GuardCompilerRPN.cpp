@@ -5,30 +5,14 @@
 using namespace FL;
 using namespace FL::Patterns::RPN;
 
-class ParseException
-{
-public:
-    ParseException(int errNo, const std::string &description, int ln = -1, int col = -1)
-        : m_errNo(errNo), m_description(description), m_ln(ln), m_col(col)
-    {
-
-    }
-    int errNo() const { return m_errNo; }
-    const std::string& description() const { return m_description; }
-    int line() const { return m_ln; }
-    int column() const { return m_col; }
-private:
-    int m_errNo;
-    std::string m_description;
-    int m_ln;
-    int m_col;
-};
 
 /********** RPN COPMPILER ***********/
 
 /* Grammar using recursive descend */
 namespace GuardGrammar
 {
+    using namespace FL::Compilers;
+
     GuardStructureRPN *m_program;
 
     inline void addInstruction(int type, int concr)
@@ -67,38 +51,30 @@ namespace GuardGrammar
     }
 
     //**** LEXEMES *****
-    enum Lexeme
-    {
-        LEX_NAME,
-        LEX_INDEXED_NAME,
-        LEX_TRUE,
-        LEX_FALSE,
-        LEX_FLOAT,
-        LEX_DECIMAL,
-        LEX_PLUS,
-        LEX_MINUS,
-        LEX_MULT,
-        LEX_DIV,
-        LEX_AND,
-        LEX_OR,
-        LEX_NOT,
-        LEX_LESS,
-        LEX_GRTR,
-        LEX_LEQ,
-        LEX_GEQ,
-        LEX_EQ,
-        LEX_NEQ,
-        LEX_LBRACE,
-        LEX_RBRACE,
-        LEX_COMMA,
-        LEX_SEMICOLON,
-        LEX_IF,
-        LEX_THEN,
-        LEX_ELSE,
-        LEX_EOI,
-        LEX_NONE,
-        LEX_UNKNOWN
-    };
+
+    const Lexeme LEX_TRUE = 1;
+    const Lexeme LEX_FALSE = 2;
+    const Lexeme LEX_PLUS = 3;
+    const Lexeme LEX_MINUS = 4;
+    const Lexeme LEX_MULT = 5;
+    const Lexeme LEX_DIV = 6;
+    const Lexeme LEX_AND = 7;
+    const Lexeme LEX_OR = 8;
+    const Lexeme LEX_NOT = 9;
+    const Lexeme LEX_LESS = 10;
+    const Lexeme LEX_GRTR = 11;
+    const Lexeme LEX_LEQ = 12;
+    const Lexeme LEX_GEQ = 13;
+    const Lexeme LEX_EQ = 14;
+    const Lexeme LEX_NEQ = 15;
+    const Lexeme LEX_LBRACE = 16;
+    const Lexeme LEX_RBRACE = 17;
+    const Lexeme LEX_COMMA = 18;
+    const Lexeme LEX_SEMICOLON = 19;
+    const Lexeme LEX_IF = 20;
+    const Lexeme LEX_THEN = 21;
+    const Lexeme LEX_ELSE = 22;
+    const Lexeme LEX_INDEXED_NAME = 23;
 
     int LEX2OP(Lexeme lex)
     {
@@ -120,13 +96,14 @@ namespace GuardGrammar
     }
 
     //****** LEXICAL ANALYSER *******
-    /*! \class LexicalAnalyser
+    /*! \class GuardLexicalAnalyser
       */
-    class LexicalAnalyser
+    class GuardLexicalAnalyser : public LexicalAnalyser
     {
     public:
-        LexicalAnalyser()
+        GuardLexicalAnalyser()
         {
+            m_oneLineComment = '#';
             // fill reserved word list
             reserved_words["true"]    = LEX_TRUE;
             reserved_words["false"]   = LEX_FALSE;
@@ -138,41 +115,17 @@ namespace GuardGrammar
             reserved_words["and"]     = LEX_AND;
         }
 
-        ~LexicalAnalyser() { close(); }
-
-        bool useIter(std::string::const_iterator &iter, std::string::const_iterator &end)
+        virtual Lexeme igl() throw (ParseException)
         {
-            close();
-            this->iter = &iter;
-            this->end  = &end;
-            if (this->iter && this->end)
-            {
-                m_c = iter != end ? *iter : LEX_EOI;
-                return true;
-            }
-            else
-            {
-                c = LEX_NONE;
-                return false;
-            }
-        }
+            Lexeme prev = m_lex;
+            m_lex = LEX_NONE;
 
-        void close()
-        {
-            c = LEX_NONE;
-        }
-
-        Lexeme gl()
-        {
-            Lexeme prev = c;
-            c = LEX_NONE;
-
-            while (c == LEX_NONE)
+            while (m_lex == LEX_NONE)
             {
                 // eof
                 if (*iter == *end)
                 {
-                    c = LEX_EOI;
+                    m_lex = LEX_EOI;
                 }
                 // spaces
                 else if (isspace(m_c) && prev != LEX_INDEXED_NAME)
@@ -182,42 +135,42 @@ namespace GuardGrammar
                 // names
                 else if (isalpha(m_c))
                 {
-                    name = m_c;
+                    m_name = m_c;
                     while ( isalnum(gc()) )
-                        name += m_c;
+                        m_name += m_c;
                     // reserved word
                     std::map<std::string, Lexeme>::const_iterator
-                            it_rw = reserved_words.find(name);
+                            it_rw = reserved_words.find(m_name);
                     if (it_rw != reserved_words.end())
-                        c = it_rw->second;
+                        m_lex = it_rw->second;
                     // indexed name
                     else if (m_c == '_')
                     {
-                        c = LEX_INDEXED_NAME;
+                        m_lex = LEX_INDEXED_NAME;
                         gc();
                     }
                     // name
                     else
-                        c = LEX_NAME;
+                        m_lex = LEX_NAME;
                 }
                 // numbers
                 else if (isdigit(m_c))
                 {
-                    name = m_c;
+                    m_name = m_c;
                     while ( isdigit(gc()) )
-                        name += m_c;
+                        m_name += m_c;
                     if (m_c == '.')
                     {
-                        name += m_c;
+                        m_name += m_c;
                         while (isdigit(gc()))
-                            name += m_c;
-                        number = atof(name.c_str());
-                        c = LEX_FLOAT;
+                            m_name += m_c;
+                        m_number = atof(m_name.c_str());
+                        m_lex = LEX_FLOAT;
                     }
                     else
                     {
-                        number = double(atoi(name.c_str()));
-                        c = LEX_DECIMAL;
+                        m_number = double(atoi(m_name.c_str()));
+                        m_lex = LEX_INTEGER;
                     }
 
 
@@ -228,11 +181,11 @@ namespace GuardGrammar
                     gc();
                     if (m_c == '=')
                     {
-                        c = LEX_EQ;
+                        m_lex = LEX_EQ;
                         gc();
                     }
                     else
-                        c = LEX_UNKNOWN;
+                        m_lex = LEX_UNKNOWN;
                 }
                 // rel !=
                 else if (m_c == '!')
@@ -240,11 +193,11 @@ namespace GuardGrammar
                     gc();
                     if (m_c == '=')
                     {
-                        c = LEX_NEQ;
+                        m_lex = LEX_NEQ;
                         gc();
                     }
                     else
-                        c = LEX_UNKNOWN;
+                        m_lex = LEX_UNKNOWN;
                 }
                 // rel < and <=
                 else if (m_c == '<')
@@ -252,11 +205,11 @@ namespace GuardGrammar
                     gc();
                     if (m_c == '=')
                     {
-                        c = LEX_LEQ;
+                        m_lex = LEX_LEQ;
                         gc();
                     }
                     else
-                        c = LEX_LESS;
+                        m_lex = LEX_LESS;
                 }
                 // rel > and >=
                 else if (m_c == '>')
@@ -264,100 +217,83 @@ namespace GuardGrammar
                     gc();
                     if (m_c == '=')
                     {
-                        c = LEX_GEQ;
+                        m_lex = LEX_GEQ;
                         gc();
                     }
                     else
-                        c = LEX_GRTR;
+                        m_lex = LEX_GRTR;
                 }
                 // math +
                 else if (m_c == '+')
                 {
-                    c = LEX_PLUS;
+                    m_lex = LEX_PLUS;
                     gc();
                 }
                 // math -
                 else if (m_c == '-')
                 {
-                    c = LEX_MINUS;
+                    m_lex = LEX_MINUS;
                     gc();
                 }
-                // math *
+                // math * or wildcard indexed name
                 else if (m_c == '*')
                 {
-                    c = LEX_MULT;
                     gc();
+                    if (m_c != '_')
+                        m_lex = LEX_MULT;
+                    else
+                    {
+                        m_name = "*";
+                        m_lex = LEX_INDEXED_NAME;
+                        gc();
+                    }
                 }
                 // math /
                 else if (m_c == '/')
                 {
-                    c = LEX_DIV;
+                    m_lex = LEX_DIV;
                     gc();
                 }
                 // delimeters
                 else if (m_c == '(')
                 {
-                    c = LEX_LBRACE;
+                    m_lex = LEX_LBRACE;
                     gc();
                 }
                 else if (m_c == ')')
                 {
-                    c = LEX_RBRACE;
+                    m_lex = LEX_RBRACE;
                     gc();
                 }
                 else if (m_c == ',')
                 {
-                    c = LEX_COMMA;
+                    m_lex = LEX_COMMA;
                     gc();
                 }
                 else
-                    c = LEX_UNKNOWN;
+                    m_lex = LEX_UNKNOWN;
             }
-            return c;
+            return m_lex;
         }
 
-        Lexeme c;         //!< Current lexeme
-        std::string name; //!< Current name (if c is LEX_NAME or LEX_INDEXED)
-        double number;    //!< Current double (if c is LEX_FLOAT or LEX_DECIMAL)
     private:
-        std::string::const_iterator *iter, *end;
-
         std::map<std::string, Lexeme> reserved_words;
-
-        char m_c;
-
-        char gc()
-        {
-            ++(*iter);
-            return m_c = (*iter != *end ? **iter : LEX_EOI);
-        }
     };
 
     //****** SYNTAX ANALYSER *******
-    /*! \class SyntaxAnalyser
+    /*! \class GuardSyntaxAnalyser
 
       *
       */
-    class SyntaxAnalyser
+    class GuardSyntaxAnalyser : public SyntaxAnalyser
     {
     public:
-        int analyse(std::string::const_iterator &i, std::string::const_iterator &end)
+        GuardSyntaxAnalyser()
         {
-            if (!m_lexical.useIter(i, end))
-                return 0;
-            gl();
-            try {
-                S();
-            } catch (ParseException &e) {
-                return e.errNo();
-            }
-
-            if (lex == LEX_EOI)
-                return -1;
-            return 0;
+            m_lexical = new GuardLexicalAnalyser();
         }
-
-        void S()
+    protected:
+        virtual void S()
         {
             b_expr();
         }
@@ -483,9 +419,9 @@ namespace GuardGrammar
                 gl();
                 addOperand(false);
             }
-            else if (lex == LEX_FLOAT || lex == LEX_DECIMAL)
+            else if (lex == LEX_FLOAT || lex == LEX_INTEGER)
             {
-                addOperand(m_lexical.number);
+                addOperand(m_lexical->number());
                 gl();
             }
             else if (lex == LEX_NAME)
@@ -497,7 +433,7 @@ namespace GuardGrammar
                 gl();
                 b_expr();
                 if (lex != LEX_RBRACE)
-                    throw ParseException(1, "')' expected");
+                    throw ParseException("')' expected");
                 gl();
             }
         }
@@ -516,7 +452,7 @@ namespace GuardGrammar
         {
             b_expr();
             if (lex != LEX_THEN)
-                throw ParseException(1, "'then' expected");
+                throw ParseException("'then' expected");
             // add "jump_if_false ELSE" dummy
             m_program->code.push_back(Instruction(GOTO_COND, -1));
             int dummyPos = m_program->code.size()-1;
@@ -538,15 +474,15 @@ namespace GuardGrammar
         void function()
         {
             if (lex != LEX_NAME)
-                throw ParseException(1, "Function name expected");
+                throw ParseException("Function name expected");
             Predicates::Predicate *p =
-                    Predicates::PredicateFactory::predicateByName(m_lexical.name);
+                    Predicates::PredicateFactory::predicateByName(m_lexical->name());
             if (p == NULL)
-                throw ParseException(1, "Unknown function: " + m_lexical.name);
+                throw ParseException("Unknown function: " + m_lexical->name());
 
             gl();
             if (lex != LEX_LBRACE)
-                throw ParseException(1, "'(' expected");
+                throw ParseException("'(' expected");
             gl();
             int argCount = 0;
             if (lex != LEX_RBRACE)
@@ -557,7 +493,7 @@ namespace GuardGrammar
                 argCount += arg();
             }
             if (lex != LEX_RBRACE)
-                throw ParseException(1, "')' expected");
+                throw ParseException("')' expected");
             gl();
 
             addCall(p, argCount);
@@ -566,46 +502,32 @@ namespace GuardGrammar
         int arg()
         {
             int argCount = 1;
-            if (lex == LEX_IF)
+
+            if (lex == LEX_NAME &&
+                !Predicates::PredicateFactory::predicateByName(m_lexical->name()))
             {
-                gl();
-                if_statement();
-            }
-            else if (lex == LEX_NAME)
-            {
-                if ( Predicates::PredicateFactory::predicateByName(m_lexical.name) )
-                    function();
-                else {
-                    addOperand( UniqueNamer::id_of_name(m_lexical.name) );
-                    gl();
-                }
-            }
-            else if (lex == LEX_TRUE || lex == LEX_FALSE)
-            {
-                addOperand(lex == LEX_TRUE ? true : false);
+                addOperand( UniqueNamer::id_of_name(m_lexical->name()) );
                 gl();
             }
-            else if (lex == LEX_FLOAT || lex == LEX_DECIMAL)
+            else
+            if (lex == LEX_INDEXED_NAME)
             {
-                addOperand(m_lexical.number);
-                gl();
-            }
-            else if (lex == LEX_INDEXED_NAME)
-            {
-                std::string indexedName = m_lexical.name;
+                std::string indexedName = m_lexical->name();
                 int indexedNo;
                 gl();
-                if (lex == LEX_DECIMAL)
+                if (lex == LEX_INTEGER)
                 {
-                    indexedNo = m_lexical.number;
+                    indexedNo = m_lexical->number();
                     gl();
                 }
                 else if (lex == LEX_MULT)
                 {
+                    if (UniqueNamer::id_of_name(indexedName) == UniqueNamer::WILDCARD)
+                        throw ParseException("Wildcard '*' can't be both on name and on index");
                     indexedNo = -1;
                     gl();
                 }
-                else throw ParseException(1, "Number of wildcard expected");
+                else throw ParseException("Number of wildcard expected");
                 // push indexed parameters
                 int opIndex = addOperand(
                         GVariant(FL::Predicates::IndexedName(indexedName, indexedNo)) );
@@ -617,17 +539,65 @@ namespace GuardGrammar
 
             }
             else
-                throw ParseException(1, "Unknown function argument");
+                b_expr();
+
+            /*
+            if (lex == LEX_IF)
+            {
+                gl();
+                if_statement();
+            }
+            else if (lex == LEX_NAME)
+            {
+                if ( Predicates::PredicateFactory::predicateByName(m_lexical->name()) )
+                    function();
+                else {
+                    addOperand( UniqueNamer::id_of_name(m_lexical->name()) );
+                    gl();
+                }
+            }
+            else if (lex == LEX_TRUE || lex == LEX_FALSE)
+            {
+                addOperand(lex == LEX_TRUE ? true : false);
+                gl();
+            }
+            else if (lex == LEX_FLOAT || lex == LEX_DECIMAL)
+            {
+                addOperand(m_lexical->number);
+                gl();
+            }
+            else if (lex == LEX_INDEXED_NAME)
+            {
+                std::string indexedName = m_lexical->name;
+                int indexedNo;
+                gl();
+                if (lex == LEX_DECIMAL)
+                {
+                    indexedNo = m_lexical->number;
+                    gl();
+                }
+                else if (lex == LEX_MULT)
+                {
+                    indexedNo = -1;
+                    gl();
+                }
+                else throw ParseException("Number of wildcard expected");
+                // push indexed parameters
+                int opIndex = addOperand(
+                        GVariant(FL::Predicates::IndexedName(indexedName, indexedNo)) );
+                // push LOAD_NODE or LOAD_NODES instruction
+                if (indexedNo == -1)
+                    addInstruction(LOAD_NODES, opIndex);
+                else
+                    addInstruction(LOAD_NODE, opIndex);
+
+            }
+            else
+                throw ParseException("Unknown function argument");
+                */
             return argCount;
         }
 
-    private:
-        LexicalAnalyser m_lexical;
-        Lexeme lex;
-        Lexeme gl()
-        {
-            return lex = m_lexical.gl();
-        }
     };
 } // namespace
 
@@ -637,8 +607,14 @@ bool GuardCompilerRPN::compile(const std::string &text, GuardStructure &guard)
     if (GuardGrammar::m_program == NULL)
         return false;
 
-    std::string::const_iterator i = text.begin(), end = text.end();
-    int errorPos = GuardGrammar::SyntaxAnalyser().analyse(i, end);
+
+    GuardGrammar::GuardSyntaxAnalyser analyser;
+    if (!analyser.analyse(text.begin(), text.end()))
+    {
+        errorPos = analyser.pos();
+        errorDescription = analyser.lastErrorDescription();
+        return false;
+    }
 
     /*
     GuardGrammar::Grammar<std::string::const_iterator> g;
@@ -646,5 +622,5 @@ bool GuardCompilerRPN::compile(const std::string &text, GuardStructure &guard)
     */
     //GuardGrammar::
 
-    return errorPos == -1;
+    return true;
 }

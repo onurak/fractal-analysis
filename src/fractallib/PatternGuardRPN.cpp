@@ -175,7 +175,8 @@ GVariant GuardCheckerRPN::execute(CheckContext &context)
                 }
                 catch (Predicates::EPredicate &e)
                 {
-                    return error((GuardCheckerRPN::Errors) e.errNo());
+                    return error(
+                            GuardCheckerRPN::Errors( PREDICATE_ERROR + e.errNo() ));
                 }
 
                 break;

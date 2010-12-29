@@ -189,7 +189,9 @@ public:
     //! Get maximum Ox scrolling value
     int maximumHorizontalScroll()
     {
-        return m_timeSeries ? m_timeSeries->dimSize(0) - m_tsFitCountX : minimumHorizontalScroll();
+        return m_timeSeries ?
+                m_timeSeries->dimSize(0) - m_tsFitCountX - m_horScrollerPos :
+                minimumHorizontalScroll();
     }
 
     //! Get Ox scrolling position

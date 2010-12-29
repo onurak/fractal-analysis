@@ -49,6 +49,9 @@ public:
     {
         if (args.size() < 7)
             throw EPredicate(m_name, INVALID_ARGS);
+        for (int i = 0; i < int(args.size()); ++i)
+            if (!args[i]->canCastTo(G_VAR_DOUBLE))
+                throw EPredicate(m_name, INVALID_ARGS);
 
         double x1 = *args[0];
         double y1 = *args[1];
@@ -64,7 +67,7 @@ public:
 
         double tol = *args[args.size() - 1];
         // For each point check than y = k*x + b
-        for (int i = 4; i < int(args.size()); )
+        for (int i = 4; i < int(args.size())-1; )
         {
             double x = *args[i++];
             double y = *args[i++];

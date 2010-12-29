@@ -53,4 +53,6 @@ void PredicateFactory::registerStandartPredicates()
     registerPredicate(new AtOneLine());
     registerPredicate(new StartTime());
     registerPredicate(new EndTime());
+    registerPredicate(new Abs());
+    registerPredicate(new Near());
 }

@@ -23,6 +23,7 @@
 #include "TimeSeries.h"
 #include "PatternParameter.h"
 #include "UniqueNamer.h"
+#include "io/AbstractCompiler.h"
 
 /*! \addtogroup FLAlgorithm
   */
@@ -104,7 +105,7 @@ private:
 };
 
 /*! \class DescriptionStructure
-  * \brief Abstract descriptot for pattern's structure
+  * \brief Abstract description for pattern's structure
   */
 class DescriptionStructure
 {
@@ -180,7 +181,8 @@ public:
     //! Compile source text to description structure
     virtual bool compile(const std::string &text, DescriptionStructure& description) = 0;
 
-    int errorPos;
+    FL::Compilers::Position errorPos;
+    std::string errorDescription;
 };
 
 

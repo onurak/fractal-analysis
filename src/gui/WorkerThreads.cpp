@@ -1,4 +1,4 @@
-m/* Author: Vladimir Belikov
+/* Author: Vladimir Belikov
  *
  * This file is part of Fractal Library.
  *
@@ -30,12 +30,12 @@ void WorkerThreadLevelAnalyser::run()
         logg.info("Markup with marker '") << watcher.option("marker").toString() << "'... ";
         if (watcher.markup())
         {
-            m_result = R_OK;
+            m_result = RET_OK;
             logg << "Markup completed: OK";
         }
         else
         {
-            m_result = R_ERROR;
+            m_result = RET_ERROR;
             m_resultDescription = QSTR(watcher.lastExceptionMsg());
             logg << "Markup completed: Failed (" << watcher.lastExceptionMsg() << ")";
         }
@@ -51,7 +51,7 @@ void WorkerThreadLevelAnalyser::run()
             }
             else
             {
-                m_result = R_ERROR;
+                m_result = RET_ERROR;
                 m_resultDescription = QSTR(watcher.lastExceptionMsg());
                 logg << "Error marking up new values: " << watcher.lastExceptionMsg();
                 emit finished(this);
@@ -66,13 +66,13 @@ void WorkerThreadLevelAnalyser::run()
         watcher.parser()->onDebug = delegate(this, &WorkerThreadLevelAnalyser::onFLDebug);
         if (watcher.parseLevel(&result))
         {
-            m_result = result.parsedCount > 0 ? R_OK : R_LAST_LEVEL;
+            m_result = result.parsedCount > 0 ? RET_OK : RET_LAST_LEVEL;
             logg << "Parse completed: OK (" << result.parsedCount << " patterns parsed)";
             m_resultDescription = "No error";
         }
         else
         {
-            m_result = R_ERROR;
+            m_result = RET_ERROR;
             m_resultDescription = QSTR(watcher.lastExceptionMsg());
             logg << "Parse completed: Failed (" << watcher.lastExceptionMsg() << ")";
         }
@@ -105,12 +105,12 @@ void WorkerThreadFullAnalyser::run()
         logg.info("Markup with marker '") << watcher.option("marker").toString() << "'... ";
         if (watcher.markup())
         {
-            m_result = R_OK;
+            m_result = RET_OK;
             logg << "Markup completed: OK";
         }
         else
         {
-            m_result = R_ERROR;
+            m_result = RET_ERROR;
             m_resultDescription = QSTR(watcher.lastExceptionMsg());
             logg << "Markup completed: Failed (" << watcher.lastExceptionMsg() << ")";
         }
@@ -125,7 +125,7 @@ void WorkerThreadFullAnalyser::run()
         }
         else
         {
-            m_result = R_ERROR;
+            m_result = RET_ERROR;
             m_resultDescription = QSTR(watcher.lastExceptionMsg());
             logg << "Error marking up new values: " << watcher.lastExceptionMsg();
             emit finished(this);
@@ -140,13 +140,13 @@ void WorkerThreadFullAnalyser::run()
     watcher.parser()->onDebug = delegate(this, &WorkerThreadFullAnalyser::onFLDebug);
     if (watcher.parseAll(&levelsCount))
     {
-        m_result = levelsCount > 0 ? R_OK : R_LAST_LEVEL;
+        m_result = levelsCount > 0 ? RET_OK : RET_LAST_LEVEL;
         logg << "Parse completed: OK (" << levelsCount << " levels parsed)";
         m_resultDescription = "No error";
     }
     else
     {
-        m_result = R_ERROR;
+        m_result = RET_ERROR;
         m_resultDescription = QSTR(watcher.lastExceptionMsg());
         logg << "Parse completed: Failed (" << watcher.lastExceptionMsg() << ")";
     }

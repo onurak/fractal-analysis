@@ -90,7 +90,9 @@ HEADERS += gui/MainWindow.h \
     fractallib/predicates/AtOneLine.h \
     fractallib/predicates/StartTime.h \
     fractallib/predicates/EndTime.h \
-    fractallib/io/AbstractCompiler.h
+    fractallib/io/AbstractCompiler.h \
+    fractallib/predicates/Abs.h \
+    fractallib/predicates/Near.h
 SOURCES += main.cpp \
     fractallib/io/FileCSV.cpp \
     fractallib/io/FilePAT.cpp \

@@ -17,7 +17,8 @@
  */
 
 #include "PatternDescriptionEbnf.h"
-#include "tools/spirit.h"
+//#include "tools/spirit.h"
+#include "io/AbstractCompiler.h"
 
 using namespace FL;
 using namespace FL::Patterns::EBNF;
@@ -97,6 +98,13 @@ std::string EbnfStructure::print(Node *root, int level)
         return result;
     }
     return "";
+}
+
+int EbnfStructure::maxLength() const
+{
+    // Fix it!
+    // It must be calculated for each pattern, hope no one will use patterns longer
+    return 20;
 }
 
 /****************** CHECKER ******************/
@@ -212,7 +220,7 @@ bool EbnfChecker::rcheck(Expression *expr, const SynonymsTable &synonyms, Node *
     }
     else if (node->type == TRUEC)
     {
-        return true; // узел true
+        return true; // узел truesrc
     }
     else if (node->type == FALSEC)
     {
@@ -223,10 +231,11 @@ bool EbnfChecker::rcheck(Expression *expr, const SynonymsTable &synonyms, Node *
     return false;
 }
 
-/*********** Компилятор Ebnf-деревьев *************/
+/*********** EBNF Tree compiler *************/
 
-/* Грамматика guard-выражений */
+/* Guard's grammar*/
 
+/*
 namespace EBNFGrammar {
 
     //! Элемент шаблона
@@ -249,7 +258,7 @@ namespace EBNFGrammar {
         return result;
     }
 
-    /*   ИНДЕКСИРОВАНЫЕ   */
+    //   ИНДЕКСИРОВАНЫЕ
     void onIndexedName(std::string name)
     {
         m_indexedElem.name = name;
@@ -260,7 +269,7 @@ namespace EBNFGrammar {
         m_indexedElem.no = int(no);
     }
 
-    /*  ОПЕРАТОРЫ   */
+    //  ОПЕРАТОРЫ
     void onLevelDown()
     {
         m_curNode = newChild();
@@ -304,7 +313,7 @@ namespace EBNFGrammar {
         m_ebnf->setName(name);
     }
 
-    /*  ГРАММАТИКА  */
+    //  ГРАММАТИКА
 
     template <typename Iterator>
     struct Grammar : qi::grammar<Iterator>
@@ -341,31 +350,278 @@ namespace EBNFGrammar {
     };
 } // namespace
 
+*/
+
+namespace EBNFGrammar
+{
+    using namespace FL::Compilers;
+
+    FL::Patterns::EBNF::EbnfStructure *m_ebnf;
+    FL::Patterns::EBNF::Node *m_curNode;
+
+    /* Lexemes */
+    const Lexeme LEX_INDEXED_NAME = 1;
+    const Lexeme LEX_LPAREN       = 2;
+    const Lexeme LEX_RPAREN       = 3;
+    const Lexeme LEX_LBRACKET     = 4;
+    const Lexeme LEX_RBRACKET     = 5;
+    const Lexeme LEX_WILDCARD     = 6;
+    const Lexeme LEX_ALTERNATIVE  = 7;
+    const Lexeme LEX_EQ           = 8;
+
+    class EBNFLexicalAnalyser : public LexicalAnalyser
+    {
+    public:
+        EBNFLexicalAnalyser()
+        {
+            m_oneLineComment = '#';
+        }
+
+    protected:
+        virtual Lexeme igl() throw (ParseException)
+        {
+            m_lex = LEX_NONE;
+
+            while (m_lex == LEX_NONE)
+            {
+                // eof
+                if (iter == end)
+                {
+                    m_lex = LEX_EOI;
+                }
+
+                // spaces
+                else if (isspace(m_c))
+                {
+                     gc();
+                }
+
+                // names
+                else if (isalpha(m_c))
+                {
+                    m_number = -1;
+                    m_name = m_c;
+                    while ( isalnum(gc()) )
+                        m_name += m_c;
+                    if (m_c == '_')
+                    {
+                        gc();
+                        if (!isdigit(m_c))
+                            throw ParseException("Index expected");
+                        m_number = 0;
+                        do {
+                            m_number = m_number * 10 + int(m_c - '0');
+                        } while ( isdigit(gc()) );
+                        if ( isalpha(m_c) )
+                            throw ParseException("Delimeter expected between names");
+                        m_lex = LEX_INDEXED_NAME;
+                    }
+                    else
+                        m_lex = LEX_NAME;
+                }
+
+                // parenthesis
+                else if (m_c == '(')
+                {
+                    gc();
+                    m_lex = LEX_LPAREN;
+                }
+                else if (m_c == ')')
+                {
+                    gc();
+                    m_lex = LEX_RPAREN;
+                }
+
+                // brackets
+                else if (m_c == '[')
+                {
+                    gc();
+                    m_lex = LEX_LBRACKET;
+                }
+                else if (m_c == ']')
+                {
+                    gc();
+                    m_lex = LEX_RBRACKET;
+                }
+
+                // wildcard
+                else if (m_c == '*')
+                {
+                    gc();
+                    m_lex = LEX_WILDCARD;
+                }
+
+                // alternative
+                else if (m_c == '|')
+                {
+                    gc();
+                    m_lex = LEX_ALTERNATIVE;
+                }
+
+                // eq
+                else if (m_c == '=')
+                {
+                    gc();
+                    m_lex = LEX_EQ;
+                }
+
+                // unknown
+                else
+                    m_lex = LEX_UNKNOWN;
+            }
+            return m_lex;
+        }
+    };
+
+
+
+    class EBNFSyntaxAnalyser : public SyntaxAnalyser
+    {
+    public:
+        EBNFSyntaxAnalyser()
+        {
+            m_lexical = new EBNFLexicalAnalyser();
+        }
+
+    protected:
+        FL::Patterns::EBNF::Node* newChild()
+        {
+            FL::Patterns::EBNF::Node* result = new FL::Patterns::EBNF::Node(TRUEC);
+            m_curNode->children.push_back(result);
+            result->parent = m_curNode;
+            return result;
+        }
+
+        void goDown()
+        {
+            m_curNode = newChild();
+        }
+
+        void goUp()
+        {
+            m_curNode = m_curNode->parent;
+        }
+
+        void goNext()
+        {
+            m_curNode = m_curNode->parent;
+            m_curNode = newChild();
+        }
+
+    protected:
+        virtual void S()
+        {
+            name();
+            if (lex != LEX_EQ)
+                throw ParseException("'=' expected");
+            gl();
+            ebnf();
+        }
+
+        void name()
+        {
+            if (lex != LEX_NAME)
+                throw ParseException("Pattern's name expected");
+            m_ebnf->setName(m_lexical->name());
+            gl();
+        }
+
+        void ebnf()
+        {
+            goDown();
+            term();
+            while (lex == LEX_ALTERNATIVE)
+            {
+                gl();
+                goDown();
+                term();
+            }
+            m_curNode->type  = OPERATOR;
+            m_curNode->concr = opAlternative;
+        }
+
+        void term()
+        {
+            goDown();
+            factor();
+            while (lex == LEX_NAME     || lex == LEX_INDEXED_NAME ||
+                   lex == LEX_LPAREN )//|| lex == LEX_LBRACKET )
+            {
+                factor();
+            }
+            goUp();
+            m_curNode->type  = OPERATOR;
+            m_curNode->concr = opConcatenate;
+            goUp();
+        }
+
+        void factor()
+        {
+            if (lex == LEX_NAME || lex == LEX_INDEXED_NAME)
+            {
+                m_curNode->type = NAME;
+                m_curNode->concr = m_ebnf->getOrCreateName(m_lexical->name(),  m_lexical->number());
+                gl();
+            }
+            else if (lex == LEX_LPAREN)
+            {
+                gl();
+                ebnf();
+                if (lex != LEX_RPAREN)
+                    throw ParseException("')' expected");
+                gl();
+            }
+            else
+                throw ParseException(std::string("Unexpected symbol: ") + m_lexical->c());
+            goNext();
+        }
+
+    };
+
+
+} // namespace
+
 bool EbnfCompiler::compile(const std::string &text,
                            DescriptionStructure& description)
 {
-    errorPos = -1;
+    errorPos.set(0, 0, 0);
     EbnfStructure *ebnf = dynamic_cast<EbnfStructure*>(&description);
     if (ebnf == NULL)
         return false;
 
 
-    // готовим переменные
+    // Prepare
     ebnf->remNode(ebnf->root());
     ebnf->setRoot(new Node(0, 0));
     EBNFGrammar::m_ebnf = ebnf;
     EBNFGrammar::m_curNode = ebnf->root();
 
-    // парсим
+    // Parse
+    /*
     EBNFGrammar::Grammar<std::string::const_iterator> g;
     errorPos = spiritParseString(text, g);
+    */
+    EBNFGrammar::EBNFSyntaxAnalyser analyser;
+    if (!analyser.analyse(text.begin(), text.end()))
+    {
+        ebnf->remNode(ebnf->root());
+        char err[200];
+        sprintf(err, "Error at pos (%d, %d): %s",
+                analyser.pos().line,
+                analyser.pos().column,
+                analyser.lastErrorDescription().c_str());
+        GError(GCritical, "EBNF compiler", 1, err);
+        errorPos = analyser.pos();
+        errorDescription = analyser.lastErrorDescription();
+        return false;
+    }
 
-    // оптимизируем
+    // Optimze
     optimize(ebnf->root(), ebnf);
 
     logg.debug("Pattern compiled:\n") << ebnf->print();
-
-    return errorPos == -1;
+    errorPos.set(-1, -1, -1);
+    return true;
 }
 
 inline void removeChild(Node *parent, Node *child)
