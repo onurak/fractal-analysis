@@ -286,5 +286,10 @@ bool SyntaxAnalyser::analyse(std::string::const_iterator begin,
         m_lastErrorDescription = e.msg();
         return false;
     }
-    return lex == LEX_EOI;
+    if (lex != LEX_EOI)
+    {
+        m_lastErrorDescription = std::string("Unexpected symbol: ") + m_lexical->c();
+        return false;
+    }
+    return true;
 }

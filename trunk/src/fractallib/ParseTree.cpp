@@ -361,6 +361,9 @@ void ParseTree::clear()
     m_allNodes.clear();
     m_roots.clear();
     m_leafes.clear();
+    std::map<int, Layer*>::const_iterator itLayer;
+    for_each_(itLayer, m_nodesByLevel)
+        delete (*itLayer).second;
     m_nodesByLevel.clear();
     m_minLevel = m_maxLevel = -1;
 }

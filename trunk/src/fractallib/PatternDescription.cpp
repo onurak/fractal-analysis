@@ -25,16 +25,22 @@ std::vector<ParseTreeNode*>& CheckContext::getNodes(
 {
     m_cashedNodes.clear();
     ParseTree::Layer::const_iterator i;
-    if (nameId != UniqueNamer::WILDCARD)
+    if (nameId == UniqueNamer::WILDCARD)
     {
         for (i = nodes.begin(); i != nodes.end(); ++i)
-            if ((*i)->no == no && (*i)->nameId == nameId)
+            if ((*i)->no == no)
+                m_cashedNodes.push_back(*i);
+    }
+    else if (no == UniqueNamer::WILDCARD)
+    {
+        for (i = nodes.begin(); i != nodes.end(); ++i)
+            if ((*i)->nameId == nameId)
                 m_cashedNodes.push_back(*i);
     }
     else
     {
         for (i = nodes.begin(); i != nodes.end(); ++i)
-            if ((*i)->no == no)
+            if ((*i)->no == no && (*i)->nameId == nameId)
                 m_cashedNodes.push_back(*i);
     }
     return m_cashedNodes;

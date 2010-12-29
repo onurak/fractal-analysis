@@ -249,8 +249,10 @@ namespace PATGrammar
                         pattern->description()->compiler();
                 if ( !dCompiler->compile(description, *(pattern->description()->structure())) )
                 {
+                    std::string errorDescription =
+                            std::string("error in description: ") + dCompiler->errorDescription;
                     delete pattern;
-                    throw ParseException("invalid pattern's description");
+                    throw ParseException(errorDescription);
                 }
                 pattern->description()->setSourceText(description, false);
                 gl();
@@ -265,15 +267,17 @@ namespace PATGrammar
                     pattern->guard()->compiler();
                 if ( !gCompiler->compile(guard, *(pattern->guard()->structure())) )
                 {
+                    std::string errorDescription =
+                            std::string("error in guard: ") + gCompiler->errorDescription;
                     delete pattern;
-                    throw ParseException("invalid pattern's guard");
+                    throw ParseException(errorDescription);
                 }
                 pattern->guard()->setSourceText(description, false);
                 gl();
                 if (lex != LEX_SEMI)
                 {
                     delete pattern;
-                    throw ParseException(EInvalidFileFormat);
+                    throw ParseException("';' expected after pattern");
                 }
 
                 // Ready

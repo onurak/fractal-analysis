@@ -42,23 +42,21 @@ private:
     std::string m_msg;
 };
 
+// Position in file
+struct Position
+{
+    Position(): line(0), column(0), linear(0) {}
+    void set(int line, int column, int linear)
+    {
+        this->line = line; this->column = column; this->linear = linear;
+    }
+    int line;
+    int column;
+    int linear;
+};
 
 class LexicalAnalyser
 {
-public:    
-
-    // Position in file
-    struct Position
-    {
-        Position(): line(0), column(0), linear(0) {}
-        void set(int line, int column, int linear)
-        {
-            this->line = line; this->column = column; this->linear = linear;
-        }
-        int line;
-        int column;
-        int linear;
-    };
 public:
     //! Default constructor
     LexicalAnalyser();
@@ -78,6 +76,7 @@ public:
     Lexeme lex() const { return m_lex; }
     const std::string& name() const { return m_name; }
     double number() const { return m_number; }
+    char c() const { return m_c; }
 
     //! Get raw string data to nearest symbol from overs or up to end of string
     std::string getRaw(const std::string &overs);
@@ -138,9 +137,9 @@ public:
 
     bool analyse(std::string::const_iterator begin, std::string::const_iterator end);
 
-    LexicalAnalyser::Position pos() const
+    Position pos() const
     {
-        return m_lexical ? m_lexical->pos() : LexicalAnalyser::Position();
+        return m_lexical ? m_lexical->pos() : Position();
     }
     const std::string& lastErrorDescription() const { return m_lastErrorDescription; }
 protected:

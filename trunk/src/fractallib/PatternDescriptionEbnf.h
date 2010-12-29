@@ -188,12 +188,7 @@ public:
     }
 
     //! Maximum length of EBNF
-    int maxLength()
-    {
-        // Fix it!
-        // It must be calculated for each pattern, hope no one will use patterns longer than 10
-        return 10;
-    }
+    int maxLength() const;
 
     friend class EbnfChecker;
 private:

@@ -1,7 +1,7 @@
 /********************************************************************************
 ** Form generated from reading UI file 'DebugWindow.ui'
 **
-** Created: Sun 7. Nov 00:57:42 2010
+** Created: Sun 5. Dec 16:43:15 2010
 **      by: Qt User Interface Compiler version 4.7.0
 **
 ** WARNING! All changes made in this file will be lost when recompiling UI file!

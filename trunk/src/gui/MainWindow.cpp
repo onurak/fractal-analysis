@@ -27,12 +27,12 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     m_valuesAdded = 0;
     m_tsDataSource = NULL;
+    initializeFractalLibrary();
     if (QFile::exists("config.env"))
         if (!env.loadFromFile("config.env"))
             showError("Error loading environment (it must be invalid file format)");
     this->state = STATE_INIT;
     ui->setupUi(this);
-    initializeFractalLibrary();
     initializeControls();
     loadEnvironment();
     setStatus(tr("Ready"));
@@ -225,7 +225,7 @@ void MainWindow::on_actionOpen_Environment_triggered()
     }
 }
 
-void MainWindow::on_action_Run_step_by_step_triggered()
+void MainWindow::spc_on_action_Run_step_by_step_triggered()
 {
     // Never run two analysis process!
     if (this->state == STATE_ANALYSIS)
@@ -285,7 +285,46 @@ void MainWindow::on_action_Debug_window_triggered()
     wnd.exec();
 }
 
-void MainWindow::on_actionLoad_dynamic_time_series_triggered()
+void MainWindow::on_actionDynamic_Time_Series_Run_triggered()
+{
+    if (m_tsDataSource)
+    {
+        refreshDynamicTS();
+        timerDynamicTS.start(1000);
+    }
+}
+
+void MainWindow::on_actionDynamic_Time_Series_Stop_triggered()
+{
+    refreshDynamicTS();
+    timerDynamicTS.stop();
+}
+
+void MainWindow::on_actionDynamic_Time_Series_Step_triggered()
+{
+    if (state != STATE_READY)
+    {
+        setStatus("Can't step while analysis is in progress", 5000);
+        return;
+    }
+    if (m_tsDataSource == NULL)
+    {
+        setStatus("Can't step because data source not loaded", 5000);
+        return;
+    }
+    double value;
+    if (m_tsDataSource->next(value))
+    {
+        watcher.timeSeries()->add(value);
+        draw();
+    }
+    else
+    {
+        setStatus("No new values in data source");
+    }
+}
+
+void MainWindow::on_actionOpen_DTS_from_file_triggered()
 {
     // Open file, choose column
     QString fileName =
@@ -344,43 +383,4 @@ void MainWindow::on_actionLoad_dynamic_time_series_triggered()
     }
     refreshDynamicTS();
     draw();
-}
-
-void MainWindow::on_actionDynamic_Time_Series_Run_triggered()
-{
-    if (m_tsDataSource)
-    {
-        refreshDynamicTS();
-        timerDynamicTS.start(1000);
-    }
-}
-
-void MainWindow::on_actionDynamic_Time_Series_Stop_triggered()
-{
-    refreshDynamicTS();
-    timerDynamicTS.stop();
-}
-
-void MainWindow::on_actionDynamic_Time_Series_Step_triggered()
-{
-    if (state != STATE_READY)
-    {
-        setStatus("Can't step while analysis is in progress", 5000);
-        return;
-    }
-    if (m_tsDataSource == NULL)
-    {
-        setStatus("Can't step because data source not loaded", 5000);
-        return;
-    }
-    double value;
-    if (m_tsDataSource->next(value))
-    {
-        watcher.timeSeries()->add(value);
-        draw();
-    }
-    else
-    {
-        setStatus("No new values in data source");
-    }
 }

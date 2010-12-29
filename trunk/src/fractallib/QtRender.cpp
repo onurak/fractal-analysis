@@ -90,8 +90,8 @@ QtRender::QtRender()
 QtRender::~QtRender()
 {
     m_scene->clear();
-    if (m_framebuffer)
-        delete m_framebuffer;
+    delete m_framebuffer;
+    delete m_csbuffer;
     delete m_scene;
  //   delete m_cs;
     logg.info("QtRender: Destroy OK");
@@ -99,8 +99,7 @@ QtRender::~QtRender()
 
 void QtRender::resize(int width, int height)
 {
-    if (m_framebuffer)
-        delete m_framebuffer;
+    delete m_framebuffer;
     m_framebuffer = new QPixmap(width, height);
     m_width = width - 2*m_xborder;
     m_height = height - 2*m_yborder;
@@ -251,15 +250,18 @@ void QtRender::updateScroller()
             return;
         // Limit scroller position
         int dimsz = m_timeSeries->dimSize(m_tsdim);
-        if (m_horScrollerPos > dimsz)
-            m_horScrollerPos = dimsz;
+        if (m_horScrollerPos >= dimsz)
+            m_horScrollerPos = dimsz-1;
 
         // Find how much values of time series can be fit
-        std::vector<double>::const_iterator
-                i = vec.begin() + m_horScrollerPos;
-        while (i != vec.end() && tx(*i) <= m_width)
+        //std::vector<double>::const_iterator
+        //        i = vec.begin() + m_horScrollerPos;
+        //while (i != vec.end() && tx(*i) <= m_width)
+        //    ++i;
+        int i = 0;
+        while (i < (int)dimsz && tx(i) <= m_width)
             ++i;
-        m_tsFitCountX = i - (vec.begin() + m_horScrollerPos);
+        m_tsFitCountX = i;
     }
 }
 
@@ -273,12 +275,14 @@ void QtRender::setTreeDrawingSettings(TreeDrawingSettings settings)
 void QtRender::bufferCoordSystem()
 {
     // Recreate coordinate system buffer
-    if (m_csbuffer)
-        delete m_csbuffer;
+    delete m_csbuffer;
     m_csbuffer = new QPixmap(m_framebuffer->width(), m_framebuffer->height());
 
     QPainter bPainter;
     bPainter.begin(m_csbuffer);
+
+    bPainter.setBrush(Qt::black);
+    bPainter.drawRect(0, 0, m_csbuffer->width(), m_csbuffer->height());
 
     // If zero is inside (min_, max_) than draw line trought it, otherwize throuht min_
     int x0 = tx(m_minX > 0 || m_maxX < 0 ? m_minX : 0);

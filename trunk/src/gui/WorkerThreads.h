@@ -44,9 +44,9 @@ protected:
     QString m_resultDescription;
 };
 
-const int R_OK = -1;
-const int R_ERROR = -2;
-const int R_LAST_LEVEL = -3;
+const int RET_OK = -1;
+const int RET_ERROR = -2;
+const int RET_LAST_LEVEL = -3;
 
 class WorkerThreadLevelAnalyser: public WorkerThread
 {

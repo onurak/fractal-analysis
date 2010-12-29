@@ -146,11 +146,11 @@ void MainWindow::workerThreadFinished(WorkerThread *thread)
     draw();
     switch (thread->result())
     {
-        case R_OK: break;
-        case R_ERROR:
+        case RET_OK: break;
+        case RET_ERROR:
             showError("Error occures: " + thread->resultDescription());
             break;
-        case R_LAST_LEVEL:
+        case RET_LAST_LEVEL:
             showInfo("Last level parsed!");
             setStatus("Last level parsed!");
             break;
@@ -320,9 +320,12 @@ void MainWindow::writeAnalysisProperties()
 
 void MainWindow::spc_on_analysisPropertiesChanged()
 {
-    writeAnalysisProperties();
-    render->setTreeDrawingSettings(treeDrawingSettings());
-    draw();
+    if (this->state != STATE_INIT)
+    {
+        writeAnalysisProperties();
+        render->setTreeDrawingSettings(treeDrawingSettings());
+        draw();
+    }
 }
 
 void MainWindow::spc_on_drawingWindowSizeChanged()
