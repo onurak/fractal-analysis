@@ -17,7 +17,7 @@ Next comes description of each step. This manual use *FLAnalyzer* - GUI frontend
 *FLAnalyzer* is the GUI frontend to FL. Complete documentation will be created later.
 It's main window could looks like this:
 
-[http://fractal-analysis.googlecode.com/svn/wiki/images/main_window.jpg]
+[http://fractal-analysis.googlecode.com/svn/wiki/images/main_window.png]
 
 Currently the program continues to be developed so its appearance may change.
 To load time series use *File->Open time series*. Only Comma Separated Values (CSV) file format is supported now.
@@ -29,7 +29,7 @@ At this moment only the simplest marker algorithm realized (it's also called *si
 
 Let's see how it is look like. To set Marker use *Properties* window and choose _abmarker_ in *Marker* combo box and then run markup algorithm using *Analysis->Next level* menu item. All segments of the time series will be highlighted with the terminals it classified as it shown on picture:
 
-[http://fractal-analysis.googlecode.com/svn/wiki/images/marked_up.jpg]
+[http://fractal-analysis.googlecode.com/svn/wiki/images/marked_up.png]
 
 	Note: if you see another picture you might change drawing options in *Properties* window under section *Drawing*.
 
@@ -78,11 +78,11 @@ Patterns must be put in special PAT-files. Assuming we have one (e.g. C:/temp/ex
 It's really single pattern, but die to current limitations of file format all alternatives must be writen in few rules. 
 This file can be loaded in FLAnalyser using *File->Open patterns*. In the picture below shown example time series:
 
-[http://fractal-analysis.googlecode.com/svn/wiki/images/ts_example.jpg]
+[http://fractal-analysis.googlecode.com/svn/wiki/images/ts_example.png]
 
 First time series will be marked up using _abmarker_ as it shown in previous parts:
 
-[http://fractal-analysis.googlecode.com/svn/wiki/images/ab_marked.jpg]
+[http://fractal-analysis.googlecode.com/svn/wiki/images/ab_marked.png]
 
 The next step is the fractal pattern recognition. Currently there are two Parsers available:
  * *simple* is the fast singlepass parser. It algorithm is:
@@ -95,7 +95,7 @@ The next step is the fractal pattern recognition. Currently there are two Parser
  
 We will use _simple_ parser (it must be choosed in *Properties* swindow). Choose *Analysis->Next level* menu few time until message "Last level parsed". Each time you parsing level, next _fractal level_ is recognizing. New recognized patterns will be added to time series view and segments of time series highlighted with green are the top-level patterns (it's a roots of parse tree). Every time analyzer recognize _a_ or _up up_ sequences they are marks as _up_ pattern of upper level. Complete recognized structure is on the screenshot:
 
-[http://fractal-analysis.googlecode.com/svn/wiki/images/simple_parsed.jpg]
+[http://fractal-analysis.googlecode.com/svn/wiki/images/simple_parsed.png]
 
 Patterns of different heights are creates _levels_ of fractal. As you can see nodes of zero level is the markup terminals. Next level is all patterns like `up = a @ true` - it is the only structure that parser could recognize. And patterns of second and third levels are like `up = up up @ true`. In fact this is a tree structure is kind of [http://en.wikipedia.org/wiki/Abstract_syntax_tree AST]. That is not correct AST because there are more than one root (roots highlighted with green). In more usual form it could be displayed as:
 
@@ -142,7 +142,7 @@ Sure this is a very poor pattern set and they can't be used for real analysis or
 
 In the way to "smooth" demonstrative time series all its fractal levels will be extracted using first patterns set and _simple_ parser:
 
-[http://fractal-analysis.googlecode.com/svn/wiki/images/smoothed_ts.jpg]
+[http://fractal-analysis.googlecode.com/svn/wiki/images/smoothed_ts.png]
 
 Then using second patterns set and _ideal_ parser all possible combinations of this patterns (in example time series there are 14) will be extracted. There are lot of "garbage" combinations because of poor pattern set, but few other combinations looks pretty well:
 

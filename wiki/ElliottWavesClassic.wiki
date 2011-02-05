@@ -1,0 +1,12 @@
+#summary Classic Elliott Waves
+#labels Classic Elliott Waves
+
+= Classic Elliott Waves =
+_Description of classic Elliott Waves patterns based on Elliott, Frost and Prechter._
+
+Common description currently located on [https://docs.google.com/document/d/1_jw83OsxRJ8SCVQrTfa741WVgRow1OfrDDJAs-fIoPw/edit Google Docs]. 
+
+Description in [FormalLanguage Formal Language] located [ElliottWavesClassicFormal here].
+
+These pages may change over time.
+
