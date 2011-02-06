@@ -18,7 +18,7 @@ Each pattern have following form:
 *Description* part express structure of the pattern (like "up-down-up" in example). It is based on reduced [http://en.wikipedia.org/wiki/Extended_Backus-Naur_Form Extended Backus-Naur Form (EBNF)]. In terms of EBNF it could include three kinds of symbols:
  * *nonterminals* which are names of same or different pattern that are structural element of this pattern in a given position.
  * *terminals* which are names of predefined simple linear structural elements. They are the lowest level elements that extracted from time series in any way.
- * EBNF special symbols. Supported symbols are: concatenation (... whitespace ...), alternative ( ... | ... ), option ( [[ ... ]] ) and grouping ( (...) ).
+ * EBNF special symbols. Supported symbols are: concatenation ({{{... whitespace ...}}}), alternative ({{{... | ...}}}), option ({{{[ ... ]}}}) and grouping ({{{(...)}}}).
 Also each symbol have unique (within this pattern) number associated with it in the way to distinguish symbols from each other in gurad part.
 
 For description of example the two terminal symbols would be used: {{{up}}}, which means two adjacent points of time series first lower that second, and {{{down}}}, which is the contrary. More formal: if {{{a = (x1, y1)}}} and {{{b = (x2, y1)}}} are two points of time series X, than segment {{{(a, b)}}} would be marked one of symbols {{{up}}} or {{{down}}} according to rule:
