@@ -4,7 +4,7 @@
 = Elliott Waves Principle =
 [http://en.wikipedia.org/wiki/Elliott_Wave_Principle Elliott Waves Principle] was originally created by [http://en.wikipedia.org/wiki/Ralph_Nelson_Elliott Ralph Elliott] in the 1930s as the form of technical stock analysis. The basis of this principle are recognizable behavioral patterns of stock charts which were described by Elliott and his followers. Elliot believed that in most cases the charts tend to repeat one of these patterns with some distortion. By identifying these patterns traders can make assumptions about the future movement of chart.
 
-Patterns of Elliott Wave theory (called _Waves_)  have nonlinear structure. It means they can't be expressed as sequence of chart's points that must be recognized. Instead they are _fractals_ - each pattern consists of other patterns on a smaller scale. The main structure of each chart if _impulse-correction_ pair:
+Patterns of Elliott Wave theory (called _Waves_) have nonlinear structure. It means they can't be expressed as sequence of chart's points that must be recognized. Instead they are _fractals_ - each pattern consists of other patterns on a smaller scale. The main structure of each chart if _impulse-correction_ pair:
 
 [http://fractal-analysis.googlecode.com/svn/wiki/images/frac.png]
 
