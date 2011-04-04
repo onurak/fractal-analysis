@@ -61,6 +61,8 @@ public:
     typedef iterator Iterator;
     typedef const_iterator ConstIterator;
 public:
+    virtual ~PatternsSet() { cleanup(); }
+    void cleanup() { FL::cleanup(*this); }
 };
 
 } } // namepsace

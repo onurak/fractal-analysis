@@ -12,10 +12,27 @@ TEMPLATE = app
 
 SOURCES += gui/main.cpp\
         gui/MainWindow.cpp \
-    gui/QParseTreeRender.cpp
+    gui/QParseTreeRender.cpp \
+    fractallib/patterns/functions/Value.cpp \
+    fractallib/patterns/functions/AtOneLine.cpp \
+    fractallib/patterns/functions/StartTime.cpp \
+    fractallib/patterns/functions/EndTime.cpp \
+    fractallib/patterns/functions/Prev.cpp \
+    fractallib/patterns/functions/Self.cpp \
+    fractallib/patterns/functions/IsPrev.cpp \
+    fractallib/patterns/functions/Near.cpp
 
 HEADERS  += gui/MainWindow.h \
-    gui/QParseTreeRender.h
+    gui/QParseTreeRender.h \
+    fractallib/patterns/functions/Value.h \
+    fractallib/patterns/functions/AtOneLine.h \
+    fractallib/patterns/functions/StartTime.h \
+    fractallib/patterns/functions/EndTime.h \
+    fractallib/patterns/functions/Prev.h \
+    fractallib/patterns/functions/Self.h \
+    fractallib/patterns/functions/IsPrev.h \
+    fractallib/patterns/functions/Near.h \
+    gui/Utils.h
 
 FORMS    += gui/MainWindow.ui
 

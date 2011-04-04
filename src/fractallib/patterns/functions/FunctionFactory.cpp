@@ -1,6 +1,14 @@
 #include "FunctionFactory.h"
 #include "Min.h"
 #include "Max.h"
+#include "Value.h"
+#include "AtOneLine.h"
+#include "StartTime.h"
+#include "EndTime.h"
+#include "Prev.h"
+#include "Self.h"
+#include "IsPrev.h"
+#include "Near.h"
 
 using namespace FL::Patterns::Functions;
 
@@ -46,4 +54,12 @@ void FunctionFactory::registerAll()
     if (get("Max") != NULL) return;
     registerFunction(new Max());
     registerFunction(new Min());
+    registerFunction(new Value());
+    registerFunction(new AtOneLine());
+    registerFunction(new StartTime());
+    registerFunction(new EndTime());
+    registerFunction(new Prev());
+    registerFunction(new Self());
+    registerFunction(new IsPrev());
+    registerFunction(new Near());
 }

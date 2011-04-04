@@ -42,6 +42,7 @@ class EAnalyze : public EException
 {
 public:
     EAnalyze(int id = E_OK, const std::string& arg = "") : EException(id, arg) {}
+    void setArg(const char *arg) { m_arg = arg ? arg : ""; }
 };
 
 }} // namespaces

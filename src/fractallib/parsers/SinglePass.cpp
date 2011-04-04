@@ -15,30 +15,46 @@ FL::ParseResult SinglePass::analyze(const TimeSeries &ts, Forest &forest, Patter
 
     try
     {
-        if (ts.values().size() < 2 || forest.size() == 0 || patterns.size() == 0)
-            throw EAnalyze(E_INVALID_INPUT);
+        if (ts.values().size() < 2)
+            throw EAnalyze(E_EMPTY_TIME_SERIES);
+        if (forest.size() == 0)
+            throw EAnalyze(E_EMPTY_FOREST);
+        if (patterns.size() == 0)
+            throw EAnalyze(E_EMPTY_PATTERNS);
 
+        Forest outForest;
         Forest::Iterator tree;
         forall(tree, forest)
-            analyzeTree(ts, **tree, patterns);
+        {
+            FL::Trees::Tree *newTree = analyzeTree(ts, **tree, patterns);
+            //outForest.push_back(newTree);
+        }
+
+        //forest.cleanup();
+        //forest = outForest;
     }
     catch (const EAnalyze &e)
     {
         m_lastError = e;
+        m_lastError.setArg(descriptionOf(e.id()));
     }
 
     return m_result;
 }
 
-void SinglePass::analyzeTree(const TimeSeries &ts, Tree &tree, PatternsSet &patterns)
+FL::Trees::Tree* SinglePass::analyzeTree(const TimeSeries &ts, Tree &tree, PatternsSet &patterns)
 {
     // Initialize iterators
     PatternsSet::Iterator pattern;
 
+    // Output tree
+    //FL::Trees::Tree* outTree = tree.copy();
+
     // Initialize analyse context
     Context context;
+    context.setTimeSeries(&ts);
     context.setParseTree(&tree);
-    //context.setOutputTree(tree.copy());
+    //context.setOutputTree(outTree);
     context.setOutputTree(&tree);
     context.setCandidateNode(new Node());
 
@@ -56,9 +72,10 @@ void SinglePass::analyzeTree(const TimeSeries &ts, Tree &tree, PatternsSet &patt
         }
 
         if (!found)
-            context.anvanceCurrentRoot(1);
+            context.advanceCurrentRoot(1);
     }
     delete context.candidateNode();
+    //return outTree;
 }
 
 bool SinglePass::applyPattern(Pattern &pattern, Context &context)
@@ -72,18 +89,12 @@ bool SinglePass::applyPattern(Pattern &pattern, Context &context)
         // Insert candidate node into output tree
         context.buildLastParsed(seq);
         Layer::Iterator child;
-
-//        forall(child, context.lastParsed())
-//        {
-//             Node *relativeToChild = (*child)->relativeNode();
-//             relativeToChild->setParent(candidate);
-//        }
         forall(child, context.lastParsed())
             (*child)->setParent(context.candidateNode());
         context.outputTree().add(context.candidateNode());
 
         // Update result, advance current roots position
-        context.anvanceCurrentRoot(seq.size());
+        context.advanceCurrentRoot(seq.size());
         m_result.nodesAdded += 1;
         context.setCandidateNode(new Node());
 

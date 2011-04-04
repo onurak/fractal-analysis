@@ -27,6 +27,43 @@ namespace FL {
     const int E_UNKNOWN_IDENTIFIER   = 5; //!< Unknown identifier name
     const int E_SYNTAX_ERROR         = 6; //!< Syntax error (invalid token sequence)
     const int E_INVALID_DATA         = 7; //!< Invalid arguments passed (excluding input e.g. output structure)
+
+    /*! Get standart compilation error description */
+    inline std::string errorDescription(const FL::Exceptions::EParsing &e)
+    {
+        std::string result;
+        char buf[100];
+        switch (e.id())
+        {
+            case FL::E_OK:
+                result = "OK";
+                break;
+            case FL::E_EMPTY_INPUT:
+                result = "Input is empty";
+                break;
+            case FL::E_EXPECTED_TOKEN:
+                sprintf(buf, "At line %d: Expected '%s'",
+                        e.line(), e.arg().c_str());
+                result = buf;
+                break;
+            case FL::E_UNEXPECTED_TOKEN:
+                sprintf(buf, "At line %d: Unexpected '%s'",
+                        e.line(), e.arg().c_str());
+                result = buf;
+                break;
+            case FL::E_SYNTAX_ERROR:
+                sprintf(buf, "At line %d: Syntax error '%s'",
+                        e.line(), e.arg().c_str());
+                result = buf;
+                break;
+            case FL::E_UNKNOWN_IDENTIFIER:
+                sprintf(buf, "At line %d: Unknown identifier '%s'",
+                        e.line(), e.arg().c_str());
+                result = buf;
+                break;
+        }
+        return result;
+    }
 }
 
 namespace FL { namespace Compilers {
@@ -56,17 +93,11 @@ public:
     int line() const;
     int column() const;
     bool isEoi() const;
-
-    int remLine() const;
-    int remColumn() const;
-    void setRemPos(int line, int column);
 private:
     int m_line;
     int m_column;
     int m_refCount;
     int m_pc;
-    int m_remLine;
-    int m_remColumn;
     Iterator &m_input;
 
 };

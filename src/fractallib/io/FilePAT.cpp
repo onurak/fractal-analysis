@@ -63,6 +63,17 @@ protected:
                 m_l = LEX_SEMICOLON;
                 gc();
             }
+            else if (c() == '#')
+            {
+                while (gc() != '\n' && !isEoi())
+                    ;
+            }
+            else
+            {
+                std::string ch;
+                ch = (char)c();
+                error(E_UNEXPECTED_TOKEN, ch);
+            }
         }
     }
 

@@ -13,6 +13,8 @@ public:
     typedef const_iterator ConstIterator;
 public:
     Forest();
+    virtual ~Forest() { cleanup(); }
+    void cleanup() { FL::cleanup(*this); }
 };
 
 }} // namespaces

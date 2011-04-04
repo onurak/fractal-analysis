@@ -49,7 +49,7 @@ void Context::buildLastParsed(const CISequence& seq)
     }
 }
 
-void Context::anvanceCurrentRoot(int step)
+void Context::advanceCurrentRoot(int step)
 {
     m_currentRoot += step;
     m_currentRootPos += step;
@@ -58,8 +58,14 @@ void Context::anvanceCurrentRoot(int step)
 void Context::setParseTree(Trees::Tree *tree)
 {
     m_parseTree = tree;
+}
+
+void Context::setOutputTree(Trees::Tree *tree)
+{
+    m_outputTree = tree;
     m_roots.assign(tree->roots().begin(), tree->roots().end());
     m_currentRoot = m_roots.begin();
+    m_currentRootPos = 0;
 }
 
 //! Analyzing roots of tree
@@ -67,3 +73,14 @@ void Context::setParseTree(Trees::Tree *tree)
 //{
 
 //}
+
+const FL::TimeSeries* Context::timeSeries()
+{
+    return m_ts;
+}
+
+//! Set analyzing time series
+void Context::setTimeSeries(const FL::TimeSeries* ts)
+{
+    m_ts = ts;
+}

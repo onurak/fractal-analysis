@@ -57,7 +57,7 @@ public:
     const std::list<Trees::Node*>::const_iterator& currentRoot();
 
     //! Change position of current root
-    void anvanceCurrentRoot(int step);
+    void advanceCurrentRoot(int step);
 
     //! Get position to the end of roots()  (same as currentRoot() - roots().begin(),
     //! but operator- not defined for std::list::const_iterator).
@@ -75,7 +75,7 @@ public:
     Trees::Tree& outputTree() { return *m_outputTree; }
 
     //! Set output tree where results of analysis are stored
-    void setOutputTree(Trees::Tree *tree) { m_outputTree = tree; }
+    void setOutputTree(Trees::Tree *tree);
 
 
     //! Get currently checking node that passed description check and going to check in guard
@@ -97,6 +97,11 @@ public:
         return m_currentRootPos == (int)m_roots.size();
     }
 
+    //! Get analyzing time series
+    const FL::TimeSeries* timeSeries();
+
+    //! Set analyzing time series
+    void setTimeSeries(const FL::TimeSeries* ts);
 private:
     //! Current forest
     Trees::Forest *m_forest;
@@ -125,6 +130,9 @@ private:
 
     //! For fast calculation of position of current root in list
     int m_currentRootPos;
+
+    //! Analyzing time series
+    const FL::TimeSeries *m_ts;
 };
 
 }} // namespaces

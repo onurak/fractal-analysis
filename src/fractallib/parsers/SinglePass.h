@@ -15,7 +15,7 @@ public:
         Trees::Forest &forest,
         Patterns::PatternsSet &patterns);
 protected:
-    void analyzeTree(const TimeSeries &ts, Trees::Tree &tree, Patterns::PatternsSet &patterns);
+    FL::Trees::Tree* analyzeTree(const TimeSeries &ts, Trees::Tree &tree, Patterns::PatternsSet &patterns);
 
     bool applyPattern(Patterns::Pattern &pattern, Patterns::Context &context);
 

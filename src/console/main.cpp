@@ -1,6 +1,6 @@
 #include "Testing.h"
 
-//GLogger logg("./lastrun.log");
+GLogger logg("./lastrun.log");
 
 void GlobalErrorHandler(GErrorType type, const std::string& notifier, int errNo, const std::string& description)
 {
