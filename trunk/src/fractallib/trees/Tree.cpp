@@ -73,7 +73,7 @@ void Tree::add(Node *node)
         if (node->parent() == NULL)
         {
             node->m_internalParent = m_virtualRoot;
-            m_virtualRoot->children().push_back(node);
+            insertChild(m_virtualRoot, node);
         }
         else
         {
@@ -83,6 +83,18 @@ void Tree::add(Node *node)
         // Add to leveled cache
         m_nodesByLevel[node->level()].push_back(node);
     }
+}
+
+void Tree::insertChild(Node *dst, Node *src)
+{
+    // Children of dst must be sorted by position in time series
+    Layer::Iterator node;
+    forall(node, dst->children())
+    {
+        if ((*node)->begin() >= src->end())
+            break;
+    }
+    dst->children().insert(node, src);
 }
 
 void Tree::remove(Node *node)

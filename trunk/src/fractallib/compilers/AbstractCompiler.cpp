@@ -11,14 +11,14 @@ Lexeme::Lexeme(int id, int index)
 
 
 Input::Input(const Input &i)
-    : m_line(i.m_line), m_column(i.m_column), m_refCount(0), m_pc(-1),
-      m_remLine(i.m_remLine), m_remColumn(i.m_remColumn), m_input(i.m_input)
+    : m_line(i.m_line), m_column(i.m_column),
+      m_refCount(0), m_pc(-1),m_input(i.m_input)
 {
 }
 
 Input::Input(Iterator &it)
-    : m_line(1), m_column(1), m_refCount(0), m_pc(-1),
-      m_remLine(1), m_remColumn(1), m_input(it)
+    : m_line(1), m_column(1),
+      m_refCount(0), m_pc(-1), m_input(it)
 
 {
 }
@@ -69,21 +69,6 @@ int Input::column() const
     return m_column;
 }
 
-int Input::remLine() const
-{
-    return m_remLine;
-}
-int Input::remColumn() const
-{
-    return m_remColumn;
-}
-
-void Input::setRemPos(int line, int column)
-{
-    m_remLine = line;
-    m_remColumn = column;
-}
-
 bool Input::isEoi() const
 {
     return *m_input == EOF;
@@ -130,7 +115,7 @@ std::string AbstractCompiler::psymbol() const
 
 void AbstractCompiler::error(int id, const std::string &arg)
 {
-    throw FL::Exceptions::EParsing(id, m_input->remLine(), m_input->remColumn(), arg);
+    throw FL::Exceptions::EParsing(id, m_input->line(), m_input->column(), arg);
 }
 
 bool AbstractCompiler::compile(const std::string &s, CompilationFlags flags)
@@ -206,7 +191,6 @@ void AbstractCompiler::gl()
     m_lexprev = m_lex;
     m_l = LEX_UNKNOWN;
     m_lex.index = -1;
-    m_input->setRemPos(m_input->line(), m_input->column());
     vgl();
 }
 
@@ -406,7 +390,10 @@ void AbstractCompiler::vgl()
         {
             gc();
             if (wantLexeme(LEX_GEQ) && c() == '=')
+            {
                 m_l = LEX_GEQ;
+                gc();
+            }
             else
                 m_l = LEX_GRTR;
             continue;
@@ -419,7 +406,10 @@ void AbstractCompiler::vgl()
         {
             gc();
             if (wantLexeme(LEX_LEQ) && c() == '=')
+            {
                 m_l = LEX_LEQ;
+                gc();
+            }
             else
                 m_l = LEX_LESS;
             continue;

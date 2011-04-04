@@ -40,7 +40,18 @@ search(Collection &c, const Value &v, typename Collection::iterator &i)
     return i != c.end();
 }
 
-
+template <typename Collection>
+inline void
+cleanup(Collection &c)
+{
+    if (c.size() > 0)
+    {
+        typename Collection::iterator i;
+        forall(i, c)
+            delete *i;
+        c.clear();
+    }
+}
 
 
 class ParseResult
@@ -59,6 +70,11 @@ public:
     int treesAdded;
     int treesModified;
     int nodesAdded;
+
+    bool somethingAdded() const
+    {
+        return treesAdded > 0 || treesModified > 0 || nodesAdded > 0;
+    }
 };
 
 class IDGenerator

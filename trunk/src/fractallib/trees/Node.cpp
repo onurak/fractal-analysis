@@ -4,8 +4,8 @@
 using namespace FL::Trees;
 
 Node::Node(Node *parent, int id, int begin, int end, int level)
-    : m_id(id), m_begin(begin), m_end(end), m_level(level), m_parent(parent),
-      m_relativeNode(NULL), m_internalParent(NULL)
+    : m_id(id), m_index(-1), m_begin(begin), m_end(end), m_level(level),
+      m_parent(parent), m_relativeNode(NULL), m_internalParent(NULL)
 {
     m_children = new Layer();
 }

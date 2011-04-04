@@ -24,6 +24,10 @@ public:
 
     Tree* copy();
     void clear();
+protected:
+    //! Insert one node to children's sequence of another at right place
+    //! according to position in time series
+    void insertChild(Node *dst, Node *src);
 private:
     //! All nodes of tree
     Layer m_allNodes;

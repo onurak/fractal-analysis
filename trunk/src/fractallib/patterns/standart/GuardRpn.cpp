@@ -801,7 +801,6 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
             Function *f = FunctionFactory::get(m_name);
             if (f == NULL)
                 error(E_UNKNOWN_IDENTIFIER, m_name);
-
             gl();
             if (m_l != LEX_LPAREN)
                 error(E_EXPECTED_TOKEN, "(");
@@ -821,17 +820,48 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
             addCall(f, argCount);
         }
 
+        void function_or_name()
+        {
+            if (m_l != LEX_NAME)
+                error(E_EXPECTED_TOKEN, "name");
+            std::string name = m_name;
+            gl();
+
+            // It must be function
+            if (m_l == LEX_LPAREN)
+            {
+                Function *f = FunctionFactory::get(name);
+                if (f == NULL)
+                    error(E_UNKNOWN_IDENTIFIER, name);
+                gl();
+                int argCount = 0;
+                if (m_l != LEX_RPAREN)
+                    argCount = arg();
+                while (m_l == LEX_COMMA)
+                {
+                    gl();
+                    argCount += arg();
+                }
+                if (m_l != LEX_RPAREN)
+                    error(E_EXPECTED_TOKEN, ")");
+                gl();
+
+                addCall(f, argCount);
+            }
+            // It must be nonindexed argument
+            else
+            {
+                addInstruction(OPERAND, addOperand(name));
+            }
+        }
+
         int arg()
         {
             int argCount = 1;
 
-            if (m_l == LEX_NAME
-                //&&
-                //!PredicateFactory::predicateByName(m_lical->name())
-                )
+            if (m_l == LEX_NAME)
             {
-                addOperand( IDGenerator::idOf(m_name) );
-                gl();
+                function_or_name();
             }
             else if (m_l == LEX_INDEXED_NAME)
             {
@@ -859,7 +889,6 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
                     addInstruction(LOAD_NODES, opIndex);
                 else
                     addInstruction(LOAD_NODE, opIndex);
-
             }
             else
                 b_expr();
@@ -929,7 +958,7 @@ EParsing GuardRpn::compile(Compilers::Input &i)
 
 bool GuardRpn::check(Context &c, CheckInfo &info)
 {
-    //return ((bool)execute(context) == true) && (m_lastError == NO_ERROR);
-    //info.patternSize = 1;
-    return true;
+    bool result = (m_rpnProgram->execute(c)) &&
+                  (m_rpnProgram->lastError() == Internal::Program::NO_ERROR);
+    return result;
 }

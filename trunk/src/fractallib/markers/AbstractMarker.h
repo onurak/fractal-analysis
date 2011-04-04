@@ -26,6 +26,7 @@ public:
                       Patterns::PatternsSet &patterns) = 0;
 
     const Exceptions::EAnalyze& lastError() const { return m_lastError; }
+    bool wasOk() const { return m_lastError.id() == E_OK; }
 protected:
     Exceptions::EAnalyze m_lastError;
 };

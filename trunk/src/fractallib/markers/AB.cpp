@@ -28,9 +28,9 @@ FL::ParseResult AB::analyze(
         const int up   = IDGenerator::idOf("a");
         const int down = IDGenerator::idOf("b");
 
-        for (unsigned int i = 0; i < ts.values().size(); i += 2)
+        for (unsigned int i = 0; i < ts.values().size()-1; i += 1)
         {
-            const int &id =  (ts.values()[i] >= ts.values()[i+1])  ?  up  :  down;
+            const int &id =  (ts.values()[i] <= ts.values()[i+1])  ?  up  :  down;
             tree->add(new Node(NULL, id, i, i+1, 0));
         }
         forest.push_back(tree);
