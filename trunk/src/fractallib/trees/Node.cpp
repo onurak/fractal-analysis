@@ -3,15 +3,33 @@
 
 using namespace FL::Trees;
 
-Node::Node(Node *parent, int id, int begin, int end, int level)
+Node::Node(Node *parent, int id, int begin, int end, int level, NodeStatus ns)
     : m_id(id), m_index(-1), m_begin(begin), m_end(end), m_level(level),
-      m_parent(parent), m_relativeNode(NULL), m_internalParent(NULL)
+      m_parent(parent), m_status(ns), m_relativeNode(NULL),
+      m_internalParent(NULL)
 {
     m_children = new Layer();
 }
 
+Node::Node(const Node &node)
+{
+    m_children = new Layer();
+    m_id = node.id();
+    m_index = node.index();
+    m_level = node.level();
+    m_begin = node.begin();
+    m_end = node.end();
+    m_parent = NULL;
+    m_relativeNode = NULL;
+    m_internalParent = NULL;
+    m_status = FL::nsFixed;
+}
+
 Node::~Node()
 {
+    setParent(NULL);
+    while (m_children->size() > 0)
+        m_children->front()->setParent(NULL);
     delete m_children;
 }
 

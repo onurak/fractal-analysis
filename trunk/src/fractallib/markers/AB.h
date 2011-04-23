@@ -5,7 +5,7 @@
 
 namespace FL { namespace Markers {
 
-class AB : public FL::Markers::AbstractMarker
+class AB : public AbstractMarker
 {
 public:
     AB();

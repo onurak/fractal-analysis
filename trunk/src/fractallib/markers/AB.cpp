@@ -39,7 +39,7 @@ FL::ParseResult AB::analyze(
     }
     catch (const EAnalyze &e)
     {
-
+        m_lastError = e;
     }
     return result;
 }

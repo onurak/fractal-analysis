@@ -2,7 +2,6 @@
 #define DESCRIPTION_H
 
 #include <string>
-#include "SynonymsTable.h"
 #include "../exceptions/EException.h"
 #include "../compilers/AbstractCompiler.h"
 #include "CheckInfo.h"

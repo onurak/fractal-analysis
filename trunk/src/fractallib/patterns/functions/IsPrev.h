@@ -5,6 +5,12 @@
 
 namespace FL { namespace Patterns { namespace Functions {
 
+/*! \class IsPrev
+  * \brief Check if previous to current node have specified name
+  *
+  * Argument is a string node name.
+  * Result is true or false.
+  */
 class IsPrev : public Function
 {
 public:

@@ -5,6 +5,12 @@
 
 namespace FL { namespace Patterns { namespace Functions {
 
+/*! \class Self
+  * \brief Return pointer to currently analyzing node.
+  *
+  * It don't want any arguments.
+  * Return pointer to FL::Trees::Node* that just was recognized and analyzing now.
+  */
 class Self : public Function
 {
 public:

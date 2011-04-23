@@ -427,6 +427,7 @@ public:
                 return reinterpret_cast<void*>(_data.custom);
             default:
                 GVarInvalidCast(typeName(), typeName(G_VAR_PVOID));
+                return NULL;
         }
     }
 
@@ -1024,12 +1025,30 @@ inline bool operator==(const GVariant &left, const GVariant &right)
 {
     if (left._type == G_VAR_NULL || right._type == G_VAR_NULL)
         G_VAR_UNDEFINED_OPERATION
-    switch (left._type) {
-        case G_VAR_INT: return left._data.i == int(right);
-        case G_VAR_FLOAT: return left._data.f == float(right);
-        case G_VAR_DOUBLE: return left._data.d == double(right);
-        case G_VAR_PCHAR: return strcmp(left._data.pc, (char*)(right)) == 0;
-        case G_VAR_BOOL: return left._data.b == right._data.b;
+    switch (left._type)
+    {
+        case G_VAR_INT:
+            if (!right.canCastTo(G_VAR_INT))
+                return false;
+            return left._data.i == int(right);
+        case G_VAR_FLOAT:
+            if (!right.canCastTo(G_VAR_FLOAT))
+                return false;
+            return left._data.f == float(right);
+        case G_VAR_DOUBLE:
+            if (!right.canCastTo(G_VAR_FLOAT))
+                return false;
+            return left._data.d == double(right);
+        case G_VAR_PCHAR:
+            return strcmp(left._data.pc, (char*)(right)) == 0;
+        case G_VAR_BOOL:
+            if (!right.canCastTo(G_VAR_BOOL))
+                return false;
+            return left._data.b == (bool)right;
+        case G_VAR_PVOID:
+            if (!right.canCastTo(G_VAR_PVOID))
+                return false;
+            return left._data.pv == (void*)right;
         default:
             G_VAR_UNDEFINED_OPERATION
     }
@@ -1071,17 +1090,7 @@ inline bool operator!=(const GVariant &left, const char *right)
   */
 inline bool operator!=(const GVariant &left, const GVariant &right)
 {
-    if (left._type == G_VAR_NULL || right._type == G_VAR_NULL)
-        G_VAR_UNDEFINED_OPERATION
-    switch (left._type) {
-        case G_VAR_INT: return left._data.i != int(right);
-        case G_VAR_FLOAT: return left._data.f != float(right);
-        case G_VAR_DOUBLE: return left._data.d != double(right);
-        case G_VAR_PCHAR: return strcmp(left._data.pc, (char*)(right)) != 0;
-        case G_VAR_BOOL: return left._data.b != right._data.b;
-        default:
-            G_VAR_UNDEFINED_OPERATION
-    }
+    return !(left == right);
 }
 
 /*! \brief Less operator

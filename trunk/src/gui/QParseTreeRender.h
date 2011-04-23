@@ -65,6 +65,16 @@ public:
     bool showRoots() const { return m_showRoots; }
     void setShowRoots(bool value) { m_showRoots = value; }
 
+    int currentTree() const { return m_currentTree; }
+    void setCurrentTree(int value) {
+        m_currentTree = value;
+        if (m_currentTree < 0)
+            m_currentTree = 0;
+        if (m_currentTree >= (int)m_forest->size())
+            m_currentTree = m_forest->size() - 1;
+        forestChanged();
+    }
+
 protected:
     void draw();
     void drawCoordinateSystem();
@@ -74,7 +84,9 @@ protected:
     void drawTreeLayer(const FL::Trees::Layer &layer,
                        QColor color,
                        LayerDrawingOptions options = ldoNone);
+    void prepare();
 private:
+    int m_currentTree;
     bool m_showRoots;
 private:
     QParseTreeScene *m_scene;
@@ -82,7 +94,7 @@ private:
     FL::TimeSeries *m_ts;
     FL::Trees::Forest *m_forest;
     double m_tsYMin;
-    double m_tsYMax;
+    double m_tsYMax;    
     //QLinkedList<QGraphicsItem*> m_tsItems;
     //QLinkedList<QGraphicsItem*> m_coordSystemItems;
 };

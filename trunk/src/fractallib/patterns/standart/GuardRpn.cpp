@@ -352,7 +352,7 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
                         {
                             st_push( f(context, args) );
                         }
-                        catch (const FL::Exceptions::EFunction &e)
+                        catch (const FL::Exceptions::EArguments &e)
                         {
                             return error(
                                     Program::Errors( FUNCTION_ERROR + e.id() ));
@@ -490,6 +490,7 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
     {
     public:
         Program *m_program;
+        int m_isFuncArg;
     public:
         RpnCompiler(Program *program)
         {
@@ -529,6 +530,7 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
     protected:
 
         std::string m_name;
+        std::string m_funcName;
 
         virtual void vgl()
         {
@@ -616,6 +618,7 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
 
         virtual void S()
         {
+            m_isFuncArg = 0;
             b_expr();
             if (m_l != LEX_SEMICOLON)
                 error(E_EXPECTED_TOKEN, ";");
@@ -749,7 +752,45 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
             }
             else if (m_l == LEX_NAME)
             {
-                function();
+                m_funcName = m_name;
+                gl();
+                if (m_l == LEX_LPAREN)
+                {
+                    function();
+                }
+                else if (m_isFuncArg)
+                    addOperand(m_funcName);
+                else
+                    error(E_SYNTAX_ERROR, "Pattern name outside function");
+            }
+            else if (m_l == LEX_INDEXED_NAME)
+            {
+                if (!m_isFuncArg)
+                    error(E_SYNTAX_ERROR, "Pattern name outside function");
+                std::string indexedName = m_name;
+                int indexedNo = 0;
+                gl();
+                if (m_l == LEX_INTEGER)
+                {
+                    indexedNo = m_symbolsTable[m_lex.index];
+                    gl();
+                }
+                else if (m_l == LEX_MULT)
+                {
+                    if (IDGenerator::idOf(indexedName) == IDGenerator::WILDCARD)
+                        error(E_SYNTAX_ERROR, "* both on name and index");
+                    indexedNo = -1;
+                    gl();
+                }
+                else
+                    error(E_SYNTAX_ERROR, "Index or * expected");
+                // push indexed parameters
+                int opIndex = addOperand( GVariant(IndexedName(indexedName, indexedNo)) );
+                // push LOAD_NODE or LOAD_NODES instruction
+                if (indexedNo == -1)
+                    addInstruction(LOAD_NODES, opIndex);
+                else
+                    addInstruction(LOAD_NODE, opIndex);
             }
             else if (m_l == LEX_LPAREN)
             {
@@ -796,103 +837,36 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
 
         void function()
         {
-            if (m_l != LEX_NAME)
-                error(E_EXPECTED_TOKEN, "name");
-            Function *f = FunctionFactory::get(m_name);
-            if (f == NULL)
-                error(E_UNKNOWN_IDENTIFIER, m_name);
-            gl();
             if (m_l != LEX_LPAREN)
                 error(E_EXPECTED_TOKEN, "(");
             gl();
+            Function *f = FunctionFactory::get(m_funcName);
+            if (f == NULL)
+                error(E_UNKNOWN_IDENTIFIER, m_funcName);
+            m_isFuncArg++;
             int argCount = 0;
             if (m_l != LEX_RPAREN)
-                argCount = arg();
+            {
+                arg();
+                argCount++;
+            }
             while (m_l == LEX_COMMA)
             {
                 gl();
-                argCount += arg();
+                arg();
+                argCount++;
             }
             if (m_l != LEX_RPAREN)
                 error(E_EXPECTED_TOKEN, ")");
             gl();
 
             addCall(f, argCount);
+            m_isFuncArg--;
         }
 
-        void function_or_name()
+        void arg()
         {
-            if (m_l != LEX_NAME)
-                error(E_EXPECTED_TOKEN, "name");
-            std::string name = m_name;
-            gl();
-
-            // It must be function
-            if (m_l == LEX_LPAREN)
-            {
-                Function *f = FunctionFactory::get(name);
-                if (f == NULL)
-                    error(E_UNKNOWN_IDENTIFIER, name);
-                gl();
-                int argCount = 0;
-                if (m_l != LEX_RPAREN)
-                    argCount = arg();
-                while (m_l == LEX_COMMA)
-                {
-                    gl();
-                    argCount += arg();
-                }
-                if (m_l != LEX_RPAREN)
-                    error(E_EXPECTED_TOKEN, ")");
-                gl();
-
-                addCall(f, argCount);
-            }
-            // It must be nonindexed argument
-            else
-            {
-                addInstruction(OPERAND, addOperand(name));
-            }
-        }
-
-        int arg()
-        {
-            int argCount = 1;
-
-            if (m_l == LEX_NAME)
-            {
-                function_or_name();
-            }
-            else if (m_l == LEX_INDEXED_NAME)
-            {
-                std::string indexedName = m_name;
-                int indexedNo = 0;
-                gl();
-                if (m_l == LEX_INTEGER)
-                {
-                    indexedNo = m_symbolsTable[m_lex.index];
-                    gl();
-                }
-                else if (m_l == LEX_MULT)
-                {
-                    if (IDGenerator::idOf(indexedName) == IDGenerator::WILDCARD)
-                        error(E_SYNTAX_ERROR, "* both on name and index");
-                    indexedNo = -1;
-                    gl();
-                }
-                else
-                    error(E_SYNTAX_ERROR, "Index or * expected");
-                // push indexed parameters
-                int opIndex = addOperand( GVariant(IndexedName(indexedName, indexedNo)) );
-                // push LOAD_NODE or LOAD_NODES instruction
-                if (indexedNo == -1)
-                    addInstruction(LOAD_NODES, opIndex);
-                else
-                    addInstruction(LOAD_NODE, opIndex);
-            }
-            else
-                b_expr();
-            return argCount;
+            b_expr();
         }
 
         inline void addInstruction(int type, int concr)

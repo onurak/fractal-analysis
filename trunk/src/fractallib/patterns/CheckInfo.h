@@ -38,7 +38,7 @@ inline bool operator==(const CISequence &s1, const CISequence &s2)
 struct CheckInfo
 {
     //! Set of applicable sequences
-    std::vector<CISequence*> applicableSequnces;
+    std::vector<CISequence*> applicableSequences;
 };
 
 }} // namepsace

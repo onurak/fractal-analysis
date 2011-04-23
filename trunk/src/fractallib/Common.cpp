@@ -4,6 +4,7 @@ using namespace FL;
 
 std::map<std::string, int> IDGenerator::m_map;
 std::map<int, std::string> IDGenerator::m_invMap;
+std::map< int, std::vector<int> > IDGenerator::m_synonyms;
 int IDGenerator::m_id = 0;
 std::string EMPTY_STRING = "";
 
@@ -33,7 +34,22 @@ const std::string& IDGenerator::nameOf(int id)
         return EMPTY_STRING;
 }
 
+void IDGenerator::makeSynonyms(const std::string &name1, const std::string &name2)
+{
+    int id1 = idOf(name1), id2 = idOf(name2);
+    m_synonyms[id1].push_back(id2);
+    m_synonyms[id2].push_back(id1);
+}
 
+bool IDGenerator::isSynonyms(int id1, int id2)
+{
+    if (id1 == id2)
+        return true;
+
+    std::vector<int> &synonymsOfId1 = m_synonyms[id1];
+    return std::find(synonymsOfId1.begin(), synonymsOfId1.end(), id2)
+            != synonymsOfId1.end();
+}
 
 /*
 std::string upperCase(const std::string &s)

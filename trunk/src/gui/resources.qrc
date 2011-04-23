@@ -10,5 +10,7 @@
         <file>resources/settings.png</file>
         <file>resources/zoom_in.png</file>
         <file>resources/zoom_out.png</file>
+        <file>resources/open_dynamic_time_series.png</file>
+        <file>resources/dynamic_step.png</file>
     </qresource>
 </RCC>
