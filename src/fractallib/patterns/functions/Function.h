@@ -16,10 +16,6 @@ namespace FL { namespace Patterns { namespace Functions {
 struct IndexedName
 {
     IndexedName(int nameId = -1, int no = -2) : nameId(nameId), no(no) {}
-    IndexedName(const std::string &name = "", int no = -2) : no(no)
-    {
-        nameId = IDGenerator::idOf(name);
-    }
     int nameId;
     int no;
 };

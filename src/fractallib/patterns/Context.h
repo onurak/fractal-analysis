@@ -50,10 +50,10 @@ public:
     void buildLastParsed(const CISequence& seq);
 
     //! Get first node from last parsed sequence with specified parameters
-    Trees::Node* getNode(int nameId, int no) const;
+    Trees::Node* getNode(int nameId, int index) const;
 
     //! Get all nodes from last parsed sequence with specified parameters
-    const Trees::Layer& getNodes(int nameId, int no) const;
+    const Trees::Layer& getNodes(int nameId, int index) const;
 
 
     //! Get current position at the analyzing sequence of roots

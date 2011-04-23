@@ -18,6 +18,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->lbPatternsFile->setText("");
     ui->lbTimeSeriesFile->setText("");
+    ui->bnHalt->setEnabled(false);
 
     ui->cbMarker->addItem("AB");
     ui->cbMarker->setCurrentIndex(0);
@@ -364,7 +365,9 @@ bool MainWindow::parseLevel()
 
     parser->onProgress = delegate(this, &MainWindow::onParsingProgress);
 
+    prepareForLongAnalysis();
     FL::ParseResult parseResult = parser->analyze(m_timeSeries, m_forest, m_patterns);
+    longAnalysisComplete();
 
     bool result = parser->wasOk();
     if (parser->wasOk())
@@ -420,21 +423,25 @@ void MainWindow::on_sbCurrentTreeIndex_valueChanged(int index)
         m_render->setCurrentTree(index-1);
 }
 
-bool MainWindow::onParsingProgress(FL::ParseResult pr)
+bool MainWindow::onParsingProgress(FL::ParseResult pr, FL::Trees::Forest *currentForest)
 {
-    ui->sbCurrentTreeIndex->setEnabled(m_forest.size() > 0);
-    ui->sbCurrentTreeIndex->setMinimum(1);
-    if (m_forest.size() == 0)
-        ui->sbCurrentTreeIndex->setMaximum(1);
-    else
-        ui->sbCurrentTreeIndex->setMaximum(m_forest.size());
-    ui->sbCurrentTreeIndex->setValue(1);
-    ui->lbTreeCount->setText(QString().setNum(pr.treesAdded));
-
     ui->statusBar->showMessage("Busy...");
+    if (m_cyclesCount++ % 100 == 0)
+    {
+        ui->lbTreeCount->setText(QString().setNum(pr.treesAdded));
+        if (currentForest)
+        {
+            int memUsage = 0;
+            FL::Trees::Forest::ConstIterator tree;
+            forall(tree, *currentForest)
+                memUsage += (*tree)->bytesUsed();
+            ui->lbMemUsage->setText(QString("%1 KB").arg(memUsage/1024));
+        }
+    }
 
-    QApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-    return true;
+    QApplication::processEvents(QEventLoop::AllEvents, 300);
+
+    return m_wantInterrupt == false;
 }
 
 void MainWindow::spc_action_ExecuteFilter(QAction* a)
@@ -585,4 +592,27 @@ void MainWindow::on_tbOpenMarkerPatternsSet_clicked()
 
     loadPatterns(openDialog.selectedFiles()[0], m_markerPatterns);
     ui->lbMarkerPatterns->setText( extractFileName(openDialog.selectedFiles()[0]) );
+}
+
+void MainWindow::prepareForLongAnalysis()
+{
+    ui->menuBar->setEnabled(false);
+    ui->dockWidgetProperties->setEnabled(false);
+    ui->sbCurrentTreeIndex->setEnabled(false);
+    ui->bnHalt->setEnabled(true);
+    m_cyclesCount = 0;
+    m_wantInterrupt = false;
+}
+
+void MainWindow::longAnalysisComplete()
+{
+    ui->menuBar->setEnabled(true);
+    ui->dockWidgetProperties->setEnabled(true);
+    ui->sbCurrentTreeIndex->setEnabled(true);
+    ui->bnHalt->setEnabled(false);
+}
+
+void MainWindow::on_bnHalt_clicked()
+{
+    m_wantInterrupt = true;
 }

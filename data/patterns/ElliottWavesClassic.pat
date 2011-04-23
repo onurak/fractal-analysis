@@ -258,13 +258,6 @@ PATTERNS:
 			2);
 	
 SYNONYMS:
-	IMUP = IMClassicUP;
-	IMUP = IMFailedFifthUP;
-	IMDN = IMClassicDN;
-	IMDN = IMFailedFifthDN;
-	
-	EDIAGUP = EDIAGClassicUP;
-	EDIAGUP = EDIAGClassicUP;
-	EDIAGDN = EDIAGClassicDN;
-	EDIAGDN = EDIAGClassicDN;
+	IMUP = IMClassicUP, IMFailedFifthUP;
+	IMDN = IMClassicDN, IMFailedFifthDN;
 	

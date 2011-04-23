@@ -489,12 +489,14 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
     class RpnCompiler : public AbstractCompiler
     {
     public:
+        GuardRpn::GuardSet *m_programs;
         Program *m_program;
+        CINode m_currentNode;
         int m_isFuncArg;
     public:
-        RpnCompiler(Program *program)
+        RpnCompiler(GuardRpn::GuardSet *programs)
         {
-            m_program = program;
+            m_programs = programs;
             FunctionFactory::registerAll();
             m_oneLineCommentBegin = '#';
             // fill reserved word list
@@ -523,6 +525,7 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
             filterLexeme(LEX_DIV,       true);
             filterLexeme(LEX_COMMA,     true);
             filterLexeme(LEX_SEMICOLON, true);
+            filterLexeme(LEX_COLON,     true);
         }
 
 
@@ -569,6 +572,18 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
                     else
                         m_l = LEX_NAME;
                 }
+                else if (c() == '?')
+                {
+                    gc();
+                    if (c() != '_')
+                        m_l = LEX_NAME;
+                    else
+                    {
+                        m_name = "?";
+                        m_l = LEX_INDEXED_NAME;
+                        gc();
+                    }
+                }
                 // math * or wildcard indexed name
                 else if (c() == '*')
                 {
@@ -581,6 +596,17 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
                         m_l = LEX_INDEXED_NAME;
                         gc();
                     }
+                }
+                else if (c() == '-')
+                {
+                    gc();
+                    if (c() == '>')
+                    {
+                        m_l = LEX_COLON;
+                        gc();
+                    }
+                    else
+                        m_l = LEX_MINUS;
                 }
                 else
                     AbstractCompiler::vgl();
@@ -618,10 +644,59 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
 
         virtual void S()
         {
+            GuardRpn::GuardSet::iterator itProg;
+            forall(itProg, *m_programs)
+                delete itProg->second;
+            m_programs->clear();
+
             m_isFuncArg = 0;
-            b_expr();
+            while (m_l != LEX_SEMICOLON && m_l != LEX_EOI)
+            {
+                symbol_guard();
+                if (m_l != LEX_COMMA && m_l != LEX_SEMICOLON)
+                    error(E_EXPECTED_TOKEN, ";");
+                if (m_l == LEX_COMMA)
+                    gl();
+            }
+
             if (m_l != LEX_SEMICOLON)
                 error(E_EXPECTED_TOKEN, ";");
+            gl();
+        }
+
+        void symbol_guard()
+        {
+            if (m_l != LEX_INDEXED_NAME && m_l != LEX_NAME)
+                error(E_EXPECTED_TOKEN, "name, indexed or wildcard");
+
+            // Read node parameters (name and optional index)
+            if (m_name != "?")
+                m_currentNode.id = IDGenerator::idOf(m_name);
+            else
+                m_currentNode.id = IDGenerator::WILDCARD;
+            if (m_l == LEX_NAME)
+            {
+                m_currentNode.index = -1;
+                gl();
+                if (m_l == LEX_MULT)
+                    gl();
+            }
+            else if (m_l == LEX_INDEXED_NAME)
+            {
+                gl();
+                m_currentNode.index = m_symbolsTable[m_lex.index];
+                gl();
+            }
+
+            if (m_l != LEX_COLON)
+                error(E_EXPECTED_TOKEN, "->");
+            gl();
+
+            // Set new program for this node
+            (*m_programs)[m_currentNode] = m_program = new Program();
+
+            // Read program itself
+            b_expr();
         }
 
         void b_expr()
@@ -784,8 +859,24 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
                 }
                 else
                     error(E_SYNTAX_ERROR, "Index or * expected");
+
+                // Check that this name is previously defined
+                CINode cinode;
+                cinode.id = (indexedName != "*" && indexedName != "?") ?
+                      IDGenerator::idOf(indexedName) : IDGenerator::WILDCARD;
+                cinode.index = indexedNo;
+                if (cinode.id != -1  &&  m_programs->find(cinode) == m_programs->end())
+                {
+                    /*
+                    error(E_SYNTAX_ERROR,
+                          std::string("Symbol ") + cinode.toStr() +
+                          " is not defined in context of " + m_currentNode.toStr());
+                    */
+                }
+
                 // push indexed parameters
-                int opIndex = addOperand( GVariant(IndexedName(indexedName, indexedNo)) );
+                int opIndex = addOperand( GVariant(IndexedName(cinode.id, cinode.index)) );
+
                 // push LOAD_NODE or LOAD_NODES instruction
                 if (indexedNo == -1)
                     addInstruction(LOAD_NODES, opIndex);
@@ -912,18 +1003,16 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
 GuardRpn::GuardRpn(const FL::Patterns::Standart::DescriptionEbnf &description)
     : Guard(description)
 {
-    m_rpnProgram = new Internal::Program();
 }
 
 GuardRpn::~GuardRpn()
 {
-    delete m_rpnProgram;
 }
 
 
 EParsing GuardRpn::compile(Compilers::Input &i)
 {
-    Internal::RpnCompiler compiler(this->m_rpnProgram);
+    Internal::RpnCompiler compiler(&m_rpnPrograms);
     if (!compiler.compile(&i))
         return compiler.lastError();
     else
@@ -932,7 +1021,23 @@ EParsing GuardRpn::compile(Compilers::Input &i)
 
 bool GuardRpn::check(Context &c, CheckInfo &info)
 {
-    bool result = (m_rpnProgram->execute(c)) &&
-                  (m_rpnProgram->lastError() == Internal::Program::NO_ERROR);
-    return result;
+    GuardSet::iterator guard;
+
+    forall(guard, m_rpnPrograms)
+    {
+        Internal::Program *program = guard->second;
+        if (program == NULL)
+            continue;
+
+        CINode node = guard->first;
+        if ( c.getNode(node.id, node.index) == NULL )
+            continue;
+
+        bool result = (program->execute(c)) &&
+                      (program->lastError() == Internal::Program::NO_ERROR);
+
+        if (!result)
+            return false;
+    }
+    return true;
 }

@@ -31,7 +31,7 @@ public:
     void refreshForestInfo();
 public slots:
     void onSceneMouseMove(QGraphicsSceneMouseEvent *event);
-    bool onParsingProgress(FL::ParseResult pr);
+    bool onParsingProgress(FL::ParseResult pr, FL::Trees::Forest *currentForest);
 private:
     void readSettings();
     void writeSettings();
@@ -41,12 +41,16 @@ private:
     QString loadTimeSeries(const QString &fileName, QString columnName = "", bool isDynamic = false);
     void refreshFilters(QString filtersDir = "");
     QString extractFileName(const QString &fullName);
+    void prepareForLongAnalysis();
+    void longAnalysisComplete();
 private:
     Ui::MainWindow *ui;
     QSettings m_settings;
     QParseTreeRender *m_render;
     bool m_isDynamicTS;
     bool m_isDynamicFirstStep;
+    bool m_wantInterrupt;
+    int m_cyclesCount;
 private:
     FL::TimeSeries m_timeSeries;
     FL::TimeSeries m_dynamicTimeSeries;
@@ -72,6 +76,7 @@ private slots:
     void on_actionDynamic_Step_triggered();
     void on_actionOpen_dynamic_time_series_triggered();
     void on_tbOpenMarkerPatternsSet_clicked();
+    void on_bnHalt_clicked();
 };
 
 #endif // MAINWINDOW_H

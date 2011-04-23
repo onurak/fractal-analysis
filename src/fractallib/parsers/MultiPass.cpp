@@ -41,7 +41,7 @@ FL::ParseResult MultiPass::analyze(
         while (m_branches.size() > 0 && !m_interruption)
         {
             runBranch(m_branches.back());
-            if (!onProgress.isNull() && !onProgress(m_result))
+            if (!onProgress.isNull() && !onProgress(m_result, &m_forest))
                 break;
         }
 
