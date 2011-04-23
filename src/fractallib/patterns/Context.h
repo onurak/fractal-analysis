@@ -33,6 +33,9 @@ public:
     //! Default constructor
     Context();
 
+    //! Copy constructor. Create a deep copy
+    Context(const Context &c);
+
     //! Destructor
     ~Context();
 
@@ -56,8 +59,11 @@ public:
     //! Get current position at the analyzing sequence of roots
     const std::list<Trees::Node*>::const_iterator& currentRoot();
 
-    //! Change position of current root
+    //! Change position of current root to specified step > 0
     void advanceCurrentRoot(int step);
+
+    //! Change position of current root to concrete point of time series
+    void advanceCurrentRootToPos(int tsPos);
 
     //! Get position to the end of roots()  (same as currentRoot() - roots().begin(),
     //! but operator- not defined for std::list::const_iterator).
@@ -65,30 +71,38 @@ public:
 
 
     //! Get analyzing tree
-    Trees::Tree& parseTree() { return *m_parseTree; }
+    Trees::Tree& parseTree() const { return *m_parseTree; }
 
     //! Set analyzing tree
     void setParseTree(Trees::Tree *tree);
 
 
     //! Get output tree where results of analysis are stored
-    Trees::Tree& outputTree() { return *m_outputTree; }
+    Trees::Tree& outputTree() const { return *m_outputTree; }
 
     //! Set output tree where results of analysis are stored
     void setOutputTree(Trees::Tree *tree);
 
 
     //! Get currently checking node that passed description check and going to check in guard
-    Trees::Node* candidateNode() { return m_candidateNode; }
+    Trees::Node* candidateNode() const { return m_candidateNode; }
 
     //! Set currently checking node that passed description check and going to check in guard
     void setCandidateNode(Trees::Node* newNode) { m_candidateNode = newNode; }
 
 
     //! Analyzing roots of tree
-    inline std::list<Trees::Node*> roots()
+    inline const std::list<Trees::Node*>& roots() const
     {
         return m_roots;
+    }
+
+    //! Set own layer to iterate over as roots
+    inline void setCustomRoots(const std::list<Trees::Node*>& roots)
+    {
+        m_roots.assign(roots.begin(), roots.end());
+        m_currentRoot = m_roots.begin();
+        m_currentRootPos = 0;
     }
 
     //! Check if currentRoot() == roots().end()
@@ -97,11 +111,17 @@ public:
         return m_currentRootPos == (int)m_roots.size();
     }
 
+    //! Check if currentRoot() reached specified point of time series
+    bool isAt(int tsPos);
+
     //! Get analyzing time series
     const FL::TimeSeries* timeSeries();
 
     //! Set analyzing time series
     void setTimeSeries(const FL::TimeSeries* ts);
+
+    //! Nodes, added during analysis
+    //FL::Trees::Layer& modification();
 private:
     //! Current forest
     Trees::Forest *m_forest;
@@ -133,6 +153,9 @@ private:
 
     //! Analyzing time series
     const FL::TimeSeries *m_ts;
+
+    //! Nodes, added during analysis
+    FL::Trees::Layer *m_modification;
 };
 
 }} // namespaces

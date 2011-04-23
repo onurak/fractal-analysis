@@ -728,7 +728,7 @@ EParsing DescriptionEbnf::compile(Compilers::Input &input)
 
 bool DescriptionEbnf::check(Context &c, CheckInfo &info)
 {
-    info.applicableSequnces.clear();
+    info.applicableSequences.clear();
     CISet::iterator seq;
 
     int stillSize = c.roots().size() - c.currentRootPos();
@@ -760,9 +760,9 @@ bool DescriptionEbnf::check(Context &c, CheckInfo &info)
         // If it's applicable
         if (found)
         {
-            info.applicableSequnces.push_back(&(*seq));
+            info.applicableSequences.push_back(&(*seq));
         }
     }
 
-    return info.applicableSequnces.size() > 0;
+    return info.applicableSequences.size() > 0;
 }

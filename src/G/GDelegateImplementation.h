@@ -194,7 +194,8 @@ private:
 
     TRet invoke(PARAMS)
     {
-        if (!isNull()) {
+        if (!isNull())
+        {
             typename DelegateList::const_iterator p;
             for (p = m_delegateList.begin(); p != --m_delegateList.end(); ++p)
                 (*p)->invoke(ARGS);

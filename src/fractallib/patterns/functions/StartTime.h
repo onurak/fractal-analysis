@@ -5,6 +5,12 @@
 
 namespace FL { namespace Patterns { namespace Functions {
 
+/*! \class StartTime
+  * \brief Return start time of node of tree
+  *
+  * It always has one argument of type FL::Trees::Node*.
+  * It returns its starting time.
+  */
 class StartTime : public Function
 {
 public:

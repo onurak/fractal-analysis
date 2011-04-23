@@ -20,7 +20,12 @@ SOURCES += gui/main.cpp\
     fractallib/patterns/functions/Prev.cpp \
     fractallib/patterns/functions/Self.cpp \
     fractallib/patterns/functions/IsPrev.cpp \
-    fractallib/patterns/functions/Near.cpp
+    fractallib/patterns/functions/Near.cpp \
+    fractallib/parsers/DynamicMultiPass.cpp \
+    fractallib/parsers/AbstractDynamicParser.cpp \
+    fractallib/trees/Metrics.cpp \
+    fractallib/Forecast.cpp \
+    fractallib/markers/Incremental.cpp
 
 HEADERS  += gui/MainWindow.h \
     gui/QParseTreeRender.h \
@@ -32,7 +37,13 @@ HEADERS  += gui/MainWindow.h \
     fractallib/patterns/functions/Self.h \
     fractallib/patterns/functions/IsPrev.h \
     fractallib/patterns/functions/Near.h \
-    gui/Utils.h
+    gui/Utils.h \
+    fractallib/parsers/DynamicMultiPass.h \
+    fractallib/parsers/AbstractDynamicParser.h \
+    fractallib/trees/Metrics.h \
+    fractallib/trees/metrics/LevelsCount.h \
+    fractallib/Forecast.h \
+    fractallib/markers/Incremental.h
 
 FORMS    += gui/MainWindow.ui
 

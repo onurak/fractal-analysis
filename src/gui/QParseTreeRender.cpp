@@ -1,5 +1,7 @@
 #include "QParseTreeRender.h"
 
+const int TIME_STEP = 20;
+
 QParseTreeRender::QParseTreeRender()
 {
     m_scene = new QParseTreeScene();
@@ -7,6 +9,7 @@ QParseTreeRender::QParseTreeRender()
     m_ts = NULL;
     m_forest = NULL;
     m_showRoots = true;
+    m_currentTree = 0;
 }
 
 QParseTreeRender::~QParseTreeRender()
@@ -40,18 +43,18 @@ void QParseTreeRender::draw()
 {
     m_scene->setBackgroundBrush(Qt::black);
     m_scene->clear();
-    drawCoordinateSystem();
+    prepare();
+    //drawCoordinateSystem();
     drawTimeSeries();
     drawForest();
 }
 
 void QParseTreeRender::drawForest()
 {
-    if (m_forest && m_ts)
+    if (m_forest && m_ts && m_forest->size() &&
+        m_currentTree >= 0 && m_currentTree < (int)m_forest->size())
     {
-        FL::Trees::Forest::ConstIterator tree;
-        forall(tree, *m_forest)
-            drawParseTree(*tree);
+        drawParseTree((*m_forest)[m_currentTree]);
     }
 }
 
@@ -81,10 +84,11 @@ void QParseTreeRender::drawTreeLayer(
     QPen pen(color);
     QPen dotPen(Qt::DashDotLine);
     dotPen.setColor(color);
-    QFont font("Arial", 2);
+    QFont font("Arial", 5);
     const double treeOffset = fabs(m_tsYMin - m_tsYMax) / 14;
     const double delta = 10;
 
+    double yMult = 1 / m_tsYMin;
 
     FL::Trees::Layer::ConstIterator itNode;
     forall(itNode, layer)
@@ -93,8 +97,8 @@ void QParseTreeRender::drawTreeLayer(
 
         // Draw node platform
         qreal y = m_tsYMin - treeOffset - node->level() * delta;
-        qreal x1 = node->begin() * 5;
-        qreal x2 = node->end()   * 5;
+        qreal x1 = node->begin() * TIME_STEP;
+        qreal x2 = node->end()   * TIME_STEP;
         m_scene->addLine(x1, y, x2, y, pen);
 
         // Draw node text
@@ -110,10 +114,10 @@ void QParseTreeRender::drawTreeLayer(
         {
             if (node->begin() == 0)
             {
-                qreal tsY1 = m_ts->values()[ node->begin() ];
+                qreal tsY1 = (m_ts->values()[ node->begin() ] - m_tsYMin) * yMult + m_tsYMin;
                 m_scene->addLine(x1, y, x1, tsY1, dotPen);
             }
-            qreal tsY2 = m_ts->values()[ node->end() ];
+            qreal tsY2 = (m_ts->values()[ node->end() ] - m_tsYMin) * yMult + m_tsYMin;
             m_scene->addLine(x2, y, x2, tsY2, dotPen);
         }
         else
@@ -125,8 +129,8 @@ void QParseTreeRender::drawTreeLayer(
         // Draw node time series
         if (options & ldoDrawTimeSeries)
         {
-            qreal tsY1 = m_ts->values()[ node->begin() ];
-            qreal tsY2 = m_ts->values()[ node->end() ];
+            qreal tsY1 = (m_ts->values()[ node->begin() ] - m_tsYMin) * yMult + m_tsYMin;
+            qreal tsY2 = (m_ts->values()[ node->end() ] - m_tsYMin) * yMult + m_tsYMin;
             m_scene->addLine(x1, tsY1, x2, tsY2, pen);
         }
     }
@@ -136,12 +140,14 @@ void QParseTreeRender::drawTimeSeries()
 {
     if (m_ts)
     {
+        double yMult = 1 / m_tsYMin;
+
         for (int time = 0; time < int(m_ts->values().size()-1); ++time)
         {
-            double x1 = time*5;
-            double y1 = m_ts->values()[time];
-            double x2 = (time + 1)*5;
-            double y2 = m_ts->values()[time+1];
+            double x1 = time*TIME_STEP;
+            double y1 = (m_ts->values()[time] - m_tsYMin) * yMult + m_tsYMin;
+            double x2 = (time + 1)*TIME_STEP;
+            double y2 = (m_ts->values()[time+1] - m_tsYMin) * yMult + m_tsYMin;
             m_scene->addLine(x1, y1, x2, y2, QPen(Qt::red));
         }
     }
@@ -174,18 +180,6 @@ void QParseTreeRender::drawCoordinateSystem()
         x_max = m_ts->values().size() * 7;
         x_step = (x_max - x_min) / 10;
 
-        m_tsYMin = m_ts->values()[0];
-        m_tsYMax = m_ts->values()[0];
-
-        FL::TimeSeries::Data::const_iterator v;
-        forall(v, m_ts->values())
-        {
-            if (m_tsYMin > *v)
-                m_tsYMin = *v;
-            if (m_tsYMax < *v)
-                m_tsYMax = *v;
-        }
-
         y_min = floor(m_tsYMin) - 10.;
         y_max = floor(m_tsYMax) + 10.;
 
@@ -214,5 +208,26 @@ void QParseTreeRender::drawCoordinateSystem()
 
     // Fit scene
     if (m_view)
-        m_view->fitInView(x_min-5, y_min, x_max-x_min+10, y_max-y_min, Qt::IgnoreAspectRatio);
+    {
+        m_view->fitInView(x_min-5, y_min, x_max-x_min+10, y_max-y_min, Qt::KeepAspectRatio);
+        //m_scene->
+    }
+}
+
+void QParseTreeRender::prepare()
+{
+    if (m_ts && m_ts->values().size() > 1)
+    {
+        m_tsYMin = m_ts->values()[0];
+        m_tsYMax = m_ts->values()[0];
+
+        FL::TimeSeries::Data::const_iterator v;
+        forall(v, m_ts->values())
+        {
+            if (m_tsYMin > *v)
+                m_tsYMin = *v;
+            if (m_tsYMax < *v)
+                m_tsYMax = *v;
+        }
+    }
 }

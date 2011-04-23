@@ -9,7 +9,9 @@ SinglePass::SinglePass()
 {
 }
 
-FL::ParseResult SinglePass::analyze(const TimeSeries &ts, Forest &forest, PatternsSet &patterns)
+FL::ParseResult SinglePass::analyze(
+    const TimeSeries &ts, Forest &forest, PatternsSet &patterns,
+    int begin, int end)
 {
     m_result.reset();
 
@@ -21,17 +23,23 @@ FL::ParseResult SinglePass::analyze(const TimeSeries &ts, Forest &forest, Patter
             throw EAnalyze(E_EMPTY_FOREST);
         if (patterns.size() == 0)
             throw EAnalyze(E_EMPTY_PATTERNS);
+        if (begin >= (int)ts.values().size() ||
+            end >= (int)ts.values().size() ||
+            (end != -1 && begin >= end))
+            throw EAnalyze(E_INVALID_SEGMENT);
 
-        Forest outForest;
+        m_begin = begin;
+        if (end > 0)
+            m_end = end;
+        else
+            m_end = ts.values().size()-1;
+
         Forest::Iterator tree;
         forall(tree, forest)
         {
-            FL::Trees::Tree *newTree = analyzeTree(ts, **tree, patterns);
-            //outForest.push_back(newTree);
+            (*tree)->validateStructure();
+            analyzeTree(ts, **tree, patterns);
         }
-
-        //forest.cleanup();
-        //forest = outForest;
     }
     catch (const EAnalyze &e)
     {
@@ -42,24 +50,21 @@ FL::ParseResult SinglePass::analyze(const TimeSeries &ts, Forest &forest, Patter
     return m_result;
 }
 
-FL::Trees::Tree* SinglePass::analyzeTree(const TimeSeries &ts, Tree &tree, PatternsSet &patterns)
+void SinglePass::analyzeTree(const TimeSeries &ts, Tree &tree, PatternsSet &patterns)
 {
     // Initialize iterators
     PatternsSet::Iterator pattern;
-
-    // Output tree
-    //FL::Trees::Tree* outTree = tree.copy();
 
     // Initialize analyse context
     Context context;
     context.setTimeSeries(&ts);
     context.setParseTree(&tree);
-    //context.setOutputTree(outTree);
     context.setOutputTree(&tree);
     context.setCandidateNode(new Node());
+    context.advanceCurrentRootToPos(m_begin);
 
     // Look for applicable patterns in each position of tree
-    while (!context.isAtEnd())
+    while (!context.isAt(m_end))
     {
         bool found = false;
         forall(pattern, patterns)
@@ -75,7 +80,6 @@ FL::Trees::Tree* SinglePass::analyzeTree(const TimeSeries &ts, Tree &tree, Patte
             context.advanceCurrentRoot(1);
     }
     delete context.candidateNode();
-    //return outTree;
 }
 
 bool SinglePass::applyPattern(Pattern &pattern, Context &context)
@@ -84,7 +88,7 @@ bool SinglePass::applyPattern(Pattern &pattern, Context &context)
     if (pattern.check(context, info) == crOK)
     {
         // Pattern sequence that was applied (use only one)
-        CISequence &seq = *info.applicableSequnces[0];
+        CISequence &seq = *info.applicableSequences[0];
 
         // Insert candidate node into output tree
         context.buildLastParsed(seq);
@@ -92,6 +96,9 @@ bool SinglePass::applyPattern(Pattern &pattern, Context &context)
         forall(child, context.lastParsed())
             (*child)->setParent(context.candidateNode());
         context.outputTree().add(context.candidateNode());
+
+        // Remember modification
+//        context.modification().push_back(context.candidateNode());
 
         // Update result, advance current roots position
         context.advanceCurrentRoot(seq.size());

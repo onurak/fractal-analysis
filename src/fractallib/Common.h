@@ -40,6 +40,16 @@ search(Collection &c, const Value &v, typename Collection::iterator &i)
     return i != c.end();
 }
 
+template <typename Collection, typename Value>
+inline bool
+exists(Collection &c, const Value &v)
+{
+    typename Collection::const_iterator i =
+            std::find(c.begin(), c.end(), v);
+    return i != c.end();
+}
+
+
 template <typename Collection>
 inline void
 cleanup(Collection &c)
@@ -71,6 +81,13 @@ public:
     int treesModified;
     int nodesAdded;
 
+    void operator += (const ParseResult &r)
+    {
+        treesAdded += r.treesAdded;
+        treesModified += r.treesModified;
+        nodesAdded += r.nodesAdded;
+    }
+
     bool somethingAdded() const
     {
         return treesAdded > 0 || treesModified > 0 || nodesAdded > 0;
@@ -84,9 +101,12 @@ public:
 public:
     static int idOf(const std::string &name);
     static const std::string& nameOf(int id);
+    static void makeSynonyms(const std::string &name1, const std::string &name2);
+    static bool isSynonyms(int id1, int id2);
 private:
     static std::map<std::string, int> m_map;
     static std::map<int, std::string> m_invMap;
+    static std::map< int, std::vector<int> > m_synonyms;
     static int m_id;
 };
 

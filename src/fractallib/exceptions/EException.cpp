@@ -48,3 +48,46 @@ const EParsing& EParsing::operator=(const EParsing& e)
     m_arg = e.arg();
     return *this;
 }
+
+EArguments::EArguments(const std::string &name, int expectedCount, int gotCount)
+{
+    m_id = E_INVALID_COUNT;
+    m_arg = "In function " + name + ": invalid arguments count (expected ";
+    if (expectedCount >= 0)
+        m_arg += intToString(expectedCount);
+    else
+        m_arg += "at least " + intToString(-expectedCount);
+    m_arg += ", got " + intToString(gotCount) + ")";
+}
+
+EArguments::EArguments(const std::string &name, int expectedCountFrom,
+                       int expectedCountTo, int gotCount)
+{
+    m_id = E_INVALID_COUNT;
+    m_arg = "In function " + name + ": invalid arguments count (expected " +
+            intToString(expectedCountFrom) + "-" + intToString(expectedCountTo) +
+            " arguments, got " + intToString(gotCount) + ")";
+}
+
+EArguments::EArguments(
+    const std::string &name, const std::string &expectedType,
+    const std::string &gotType, int argIndex)
+{
+    m_id = E_INVALID_COUNT;
+    m_arg = "In function " + name + ": invalid type of ";
+    if (argIndex >= 0)
+        m_arg += intToString(argIndex);
+    m_arg += " argument (expected " + expectedType;
+    if (!gotType.empty())
+        m_arg += ", got " + gotType;
+    m_arg += ")";
+}
+
+EArguments::EArguments(const std::string &name, const std::string &arg, int argIndex)
+{
+    m_id = E_UNKNOWN_ARG;
+    m_arg = "In function " + name + ": unknown type of ";
+    if (argIndex >= 0)
+        m_arg += intToString(argIndex);
+    m_arg += " argument (" + arg + ")";
+}

@@ -15,14 +15,24 @@ class PatCompiler : public AbstractCompiler
 public:
     static const int LEX_RAW                  = 5;
     static const int LEX_SECTION_PATTERNS     = 10;
+    static const int LEX_SECTION_SYNONYMS     = 20;
 
 public:
     PatCompiler(PatternsSet *patterns)
         : m_patterns(patterns)
     {
         m_reservedWords["PATTERNS"] = LEX_SECTION_PATTERNS;
+        m_reservedWords["SYNONYMS"] = LEX_SECTION_SYNONYMS;
     }
 protected:
+    enum Section
+    {
+        PATTERNS,
+        SYNONYMS
+    };
+
+    Section m_section;
+
     virtual void vgl()
     {
         while (m_l == LEX_UNKNOWN)
@@ -47,20 +57,44 @@ protected:
                     continue;
                 }
 
-                do { s += c(); gc(); }
-                while (!isEoi() && c() != ':' && c() != ';');
+                if (s == "SYNONYMS")
+                {
+                    m_l = LEX_SECTION_SYNONYMS;
+                    continue;
+                }
 
-                m_l = LEX_RAW;
-                m_lex.index = addSymbol(s);
+                if (m_section == PATTERNS)
+                {
+                    do { s += c(); gc(); }
+                    while (!isEoi() && c() != ':' && c() != ';');
+
+                    m_l = LEX_RAW;
+                    m_lex.index = addSymbol(s);
+                }
+                else
+                {
+                    m_l = LEX_NAME;
+                    m_lex.index = addSymbol(s);
+                }
             }
             else if (c() == ':')
             {
                 m_l = LEX_COLON;
                 gc();
             }
+            else if (c() == '=')
+            {
+                m_l = LEX_EQ;
+                gc();
+            }
             else if (c() == ';')
             {
                 m_l = LEX_SEMICOLON;
+                gc();
+            }
+            else if (c() == ',')
+            {
+                m_l = LEX_COMMA;
                 gc();
             }
             else if (c() == '#')
@@ -80,10 +114,12 @@ protected:
     virtual void S()
     {
         section_patterns();
+        section_synonyms();
     }
 
     void section_patterns()
     {
+        m_section = PATTERNS;
         if (m_l != LEX_SECTION_PATTERNS)
             error(E_EXPECTED_TOKEN, "PATTERNS");
         gl();
@@ -94,7 +130,8 @@ protected:
             error(E_EXPECTED_TOKEN, "Pattern");
 
         pattern();
-        while (m_l != LEX_EOI && m_l == LEX_RAW)
+        while (m_l != LEX_SECTION_SYNONYMS &&
+               m_l != LEX_EOI && m_l == LEX_RAW)
             pattern();
     }
 
@@ -111,6 +148,50 @@ protected:
         }
         m_patterns->push_back(p);
         gl();
+        if (m_l != LEX_SEMICOLON)
+            error(E_EXPECTED_TOKEN, ";");
+        gl();
+    }
+
+    void section_synonyms()
+    {
+        m_section = SYNONYMS;
+        if (m_l != LEX_SECTION_SYNONYMS)
+            return;
+        gl();
+        if (m_l != LEX_COLON)
+            error(E_EXPECTED_TOKEN, ":");
+        gl();
+        synonym();
+        while (m_l != LEX_EOI)
+            synonym();
+    }
+
+    void synonym()
+    {
+        if (m_l != LEX_NAME)
+            error(E_EXPECTED_TOKEN, "Pattern name");
+        std::string name1 = m_symbolsTable[ m_lex.index ];
+        gl();
+        if (m_l != LEX_EQ)
+            error(E_EXPECTED_TOKEN, "=");
+        gl();
+        if (m_l != LEX_NAME)
+            error(E_EXPECTED_TOKEN, "Pattern name");
+        std::string name2 = m_symbolsTable[ m_lex.index ];
+        FL::IDGenerator::makeSynonyms(name1, name2);
+        gl();
+
+        while (m_l == LEX_COMMA)
+        {
+            gl();
+            if (m_l != LEX_NAME)
+                error(E_EXPECTED_TOKEN, "Pattern name");
+            std::string name2 = m_symbolsTable[ m_lex.index ];
+            FL::IDGenerator::makeSynonyms(name1, name2);
+            gl();
+        }
+
         if (m_l != LEX_SEMICOLON)
             error(E_EXPECTED_TOKEN, ";");
         gl();

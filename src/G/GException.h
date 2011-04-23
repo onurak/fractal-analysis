@@ -35,6 +35,36 @@ enum GErrorType
 
 typedef GDelegate4<void, GErrorType, const std::string&, int, const std::string&> GNotifyError;
 
+/*! \class GException
+  * \brief Internal GLibrary exception
+  *
+  * Note that you shouldn't throw exception outside of G Library.
+  * For outer error notifications use GError.
+  */
+class GException
+{
+public:
+    GException() {}
+
+    GException(int errNo, const std::string &msg)
+        : m_errNo(errNo), m_msg(msg)
+    {
+        report();
+    }
+
+    int errNo() const { return m_errNo; }
+
+    const std::string& msg() const { return m_msg; }
+protected:
+    void report() const
+    {
+        logg.endl();
+        logg << "Error " << m_errNo << ": " << m_msg;
+    }
+    int m_errNo;
+    std::string m_msg;
+};
+
 /*! \class GErrorClass
   * \brief Error notifications handler
   *
@@ -78,37 +108,8 @@ inline void GError(GErrorType type,
             const std::string &errDescription)
 {
     GErrorClass::notify(type, notifier, errNo, errDescription);
+    //throw GException(errNo, errDescription);
 }
-
-/*! \class GException
-  * \brief Internal GLibrary exception
-  *
-  * Note that you shouldn't throw exception outside of G Library.
-  * For outer error notifications use GError.
-  */
-class GException
-{
-public:
-    GException() {}
-
-    GException(int errNo, const std::string &msg)
-        : m_errNo(errNo), m_msg(msg)
-    {
-        report();
-    }
-
-    int errNo() const { return m_errNo; }
-
-    const std::string& msg() const { return m_msg; }
-protected:
-    void report() const
-    {
-        logg.endl();
-        logg << "Error " << m_errNo << ": " << m_msg;
-    }
-    int m_errNo;
-    std::string m_msg;
-};
 
 /*@}*/
 

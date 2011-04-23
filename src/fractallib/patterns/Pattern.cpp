@@ -122,18 +122,29 @@ CheckResult Pattern::check(Context &c, CheckInfo &info)
     // Fill partial info on candidateNode
     Trees::Node *candidate = c.candidateNode();
     candidate->setId(m_description->id());
+    candidate->setBegin(-1);
+    candidate->setEnd(-1);
 
     // Check description
     if (!m_description->check(c, info))
         return crInvalidDescription;
 
-    // Check guard
-    if (!m_guard->check(c, info))
+    // For each applicable sequence check guard
+    std::vector<CISequence*>::iterator sequence =
+            info.applicableSequences.begin();
+    for (; sequence != info.applicableSequences.end(); )
+    {
+        c.buildLastParsed(**sequence);
+        // Check guard
+        if (!m_guard->check(c, info))
+        {
+            sequence = info.applicableSequences.erase(sequence);
+        }
+        else
+            ++sequence;
+    }
+    if (info.applicableSequences.size() == 0)
         return crInvalidGuard;
-
-    // Fill rest of info on candidateNode
-    //candidate->set
-
 
     return crOK;
 }
