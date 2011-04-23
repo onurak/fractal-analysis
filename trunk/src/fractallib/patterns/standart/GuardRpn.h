@@ -14,13 +14,15 @@ namespace Internal
 class GuardRpn : public Guard
 {
 public:
+    typedef std::map<CINode, Internal::Program*, CINodeLessCompare> GuardSet;
+public:
     GuardRpn(const FL::Patterns::Standart::DescriptionEbnf &description);
     virtual ~GuardRpn();
 
     virtual FL::Exceptions::EParsing compile(Compilers::Input &i);
     virtual bool check(Context &c, CheckInfo &info);
 private:
-    Internal::Program *m_rpnProgram;
+    GuardSet m_rpnPrograms;
 };
 
 }}} // namespaces

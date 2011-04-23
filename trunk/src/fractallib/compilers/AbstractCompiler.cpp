@@ -334,6 +334,17 @@ void AbstractCompiler::vgl()
         }
 
         /////////////////////////////////
+        // LEX_QUESTION
+        /////////////////////////////////
+        if (wantLexeme(LEX_QUESTION) && c() == '?')
+        {
+            m_l = LEX_QUESTION;
+            gc();
+            continue;
+        }
+
+
+        /////////////////////////////////
         // LEX_ASSIGN, LEX_EQ
         /////////////////////////////////
         if (wantLexeme(LEX_ASSIGN) && c() == '=')

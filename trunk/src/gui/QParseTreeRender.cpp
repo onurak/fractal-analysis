@@ -88,7 +88,7 @@ void QParseTreeRender::drawTreeLayer(
     const double treeOffset = fabs(m_tsYMin - m_tsYMax) / 14;
     const double delta = 10;
 
-    double yMult = 1 / m_tsYMin;
+    double yMult = 5000 / m_tsYMin;
 
     FL::Trees::Layer::ConstIterator itNode;
     forall(itNode, layer)
@@ -140,7 +140,7 @@ void QParseTreeRender::drawTimeSeries()
 {
     if (m_ts)
     {
-        double yMult = 1 / m_tsYMin;
+        double yMult = 5000 / m_tsYMin;
 
         for (int time = 0; time < int(m_ts->values().size()-1); ++time)
         {

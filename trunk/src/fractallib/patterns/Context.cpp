@@ -63,20 +63,76 @@ Context::~Context()
     delete m_modification;
 }
 
-const Layer& Context::getNodes(int nameId, int no) const
+const Layer& Context::getNodes(int nameId, int index) const
 {
     m_cache->clear();
+
+    // Both name and index are wildcards - return all nodes
+    if (nameId == -1 && index == -1)
+        m_cache->assign(m_lastParsed->begin(), m_lastParsed->end());
+
+    // None of name and index are wildcards
+    else if (nameId != IDGenerator::WILDCARD && index != -1)
+    {
+        Trees::Layer::Iterator itNode;
+        forall(itNode, *m_lastParsed)
+        {
+            Node *node = *itNode;
+            if (node->id() == nameId && node->index() == index)
+                m_cache->push_back(node);
+        }
+    }
+
+    // Name is the wildcard
+    else if (nameId != IDGenerator::WILDCARD)
+    {
+        Trees::Layer::Iterator itNode;
+        forall(itNode, *m_lastParsed)
+        {
+            Node *node = *itNode;
+            if (node->index() == index)
+                m_cache->push_back(node);
+        }
+    }
+
+    // Index is the wildcard
+    else
+    {
+        Trees::Layer::Iterator itNode;
+        forall(itNode, *m_lastParsed)
+        {
+            Node *node = *itNode;
+            if (node->id() == nameId)
+                m_cache->push_back(node);
+        }
+    }
+
     return *m_cache;
 }
 
-Node* Context::getNode(int nameId, int no) const
+Node* Context::getNode(int nameId, int index) const
 {
+    if (index == -1)
+        return NULL;
+
     Trees::Layer::Iterator itNode;
-    forall(itNode, *m_lastParsed)
+    if (nameId != IDGenerator::WILDCARD)
     {
-        Node *node = *itNode;
-        if (node->id() == nameId && node->index() == no)
-            return node;
+        forall(itNode, *m_lastParsed)
+        {
+            Node *node = *itNode;
+            if (node->id() == nameId && node->index() == index)
+                return node;
+        }
+    }
+    else
+    {
+        forall(itNode, *m_lastParsed)
+        {
+            Node *node = *itNode;
+            if (node->index() == index)
+                return node;
+        }
     }
     return NULL;
 }

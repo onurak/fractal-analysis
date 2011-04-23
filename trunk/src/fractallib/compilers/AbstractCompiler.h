@@ -181,6 +181,7 @@ public:
     static const LexemeId LEX_OR              = -27;
     static const LexemeId LEX_AND             = -28;
     static const LexemeId LEX_AT              = -29;
+    static const LexemeId LEX_QUESTION        = -30;
 
 };
 

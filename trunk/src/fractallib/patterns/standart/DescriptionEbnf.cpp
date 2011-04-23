@@ -492,11 +492,14 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal {
         EbnfCompiler(DescriptionEbnf *description)
         {
             m_description = description;
-            filterLexeme(LEX_EQ,        true);
-            filterLexeme(LEX_LPAREN,    true);
-            filterLexeme(LEX_RPAREN,    true);
-            filterLexeme(LEX_INTEGER,   true);
-            filterLexeme(LEX_AT,        true);
+            filterLexeme(LEX_EQ,         true);
+            filterLexeme(LEX_LPAREN,     true);
+            filterLexeme(LEX_RPAREN,     true);
+            filterLexeme(LEX_INTEGER,    true);
+            filterLexeme(LEX_AT,         true);
+            filterLexeme(LEX_MULT,       true);
+            filterLexeme(LEX_UNDERSCORE, true);
+            filterLexeme(LEX_QUESTION,   true);
         }
 
     protected:
@@ -590,7 +593,8 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal {
         {
             CISet result = factor(set);
             while (m_l == LEX_NAME   || m_l == LEX_INDEXED ||
-                   m_l == LEX_LPAREN || m_l == LEX_LOPTION)
+                   m_l == LEX_LPAREN || m_l == LEX_LOPTION ||
+                   m_l == LEX_QUESTION)
             {
                 CISet r1 = factor(set);
                 result = closure(result, r1);
@@ -603,7 +607,8 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal {
             if (m_l == LEX_NAME)
             {
                 CINode node;
-                node.id    = IDGenerator::idOf((char*)m_symbolsTable[m_lex.index]);
+                std::string name = m_symbolsTable[m_lex.index];
+                node.id    = IDGenerator::idOf(name);
                 node.index = -1;
                 append(set, node);
                 gl();
@@ -611,13 +616,33 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal {
             else if (m_l == LEX_INDEXED)
             {
                 CINode node;
-                node.id    = IDGenerator::idOf((char*)m_symbolsTable[m_lex.index]);
+                std::string name = m_symbolsTable[m_lex.index];
+                node.id    = IDGenerator::idOf(name);
                 gl();
                 if (m_l != LEX_INTEGER)
                     error(E_EXPECTED_TOKEN, "Index");
                 node.index = m_symbolsTable[m_lex.index];
                 append(set, node);
                 gl();
+            }
+            else if (m_l == LEX_QUESTION)
+            {
+                CINode node;
+                node.id = IDGenerator::WILDCARD;
+                node.index = -1;
+                gl();
+                if (m_l == LEX_UNDERSCORE)
+                {
+                    gl();
+                    if (m_l == LEX_MULT)
+                        node.index = -1;
+                    else if (m_l == LEX_INTEGER)
+                        node.index = m_symbolsTable[m_lex.index];
+                    else
+                        error(E_EXPECTED_TOKEN, "index or wildcard");
+                    gl();
+                }
+                append(set, node);
             }
             else if (m_l == LEX_LPAREN)
             {
@@ -748,7 +773,7 @@ bool DescriptionEbnf::check(Context &c, CheckInfo &info)
         while (node   != c.parseTree().roots().end() &&
                cinode != seq->end())
         {
-            if ((*node)->id() != cinode->id)
+            if ((*node)->id() != cinode->id  &&  cinode->id != -1)
             {
                 found = false;
                 break;

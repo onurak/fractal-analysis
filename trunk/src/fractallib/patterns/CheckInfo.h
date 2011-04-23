@@ -11,6 +11,28 @@ struct CINode
 {
     int id;
     int index;
+
+    std::string toStr() const
+    {
+        char s[100];
+        if (index >= 0)
+            sprintf(s, "%s_%d", IDGenerator::nameOf(id).c_str(), index);
+        else
+            sprintf(s, "%s_*", IDGenerator::nameOf(id).c_str());
+        return s;
+    }
+};
+
+struct CINodeLessCompare
+{
+    bool operator()(const CINode &node1, const CINode &node2)
+    {
+        if (node1.index < node2.index)
+            return true;
+        if (node1.id < node2.id)
+            return true;
+         return false;
+    }
 };
 
 //! Sequence of CINode
