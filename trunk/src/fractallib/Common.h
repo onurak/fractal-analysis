@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <strings.h>
+#include <string.h>
 
 namespace FL {
 
@@ -63,37 +65,6 @@ cleanup(Collection &c)
     }
 }
 
-
-class ParseResult
-{
-public:
-    ParseResult()
-    {
-        reset();
-    }
-
-    inline void reset()
-    {
-        treesAdded = treesModified = nodesAdded = 0;
-    }
-
-    int treesAdded;
-    int treesModified;
-    int nodesAdded;
-
-    void operator += (const ParseResult &r)
-    {
-        treesAdded += r.treesAdded;
-        treesModified += r.treesModified;
-        nodesAdded += r.nodesAdded;
-    }
-
-    bool somethingAdded() const
-    {
-        return treesAdded > 0 || treesModified > 0 || nodesAdded > 0;
-    }
-};
-
 class IDGenerator
 {
 public:
@@ -110,19 +81,17 @@ private:
     static int m_id;
 };
 
+
 inline std::string intToString(int v)
 {
     char buf[100];
-    return itoa(v, buf, 10);
+    sprintf(buf, "%d", v);
+    return buf;
 }
 
 //std::string upperCase(const std::string &s);
 
 
 } // namespaces
-
-//namespace FL { namespace Patterns {
-
-//}} // namespaces
 
 #endif // COMMON_H

@@ -1,8 +1,9 @@
 #include "Pattern.h"
 #include "Context.h"
-#include "../Trees/Tree.h"
+#include "../trees/Tree.h"
 #include "../compilers/AbstractCompiler.h"
 
+using namespace FL;
 using namespace FL::Patterns;
 using namespace FL::Exceptions;
 
@@ -71,6 +72,22 @@ Pattern::Pattern(const Pattern &p)
 
 }
 
+int Pattern::maxSequenceLength() const
+{
+    CISet &set = m_description->sequences();
+
+    if (set.size() == 0)
+        return 0;
+
+    int result = (int)set.front().size();
+
+    CISet::const_iterator seq;
+    forall(seq, set)
+        if (result < (int)seq->size())
+            result = (int)seq->size();
+    return result;
+}
+
 const std::string& Pattern::name() const
 {
     return m_description->name();
@@ -114,37 +131,76 @@ EParsing Pattern::compile(Compilers::Input *input)
         return EParsing(E_OK);
 }
 
-CheckResult Pattern::check(Context &c, CheckInfo &info)
+CheckResult Pattern::check(Context &c, CheckInfo &info, CheckOptions check)
 {
-    // Prepare context
-    //c.clearLastParsed();
-
     // Fill partial info on candidateNode
-    Trees::Node *candidate = c.candidateNode();
-    candidate->setId(m_description->id());
-    candidate->setBegin(-1);
-    candidate->setEnd(-1);
+    if (!(check & coContinueChecking))
+    {
+        Trees::Node *candidate = c.candidateNode();
+        candidate->setId(m_description->id());
+        candidate->setBegin(-1);
+        candidate->setEnd(-1);
+    }
 
     // Check description
-    if (!m_description->check(c, info))
-        return crInvalidDescription;
+    if ( !(check & coNoDescriptionCheck) )
+    {
+        if (!m_description->check(c, info, check))
+            return crInvalidDescription;
+    }
+    else if (check & coContinueChecking)
+    {
+        info.applicableSequences.clear();
+        if (c.candidateNode()->origSequence())
+        {
+            CISequenceInfo tempInfo;
+            tempInfo.sequence = c.candidateNode()->origSequence();
+            info.applicableSequences.push_back(tempInfo);
+        }
+    }
 
     // For each applicable sequence check guard
-    std::vector<CISequence*>::iterator sequence =
-            info.applicableSequences.begin();
-    for (; sequence != info.applicableSequences.end(); )
+    std::vector<CISequenceInfo>::iterator si = info.applicableSequences.begin();
+
+    while ( si != info.applicableSequences.end() )
     {
-        c.buildLastParsed(**sequence);
-        // Check guard
-        if (!m_guard->check(c, info))
+        // Check guard in the just parsed sequence
+        if (check & coContinueChecking)
         {
-            sequence = info.applicableSequences.erase(sequence);
+            std::list<Trees::Node*> newRoots;
+            newRoots.assign(c.candidateNode()->children().begin(),
+                            c.candidateNode()->children().end());
+            Trees::Layer followNodes =
+                    c.outputTree().getFollowingRoots(c.candidateNode());
+            if (followNodes.size() > 0)
+                newRoots.insert(newRoots.end(), followNodes.begin(), followNodes.end());
+            c.setCustomRoots(newRoots);
         }
+        c.buildLastParsed(*si->sequence);
+
+        if (!m_guard->check(c, info))
+            si = info.applicableSequences.erase(si);
         else
-            ++sequence;
+            ++si;
     }
     if (info.applicableSequences.size() == 0)
         return crInvalidGuard;
 
     return crOK;
+}
+
+int PatternsSet::maxSequenceLength() const
+{
+    if (size() == 0)
+        return 0;
+    int result = front()->maxSequenceLength();
+
+    ConstIterator pattern;
+    forall(pattern, *this)
+    {
+        if ( (*pattern)->maxSequenceLength() > result )
+            result = (*pattern)->maxSequenceLength();
+    }
+
+    return result;
 }

@@ -10,13 +10,12 @@ Description::Description()
 
 const std::string& Description::name() const
 {
-    return m_name;
+    return IDGenerator::nameOf(m_id);
 }
 
 void Description::setName(const std::string& newName)
 {
-    m_name = newName;
-    m_id = IDGenerator::idOf(m_name);
+    m_id = IDGenerator::idOf(newName);
 }
 
 int Description::id() const

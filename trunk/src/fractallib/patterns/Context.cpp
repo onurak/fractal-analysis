@@ -14,6 +14,7 @@ Context::Context()
     m_candidateNode = NULL;
     m_outputTree = NULL;
     m_parseTree = NULL;
+    m_wantAutodeleteParseTree = false;
 }
 
 Context::Context(const Context &c)
@@ -25,6 +26,7 @@ Context::Context(const Context &c)
     m_candidateNode = NULL;
     m_outputTree = NULL;
     m_parseTree = NULL;
+    m_wantAutodeleteParseTree = false;
 
     setTimeSeries(c.m_ts);
     setParseTree(&c.parseTree());
@@ -61,6 +63,8 @@ Context::~Context()
     delete m_cache;
     delete m_lastParsed;
     delete m_modification;
+    if (m_wantAutodeleteParseTree)
+        delete m_parseTree;
 }
 
 const Layer& Context::getNodes(int nameId, int index) const
@@ -173,8 +177,11 @@ void Context::buildLastParsed(const CISequence& seq)
 
 void Context::advanceCurrentRoot(int step)
 {
-    m_currentRoot += step;
-    m_currentRootPos += step;
+    if (step > 0)
+    {
+        m_currentRoot += step;
+        m_currentRootPos += step;
+    }
 }
 
 void Context::advanceCurrentRootToPos(int tsPos)
@@ -186,9 +193,10 @@ void Context::advanceCurrentRootToPos(int tsPos)
         ++m_currentRoot;
 }
 
-void Context::setParseTree(Trees::Tree *tree)
+void Context::setParseTree(Trees::Tree *tree, bool wantAutodelete)
 {
     m_parseTree = tree;
+    m_wantAutodeleteParseTree = wantAutodelete;
 }
 
 void Context::setOutputTree(Trees::Tree *tree)

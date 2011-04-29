@@ -48,8 +48,6 @@ FL::ParseResult Incremental::analyze(
             }
 
             // Apply patterns to floating time series segment
-            //FL::Parsers::SinglePass parser;
-            //parser.analyze(ts, forest, patterns, tree->dynamicEndPos(), end);
             growTree(ts, *tree, patterns, tree->dynamicEndPos(), end);
         }
     }
@@ -114,7 +112,7 @@ bool Incremental::applyPattern(Pattern &pattern, Context &context)
     if (pattern.check(context, info) == crOK)
     {
         // Pattern sequence that was applied (use only one)
-        CISequence &seq = *info.applicableSequences[0];
+        CISequence &seq = *(info.applicableSequences[0].sequence);
 
         // Insert candidate node into output tree instead of it's children
         context.buildLastParsed(seq);
@@ -124,8 +122,8 @@ bool Incremental::applyPattern(Pattern &pattern, Context &context)
         Layer::Iterator child;
         forall(child, context.lastParsed())
         {
-            context.outputTree().remove(*child);
             (*child)->setParent(NULL);
+            context.outputTree().remove(*child);
             delete *child;
 
         }

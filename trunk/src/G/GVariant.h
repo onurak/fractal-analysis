@@ -23,6 +23,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
+#include <cerrno>
 #include <iostream>
 #include "GException.h"
 #include "GResources.h"

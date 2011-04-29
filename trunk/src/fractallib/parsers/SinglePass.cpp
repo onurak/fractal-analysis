@@ -11,9 +11,11 @@ SinglePass::SinglePass()
 
 FL::ParseResult SinglePass::analyze(
     const TimeSeries &ts, Forest &forest, PatternsSet &patterns,
+    Trees::MetricsSet &metrics,
     int begin, int end)
 {
     m_result.reset();
+    int maxDepth = 10;
 
     try
     {
@@ -34,12 +36,23 @@ FL::ParseResult SinglePass::analyze(
         else
             m_end = ts.values().size()-1;
 
-        Forest::Iterator tree;
-        forall(tree, forest)
+        int prevMaxLevel = forest.maxLevelCount(), newMaxLevel;
+
+        do
         {
-            (*tree)->validateStructure();
-            analyzeTree(ts, **tree, patterns);
-        }
+            Forest::Iterator tree;
+            forall(tree, forest)
+            {
+                (*tree)->validateStructure();
+                analyzeTree(ts, **tree, patterns);
+            }
+
+            newMaxLevel = forest.maxLevelCount();
+            if (prevMaxLevel < newMaxLevel && newMaxLevel <= maxDepth)
+                prevMaxLevel = newMaxLevel;
+            else
+                break;
+        } while (true);
     }
     catch (const EAnalyze &e)
     {
@@ -88,7 +101,7 @@ bool SinglePass::applyPattern(Pattern &pattern, Context &context)
     if (pattern.check(context, info) == crOK)
     {
         // Pattern sequence that was applied (use only one)
-        CISequence &seq = *info.applicableSequences[0];
+        CISequence &seq = *(info.applicableSequences[0].sequence);
 
         // Insert candidate node into output tree
         context.buildLastParsed(seq);

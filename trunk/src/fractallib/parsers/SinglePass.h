@@ -19,6 +19,7 @@ public:
         const TimeSeries &ts,
         Trees::Forest &forest,
         Patterns::PatternsSet &patterns,
+        Trees::MetricsSet &metrics,
         int begin = 0,
         int end = -1);
 protected:

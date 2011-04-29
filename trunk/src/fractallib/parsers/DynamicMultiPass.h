@@ -22,27 +22,11 @@ public:
         Forecast &forecast);
 
 protected:
+    //! Update info on known possible patterns
+    void updatePossiblePatterns(Trees::Forest &forest);
 
-    //! Update markup level 0
-    void updateMarkup(const TimeSeries &ts,
-                      Trees::Forest &forest,
-                      Patterns::PatternsSet &patterns,
-                      Trees::MetricsSet &metrics,
-                      Forecast &forecast);
-
-    //! Find all possible patterns at the end of parse tree
-    void forecastTreeStructure(const TimeSeries &ts,
-                               Trees::Forest &forest,
-                               Patterns::PatternsSet &patterns,
-                               Trees::MetricsSet &metrics,
-                               Forecast &forecast);
-
-    //! Calculate trees metrics, eclude those which are not satisfy metrics conditions
-    void calcMetrics(const TimeSeries &ts,
-                Trees::Forest &forest,
-                Patterns::PatternsSet &patterns,
-                Trees::MetricsSet &metrics,
-                Forecast &forecast);
+    //! Find all potential patterns
+    void forecastTreeStructure(Trees::Forest &forest);
 
     //! Make time series forecast
     void forecastTimeSeries(const TimeSeries &ts,
@@ -50,9 +34,31 @@ protected:
                        Patterns::PatternsSet &patterns,
                        Trees::MetricsSet &metrics,
                        Forecast &forecast);
+
+    bool isSubtreeOfSomeTree(Trees::Tree *tree);
+protected:
+
+    void newAnalysisBranchForTree(FL::Trees::Tree &tree, int indentSize);
+
+    void newAnalysisBranch(Patterns::Context *context);
+
+    void runBranch(Patterns::Context *context);
+
+    void applyPattern(Patterns::Pattern &pattern, Patterns::Context &context);
+
+    bool m_wantSubtree;
+    int m_maxTrees;
+    int m_maxLevelCount;
+
 protected:
     bool m_interruption;
     FL::ParseResult m_result;
+
+    std::vector<Patterns::Context*> m_branches;
+    FL::Trees::Forest m_oldForest, m_newForest;
+
+    FL::Patterns::PatternsSet *m_patterns;
+    const FL::TimeSeries *m_ts;
 };
 
 }} // namespaces

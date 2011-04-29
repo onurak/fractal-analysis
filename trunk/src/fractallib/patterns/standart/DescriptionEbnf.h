@@ -11,9 +11,10 @@ public:
     DescriptionEbnf();
 
     virtual FL::Exceptions::EParsing compile(Compilers::Input &input);
-    virtual bool check(Context &c, CheckInfo &info);
+    virtual bool check(Context &c, CheckInfo &info, CheckOptions check = coNone);
 
-    CISet& ebnfSet() { return m_ebnfSet; }
+    //! Get set of sequences in CI-form
+    virtual CISet& sequences() { return m_ebnfSet; }
 protected:
     //! Collection of all sequences possible for this description
     CISet m_ebnfSet;

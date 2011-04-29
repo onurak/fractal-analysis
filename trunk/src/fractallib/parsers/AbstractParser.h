@@ -4,7 +4,6 @@
 #include "../Common.h"
 #include "../TimeSeries.h"
 #include "../trees/Metrics.h"
-#include "../trees/metrics/LevelsCount.h"
 #include "../patterns/Pattern.h"
 #include "../exceptions/EException.h"
 
@@ -41,6 +40,7 @@ public:
                       const TimeSeries &ts,
                       Trees::Forest &forest,
                       Patterns::PatternsSet &patterns,
+                      Trees::MetricsSet &metrics,
                       int begin = 0,
                       int end = -1) = 0;
 
@@ -49,14 +49,6 @@ public:
 
     //! Is there any errors during last analysis
     bool wasOk() const { return m_lastError.id() == E_OK; }
-
-    //! Build complete tree
-    ParseResult parseAll(
-        const TimeSeries &ts,
-        Trees::Forest &forest,
-        Patterns::PatternsSet &patterns,
-        int begin = 0,
-        int end = -1);
 
     //! Progress update notification
     NotifyProgress onProgress;

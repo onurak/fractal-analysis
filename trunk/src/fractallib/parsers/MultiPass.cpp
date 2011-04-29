@@ -13,6 +13,7 @@ MultiPass::MultiPass()
 
 FL::ParseResult MultiPass::analyze(
     const TimeSeries &ts, Forest &forest, PatternsSet &patterns,
+    Trees::MetricsSet &metrics,
     int begin, int end)
 {
     m_result.reset();
@@ -27,23 +28,68 @@ FL::ParseResult MultiPass::analyze(
         if (patterns.size() == 0)
             throw EAnalyze(E_EMPTY_PATTERNS);
 
+        FL::Trees::Metric *metric;
+        metric = metrics.getByName("Subtree");
+        m_wantSubtree = metric && metric->isEnabled();
+
+        metric = metrics.getByName("Max trees");
+        m_maxTrees = metric && metric->isEnabled() ? metric->limit() : INT_MAX;
+
+        metric = metrics.getByName("Max levels count");
+        m_maxLevelCount = metric && metric->isEnabled() ? metric->limit() : INT_MAX;
+
+
         // Init
         m_ts = &ts;
         m_patterns = &patterns;
-        m_forest.clear();
+        m_oldForest = forest;
+        forest.clear();
+        m_newForest.clear();
 
-        // For each tree create analysis branch
-        Forest::Iterator tree;
-        forall(tree, forest)
-            newAnalysisBranchForTree(**tree);
+        int prevMaxLevel = m_oldForest.maxLevelCount(), newMaxLevel;
 
-        // Do analysis all branches
-        while (m_branches.size() > 0 && !m_interruption)
+        // Parse ALL levels
+        do
         {
-            runBranch(m_branches.back());
-            if (!onProgress.isNull() && !onProgress(m_result, &m_forest))
+            // For each tree create analysis branch
+            Forest::Iterator tree;
+            forall(tree, m_oldForest)
+                newAnalysisBranchForTree(**tree);
+
+            // Do analysis all branches
+            while (m_branches.size() > 0 && !m_interruption)
+            {
+                runBranch(m_branches.front());
+                if (!onProgress.isNull() && !onProgress(m_result, &m_newForest))
+                    break;
+            }
+            m_oldForest.cleanup();
+            if (m_interruption)
                 break;
-        }
+
+            /*
+            for (tree = m_newForest.begin(); tree != m_newForest.end(); )
+            {
+                if ( !metrics.check(**tree, m_newForest) )
+                {
+                    delete *tree;
+                    tree = m_newForest.erase(tree);
+                }
+                else
+                    ++tree;
+            }
+            */
+
+            newMaxLevel = m_newForest.maxLevelCount();
+            if (prevMaxLevel < newMaxLevel && newMaxLevel <= m_maxLevelCount)
+            {
+                m_oldForest = m_newForest;
+                m_newForest.clear();
+                prevMaxLevel = newMaxLevel;
+            }
+            else
+                break;
+        } while (true);
 
         // Clear interrupted branches
         while (m_branches.size() > 0)
@@ -55,10 +101,19 @@ FL::ParseResult MultiPass::analyze(
             m_branches.erase(m_branches.begin());
         }
 
-        // Return analysis results
-        std::reverse(m_forest.begin(), m_forest.end());
-        forest = m_forest;
-        m_forest.clear();
+        // Return result without subtrees
+        while (m_newForest.size() > 0)
+        {
+            if ( !isSubtreeOfSomeTree(m_newForest.front()) )
+                forest.push_back(m_newForest.front());
+            else
+                delete m_newForest.front();
+            m_newForest.erase(m_newForest.begin());
+
+            if (!onProgress.isNull())
+                onProgress(m_result, &m_newForest);
+        }
+        std::reverse(forest.begin(), forest.end());
     }
     catch (const EAnalyze &e)
     {
@@ -83,40 +138,17 @@ void MultiPass::runBranch(Patterns::Context *context)
         context->advanceCurrentRoot(1);
     }
 
-    // Check if analysed tree is unique
-    Forest::Iterator tree;
-    bool isTreeUnique = true;
-
-    for (tree = m_forest.begin(); tree != m_forest.end(); )
+    if (!m_wantSubtree)
     {
-        TreeCompareResult tcr = (*tree)->compare(context->outputTree());
-
-        // Is this tree is subtree of another tree
-        if (tcr.isSecondSubtreeOfFirst())
-        {
-            isTreeUnique = false;
-            break;
-        }
-
-        // Is another tree is subtree of this
-        if (tcr.isFirstSubtreeOfSecond())
-        {
-            delete *tree;
-            tree = m_forest.erase(tree);
-            m_result.treesAdded--;
-        }
-        else
-            ++tree;
-    }
-
-    if (isTreeUnique)
-    {
-        m_forest.push_back(&context->outputTree());
-        m_result.treesAdded++;
+        m_newForest.push_back(&context->outputTree());
     }
     else
-        delete &context->outputTree();
-
+    {
+        if ( isSubtreeOfSomeTree(&context->outputTree()) )
+            delete &context->outputTree();
+        else
+            m_newForest.push_back(&context->outputTree());
+    }
 
     // Forget context
     std::vector<Patterns::Context*>::iterator itContext;
@@ -131,14 +163,14 @@ void MultiPass::runBranch(Patterns::Context *context)
 void MultiPass::applyPattern(Pattern &pattern, Context &context)
 {
     CheckInfo info;
-    if (pattern.check(context, info) == crOK)
+    if (pattern.check(context, info, coAllowPartialMatch) == crOK)
     {
-        std::vector<CISequence*>::iterator itSequence;
+        std::vector<CISequenceInfo>::iterator itSequence;
 
         forall(itSequence, info.applicableSequences)
         {
             // Pattern sequence that was applied
-            CISequence &seq = **itSequence;
+            CISequence &seq = *itSequence->sequence;
 
             // New context for new branch
             Context* newContext = new Context(context);
@@ -148,6 +180,14 @@ void MultiPass::applyPattern(Pattern &pattern, Context &context)
             Layer::Iterator child;
             forall(child, newContext->lastParsed())
                 (*child)->setParent(newContext->candidateNode());
+
+            if (itSequence->checkResult == crPartialMatch)
+            {
+                newContext->candidateNode()->setStatus(nsPossible);
+                newContext->candidateNode()->setOrigPattern(&pattern);
+                newContext->candidateNode()->setOrigSequence(&seq);
+            }
+
             newContext->outputTree().add(newContext->candidateNode());
 
             // Remember modification
@@ -177,5 +217,54 @@ void MultiPass::newAnalysisBranchForTree(FL::Trees::Tree &tree)
 
 void MultiPass::newAnalysisBranch(Patterns::Context *context)
 {
-    m_branches.push_back(context);
+    if ((int)m_newForest.size() >= m_maxTrees)
+    {
+        delete &context->outputTree();
+        delete context->candidateNode();
+        delete context;
+    }
+    else
+        m_branches.push_back(context);
+}
+
+bool MultiPass::isSubtreeOfSomeTree(Trees::Tree *tree)
+{
+    Forest::Iterator itTree;
+    bool isTreeUnique = true;
+
+    for (itTree = m_newForest.begin(); itTree != m_newForest.end(); )
+    {
+        if (*itTree == tree)
+        {
+            ++itTree;
+            continue;
+        }
+
+        TreeCompareResult tcr = (*itTree)->compare(*tree);
+
+        // Is this tree is subtree of another tree
+        if (tcr.isSecondSubtreeOfFirst())
+        {
+            isTreeUnique = false;
+            break;
+        }
+
+        // Is another tree is subtree of this
+        if (tcr.isFirstSubtreeOfSecond())
+        {
+            delete *itTree;
+            itTree = m_newForest.erase(itTree);
+            m_result.treesAdded--;
+        }
+        else
+            ++itTree;
+    }
+
+    if (isTreeUnique)
+    {
+        m_result.treesAdded++;
+        return false;
+    }
+    else
+        return true;
 }

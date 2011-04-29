@@ -19,6 +19,7 @@ public:
         const TimeSeries &ts,
         Trees::Forest &forest,
         Patterns::PatternsSet &patterns,
+        Trees::MetricsSet &metrics,
         int begin = 0,
         int end = -1);
 protected:
@@ -30,11 +31,17 @@ protected:
 
     void applyPattern(Patterns::Pattern &pattern, Patterns::Context &context);
 
+    bool isSubtreeOfSomeTree(Trees::Tree *tree);
+
+    int calcMaxLevel(Trees::Forest &forest);
+
     const TimeSeries *m_ts;
-    Trees::Forest m_forest;
+    Trees::Forest m_oldForest, m_newForest;
     Patterns::PatternsSet *m_patterns;
     std::vector<Patterns::Context*> m_branches;
-
+    bool m_wantSubtree;
+    int m_maxTrees;
+    int m_maxLevelCount;
 };
 
 }} // namespaces
