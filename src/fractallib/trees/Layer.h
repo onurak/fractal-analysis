@@ -33,7 +33,10 @@ public:
     }
 
     //! Sort nodes in layer by time
-    void sort();
+    void sortByTime();
+
+    //! Sort nodes in layer by level
+    void sortByLevel();
 };
 
 }} // namespace

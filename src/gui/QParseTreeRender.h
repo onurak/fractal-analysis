@@ -6,6 +6,7 @@
 #include <QGraphicsItem>
 #include <QGraphicsLineItem>
 #include <QLinkedList>
+#include <QLinearGradient>
 #include <QGraphicsSceneMouseEvent>
 #include "../fractallib/TimeSeries.h"
 #include "../fractallib/parsers/SinglePass.h"

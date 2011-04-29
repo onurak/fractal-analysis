@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>594</width>
-    <height>488</height>
+    <width>659</width>
+    <height>598</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,7 +25,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>594</width>
+     <width>659</width>
      <height>21</height>
     </rect>
    </property>
@@ -93,7 +93,7 @@
    <property name="minimumSize">
     <size>
      <width>200</width>
-     <height>302</height>
+     <height>334</height>
     </size>
    </property>
    <property name="allowedAreas">
@@ -182,6 +182,13 @@
           </property>
          </widget>
         </item>
+        <item row="2" column="3">
+         <widget class="QToolButton" name="tbClearMarkerPatterns">
+          <property name="text">
+           <string>X</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
      </item>
@@ -262,20 +269,32 @@
       </widget>
      </item>
      <item>
-      <spacer name="verticalSpacer_5">
-       <property name="orientation">
-        <enum>Qt::Vertical</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
+      <widget class="QGroupBox" name="groupBox_7">
+       <property name="minimumSize">
         <size>
-         <width>20</width>
-         <height>40</height>
+         <width>0</width>
+         <height>100</height>
         </size>
        </property>
-      </spacer>
+       <property name="title">
+        <string>Metrics</string>
+       </property>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <item>
+         <widget class="QTableWidget" name="tblMetrics">
+          <property name="frameShape">
+           <enum>QFrame::StyledPanel</enum>
+          </property>
+          <attribute name="verticalHeaderVisible">
+           <bool>false</bool>
+          </attribute>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </item>
      <item>
-      <spacer name="verticalSpacer">
+      <spacer name="verticalSpacer_5">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
@@ -293,8 +312,8 @@
   <widget class="QDockWidget" name="dockWidget">
    <property name="minimumSize">
     <size>
-     <width>549</width>
-     <height>115</height>
+     <width>595</width>
+     <height>117</height>
     </size>
    </property>
    <property name="windowTitle">
@@ -349,7 +368,26 @@
           </property>
          </widget>
         </item>
-        <item row="0" column="4">
+        <item row="0" column="5">
+         <widget class="QPushButton" name="bnClearForest">
+          <property name="minimumSize">
+           <size>
+            <width>40</width>
+            <height>18</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>40</width>
+            <height>18</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Clear</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="5">
          <widget class="QPushButton" name="bnHalt">
           <property name="minimumSize">
            <size>
@@ -514,6 +552,9 @@
    </property>
   </action>
   <action name="actionBuild_layers">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="resources.qrc">
      <normaloff>:/icons/resources/next_fractal_level.png</normaloff>:/icons/resources/next_fractal_level.png</iconset>

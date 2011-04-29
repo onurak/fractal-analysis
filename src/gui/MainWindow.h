@@ -7,6 +7,7 @@
 #include <QSettings>
 #include <QMessageBox>
 #include <QResizeEvent>
+#include <QTableWidgetItem>
 #include "QParseTreeRender.h"
 #include "Utils.h"
 #include "../fractallib/FL.h"
@@ -19,6 +20,8 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
+public:
+    static int NONE;
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
@@ -36,9 +39,14 @@ private:
     void readSettings();
     void writeSettings();
     void markup();
-    bool parseLevel();
+    bool parseAll();
     void loadPatterns(const QString &fileName, FL::Patterns::PatternsSet &patterns);
-    QString loadTimeSeries(const QString &fileName, QString columnName = "", bool isDynamic = false);
+    QString loadTimeSeries(
+        const QString &fileName,
+        QString columnName = "",
+        bool isDynamic = false,
+        int &staticSize = NONE);
+
     void refreshFilters(QString filtersDir = "");
     QString extractFileName(const QString &fullName);
     void prepareForLongAnalysis();
@@ -51,6 +59,8 @@ private:
     bool m_isDynamicFirstStep;
     bool m_wantInterrupt;
     int m_cyclesCount;
+    QString m_defMetricText;
+    bool m_isInitializing;
 private:
     FL::TimeSeries m_timeSeries;
     FL::TimeSeries m_dynamicTimeSeries;
@@ -77,6 +87,11 @@ private slots:
     void on_actionOpen_dynamic_time_series_triggered();
     void on_tbOpenMarkerPatternsSet_clicked();
     void on_bnHalt_clicked();
+    void on_bnClearForest_clicked();
+    void on_tbClearMarkerPatterns_clicked();
+    void on_actionBuild_trees_triggered();
+    void on_tblMetrics_currentItemChanged(QTableWidgetItem* current, QTableWidgetItem* previous);
+    void on_tblMetrics_itemChanged(QTableWidgetItem* item);
 };
 
 #endif // MAINWINDOW_H

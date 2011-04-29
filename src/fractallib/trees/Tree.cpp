@@ -37,13 +37,14 @@ void Tree::clear()
 
     // Clear cache
     m_nodesByLevel.clear();
+    m_possibleNodes.clear();
 }
 
 Tree* Tree::copy() const
 {
     Tree *tree = new Tree();
 
-    Layer::ConstIterator node, parent;
+    Layer::ConstIterator node;
 
     // Create nodes
     forall(node, m_allNodes)
@@ -77,6 +78,15 @@ Tree* Tree::copy() const
         originalNode->m_internalParent = tree->m_virtualRoot;
     }
 
+    // Remember "possible" nodes
+    forall(node, m_possibleNodes)
+    {
+        Node *originalNode = (*node)->m_relativeNode;
+        originalNode->setOrigPattern((*node)->origPattern());
+        originalNode->setOrigSequence((*node)->origSequence());
+        tree->m_possibleNodes.push_back(originalNode);
+    }
+
     return tree;
 }
 
@@ -98,8 +108,33 @@ void Tree::add(Node *node)
             node->m_internalParent = NULL;
         }
 
+        // Add to possible cache
+        if (node->status() == nsPossible)
+            m_possibleNodes.push_back(node);
+
         // Add to leveled cache
         m_nodesByLevel[node->level()].push_back(node);
+    }
+}
+
+void Tree::changeNodeStatus(Node *node, NodeStatus newStatus)
+{
+    if (node && node->status() != newStatus)
+    {
+        if (node->status() == nsPossible)
+        {
+            Layer::Iterator i;
+            if (FL::search(m_possibleNodes, node, i))
+                m_possibleNodes.erase(i);
+        }
+
+        node->setStatus(newStatus);
+
+        if (node->status() == nsPossible)
+        {
+            if (!FL::exists(m_possibleNodes, node))
+                m_possibleNodes.push_back(node);
+        }
     }
 }
 
@@ -121,6 +156,28 @@ void Tree::remove(Node *node)
     {
         Layer::Iterator i;
 
+        // First remove it's parent and connections with children
+        if (node->parent())
+        {
+            //node->parent()->children().remove(node);
+            remove(node->parent());
+        }
+
+        // It could be among roots
+        if (search(m_virtualRoot->children(), node, i))
+        {
+            m_virtualRoot->children().erase(i);
+
+            forall(i, node->children())
+            {
+                (*i)->m_internalParent = m_virtualRoot;
+                insertChild(m_virtualRoot, *i);
+            }
+        }
+
+        while (node->children().size() > 0)
+            node->children().front()->setParent(NULL);
+
         // Remove from m_allNodes and from caches
         if (search(m_allNodes, node, i))
         {
@@ -130,9 +187,10 @@ void Tree::remove(Node *node)
                 m_nodesByLevel[node->level()].erase(i);
         }
 
-        // It could be among roots
-        if (search(m_virtualRoot->children(), node, i))
-            m_virtualRoot->children().erase(i);
+        // It could be possible node
+        if (search(m_possibleNodes, node, i))
+            m_possibleNodes.erase(i);
+
         node->m_internalParent = NULL;
     }
 }
@@ -155,12 +213,57 @@ const Layer& Tree::nodesByLevel(int level) const
 
 int Tree::levelCount() const
 {
+    std::map<int, Layer>::iterator i;
+    for (i = m_nodesByLevel.begin(); i != m_nodesByLevel.end(); )
+    {
+        if (i->second.size() == 0)
+            m_nodesByLevel.erase(i++);
+        else
+            ++i;
+    }
+
+            /*
+    for (int lvl = 0; lvl < (int)m_nodesByLevel.size(); )
+    {
+        if (m_nodesByLevel.find(lvl) != m_nodesByLevel.end())
+        {
+            Layer &la = m_nodesByLevel[lvl];
+            la.size();
+        }
+
+        if (m_nodesByLevel.find(lvl) != m_nodesByLevel.end() &&
+            m_nodesByLevel[lvl].size() == 0)
+        {
+            m_nodesByLevel.erase(lvl);
+        }
+        else
+            lvl++;
+    }
+            */
+
     return m_nodesByLevel.size();
 }
 
 void Tree::markupWithRoots(int begin, int end)
 {
-    Layer::Iterator node = m_allNodes.begin(), i;
+    Layer::Iterator node, i;
+
+    // Delete possible nodes
+    forall(node, m_possibleNodes)
+    {
+        if ( search(m_allNodes, *node, i) )
+            m_allNodes.erase(i);
+        if ( search( m_nodesByLevel[(*node)->level()], *node, i ) )
+            m_nodesByLevel[(*node)->level()].erase(i);
+        if ( search( m_virtualRoot->children(), *node, i ) )
+            m_virtualRoot->children().erase(i);
+
+        delete *node;
+    }
+    m_possibleNodes.clear();
+
+
+    node = m_allNodes.begin();
     while ( node != m_allNodes.end() )
     {
         // Skip node if its out of range
@@ -171,7 +274,7 @@ void Tree::markupWithRoots(int begin, int end)
         }
 
         // if node isn't root - erase it
-        if ( !exists(m_virtualRoot->children(), *node) )
+        else if ( !exists(m_virtualRoot->children(), *node) )
         {
             if ( search( m_nodesByLevel[(*node)->level()], *node, i ) )
                 m_nodesByLevel[(*node)->level()].erase(i);
@@ -187,6 +290,7 @@ void Tree::markupWithRoots(int begin, int end)
                 if ( search( m_nodesByLevel[(*node)->level()], *node, i ) )
                     m_nodesByLevel[(*node)->level()].erase(i);
                 (*node)->setLevel(0);
+                (*node)->setStatus(nsFixed);
                 m_nodesByLevel[0].push_back(*node);
             }
             ++node;
@@ -311,7 +415,7 @@ void Tree::validateStructure()
     std::map<int, Layer>::iterator layer;
     forall(layer, m_nodesByLevel)
         layer->second.sort();
-    m_allNodes.sort();
+    m_allNodes.sortByTime();
 }
 
 void Tree::makeDynamicEnd(int borderPos)
@@ -325,7 +429,7 @@ void Tree::makeDynamicEnd(int borderPos)
         Layer::const_reverse_iterator node;
         for (node = layer.rbegin(); node != layer.rend(); ++node)
         {
-            if ((*node)->end() >= borderPos)
+            if ((*node)->end() >= borderPos && (*node)->status() != nsPossible)
                 (*node)->setStatus(nsFloating);
             else
                 break;
@@ -341,7 +445,7 @@ int Tree::dynamicEndPos() const
     Layer::const_reverse_iterator node;
     for (node = level0.rbegin(); node != level0.rend(); ++node)
     {
-        if ((*node)->status() != nsFloating)
+        if ((*node)->status() == nsFixed)
         {
             if (node == level0.rbegin())
                 return (*node)->end();
@@ -349,4 +453,58 @@ int Tree::dynamicEndPos() const
         }
     }
     return 0;
+}
+
+Layer Tree::getFollowingRoots(Node *node)
+{
+    Layer result;
+    if (node)
+    {
+        Layer &roots = m_virtualRoot->children();
+        Layer::iterator itFwd = roots.begin();
+        while (itFwd != roots.end() && (*itFwd)->begin() < node->end())
+            ++itFwd;
+        if (itFwd != roots.end())
+            while (itFwd != roots.end())
+            {
+                result.push_back(*itFwd);
+                ++itFwd;
+            }
+
+        /*
+        Layer::iterator         itFwd = roots.end();
+        Layer::reverse_iterator itRev = roots.rbegin();
+
+        --itFwd;
+        while (*itRev != node && itRev != roots.rend())
+            ++itRev, --itFwd;
+        if (itRev != roots.rend())
+            while (++itFwd != roots.end())
+                result.push_back(*itFwd);
+                */
+    }
+    return result;
+}
+
+void Tree::fixup()
+{
+    Layer::Iterator node;
+    forall(node, m_allNodes)
+    {
+        if ((*node)->status() == nsFloating)
+            (*node)->setStatus(nsFixed);
+    }
+}
+
+Tree* Tree::detachLevelLastNodes(int count) const
+{
+    Tree *result = copy();
+    Layer &lastLevel = result->m_nodesByLevel[levelCount()-1];
+
+    while (count > 0 && lastLevel.size() > 0)
+    {
+        result->remove(lastLevel.back());
+        count--;
+    }
+    return result;
 }

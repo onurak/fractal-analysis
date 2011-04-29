@@ -26,7 +26,6 @@ namespace FL {
 
 namespace FL { namespace Patterns {
 
-
 class Context
 {
 public:
@@ -74,7 +73,7 @@ public:
     Trees::Tree& parseTree() const { return *m_parseTree; }
 
     //! Set analyzing tree
-    void setParseTree(Trees::Tree *tree);
+    void setParseTree(Trees::Tree *tree, bool wantAutodelete = false);
 
 
     //! Get output tree where results of analysis are stored
@@ -108,7 +107,7 @@ public:
     //! Check if currentRoot() == roots().end()
     inline bool isAtEnd()
     {
-        return m_currentRootPos == (int)m_roots.size();
+        return m_currentRootPos >= (int)m_roots.size();
     }
 
     //! Check if currentRoot() reached specified point of time series
@@ -156,6 +155,9 @@ private:
 
     //! Nodes, added during analysis
     FL::Trees::Layer *m_modification;
+
+    //! Want autodelete parse tree with context destruction
+    bool m_wantAutodeleteParseTree;
 };
 
 }} // namespaces

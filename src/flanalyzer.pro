@@ -41,9 +41,11 @@ HEADERS  += gui/MainWindow.h \
     fractallib/parsers/DynamicMultiPass.h \
     fractallib/parsers/AbstractDynamicParser.h \
     fractallib/trees/Metrics.h \
-    fractallib/trees/metrics/LevelsCount.h \
     fractallib/Forecast.h \
-    fractallib/markers/Incremental.h
+    fractallib/markers/Incremental.h \
+    fractallib/trees/metrics/Subtree.h \
+    fractallib/trees/metrics/MaxLevelsCount.h \
+    fractallib/trees/metrics/MaxTrees.h
 
 FORMS    += gui/MainWindow.ui
 

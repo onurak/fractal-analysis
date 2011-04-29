@@ -192,6 +192,9 @@ private:
         m_delegateList.clear();
     }
 
+
+    //#pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wreturn-type"
     TRet invoke(PARAMS)
     {
         if (!isNull())
@@ -203,6 +206,7 @@ private:
             return m_delegateList.back()->invoke(ARGS);
         }
     }
+    //#pragma GCC diagnostic pop
 
 private:
     DelegateList m_delegateList;

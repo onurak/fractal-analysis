@@ -51,7 +51,7 @@ class Tree
 {
 private:
     //! Use copy() mothod to create deep tree copy
-    Tree(const Tree &tree) {}
+    Tree(const Tree &tree) { tree.roots(); }
 public:
     //! Default constructor
     Tree();
@@ -75,6 +75,9 @@ public:
     //! Add node to tree. It is the only valid way to do this
     void add(Node *node);
 
+    //! Change node status (internal cache would be updated in this case)
+    void changeNodeStatus(Node *node, NodeStatus newStatus);
+
     //! Remove node from tree. It is the only valid way to do this
     void remove(Node *node);
 
@@ -92,6 +95,12 @@ public:
 
     //! Compare this (first) tree to another (second) tree
     TreeCompareResult compare(const Tree &tree) const;
+
+    //! Get all nodes with status nsPossible
+    inline const Layer& possibleNodes() const
+    {
+        return m_possibleNodes;
+    }
 
     //! Average memory usage
     int bytesUsed() const;
@@ -118,6 +127,15 @@ public:
 
     //! Get start position of ending nodes that have "floating" parameters (have status nsDynamic)
     int dynamicEndPos() const;
+
+    //! Get nodes followed by specified node at the same level
+    Layer getFollowingRoots(Node *node);
+
+    //! Fixup tree structure (make all floating nodes to be fixed)
+    void fixup();
+
+    //! Destroy last nodes at last level.
+    Tree* detachLevelLastNodes(int count) const;
 protected:
     //! Insert one node to children's sequence of another at right place
     //! according to position in time series
@@ -131,6 +149,9 @@ private:
 
     //! Cached nodes by layers
     mutable std::map<int, Layer> m_nodesByLevel;
+
+    //! Cached possible nodes
+    mutable Layer m_possibleNodes;
 };
 
 }} // namespaces

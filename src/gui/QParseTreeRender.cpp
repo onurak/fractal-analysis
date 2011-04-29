@@ -81,9 +81,11 @@ void QParseTreeRender::drawTreeLayer(
     QColor color,
     LayerDrawingOptions options)
 {
-    QPen pen(color);
+    QPen fixedNodePen(color);
+    QPen possibleNodePen(color);
     QPen dotPen(Qt::DashDotLine);
     dotPen.setColor(color);
+
     QFont font("Arial", 5);
     const double treeOffset = fabs(m_tsYMin - m_tsYMax) / 14;
     const double delta = 10;
@@ -95,11 +97,29 @@ void QParseTreeRender::drawTreeLayer(
     {
         FL::Trees::Node *node = *itNode;
 
-        // Draw node platform
+        // Node position
         qreal y = m_tsYMin - treeOffset - node->level() * delta;
         qreal x1 = node->begin() * TIME_STEP;
         qreal x2 = node->end()   * TIME_STEP;
-        m_scene->addLine(x1, y, x2, y, pen);
+
+        QPen nodePen;
+        if (node->status() != FL::nsPossible)
+        {
+            nodePen = fixedNodePen;
+        }
+        else
+        {
+            QLinearGradient possibleNodeGradient(x1, y, x2, y);
+            possibleNodeGradient.setColorAt(0, color);
+            possibleNodeGradient.setColorAt(1, QColor(color.red(), color.green(), color.blue(), 10));
+            possibleNodePen.setBrush(possibleNodeGradient);
+            nodePen = possibleNodePen;
+        }
+
+        // Draw node platform
+        m_scene->addLine(x1, y, x2, y, nodePen);
+        m_scene->addLine(x1, y, x2, y, nodePen);
+
 
         // Draw node text
         QString nodeName =
@@ -122,8 +142,8 @@ void QParseTreeRender::drawTreeLayer(
         }
         else
         {
-            m_scene->addLine(x1, y, x1, y+1, pen);
-            m_scene->addLine(x2, y, x2, y+1, pen);
+            m_scene->addLine(x1, y, x1, y+1, nodePen);
+            m_scene->addLine(x2, y, x2, y+1, nodePen);
         }
 
         // Draw node time series
@@ -131,7 +151,7 @@ void QParseTreeRender::drawTreeLayer(
         {
             qreal tsY1 = (m_ts->values()[ node->begin() ] - m_tsYMin) * yMult + m_tsYMin;
             qreal tsY2 = (m_ts->values()[ node->end() ] - m_tsYMin) * yMult + m_tsYMin;
-            m_scene->addLine(x1, tsY1, x2, tsY2, pen);
+            m_scene->addLine(x1, tsY1, x2, tsY2, fixedNodePen);
         }
     }
 }

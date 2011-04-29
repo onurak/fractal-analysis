@@ -6,11 +6,14 @@ inline QString QSTR(const std::string &s)
     return QString().fromStdString(s);
 }
 
+int MainWindow::NONE = -1;
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow),
     m_settings(QSettings::IniFormat, QSettings::UserScope, "FL", "FLAnalyzer")
 {
+    m_isInitializing = true;
     ui->setupUi(this);
     ui->graphicsView->setAlignment(Qt::AlignCenter);
     ui->graphicsView->setResizeAnchor(QGraphicsView::AnchorViewCenter);
@@ -42,7 +45,35 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lbTimeSeriesSize->setText("0");
     readSettings();
     refreshForestInfo();
+
+    ui->tblMetrics->setRowCount(m_metrics.size());
+    ui->tblMetrics->setColumnCount(3);
+
+    QTableWidgetItem *item;
+    item = new QTableWidgetItem("Enabled");
+    ui->tblMetrics->setHorizontalHeaderItem(0, item);
+    item = new QTableWidgetItem("Metric");
+    ui->tblMetrics->setHorizontalHeaderItem(1, item);
+    item = new QTableWidgetItem("Limit");
+    ui->tblMetrics->setHorizontalHeaderItem(2, item);
+    ui->tblMetrics->horizontalHeaderItem(1)->setFlags(
+                ui->tblMetrics->horizontalHeaderItem(1)->flags() & !Qt::ItemIsEditable);
+
+    FL::Trees::MetricsSet::iterator itMetric;
+    int rowNo = 0;
+    forall(itMetric, m_metrics)
+    {
+        FL::Trees::Metric *metric = *itMetric;
+        ui->tblMetrics->setItem(rowNo, 0, new QTableWidgetItem("yes"));
+        ui->tblMetrics->setItem(rowNo, 1, new QTableWidgetItem(QSTR(metric->name())));
+        ui->tblMetrics->setItem(rowNo, 2, new QTableWidgetItem(
+           QString().setNum(metric->limit())) );
+        rowNo++;
+    }
+
     ui->statusBar->showMessage(tr("Ready"), 5000);
+
+    m_isInitializing = false;
 }
 
 MainWindow::~MainWindow()
@@ -75,12 +106,13 @@ void MainWindow::on_actionOpen_time_series_triggered()
     if (!openDialog.exec())
         return;
 
-    m_settings.setValue("gui/defaultTimeSeriesPath", openDialog.directory().absolutePath());
-    m_settings.setValue("gui/defaultTimeSeriesFile", openDialog.selectedFiles()[0]);
-
     QString loadedColumn = loadTimeSeries(openDialog.selectedFiles()[0], "");
 
+    m_settings.setValue("gui/defaultTimeSeriesPath", openDialog.directory().absolutePath());
+    m_settings.setValue("gui/defaultTimeSeriesFile", openDialog.selectedFiles()[0]);
     m_settings.setValue("gui/defaultTimeSeriesColumn", loadedColumn);
+    m_settings.setValue("gui/isDefaultTimeSeriesDynamic", false);
+    m_settings.setValue("gui/defaultTimeSeriesStaticSize", 0);
 }
 
 void MainWindow::on_actionOpen_patterns_triggered()
@@ -122,7 +154,8 @@ void MainWindow::loadPatterns(const QString &fileName,
     }
 }
 
-QString MainWindow::loadTimeSeries(const QString &fileName, QString columnName, bool isDynamic)
+QString MainWindow::loadTimeSeries(
+    const QString &fileName, QString columnName, bool isDynamic, int &staticSize)
 {
     if (fileName.isEmpty())
         return "";
@@ -177,15 +210,16 @@ QString MainWindow::loadTimeSeries(const QString &fileName, QString columnName, 
             throw QString(tr("Error reading from file (is it invalid?)"));
 
         // Want dynamic time series?
-        int staticTSCount = tempTimeSeries.values().size();
-        if ((m_isDynamicTS = isDynamic) == true)
+        if ((m_isDynamicTS = isDynamic) == true &&
+            (staticSize <= 0 || staticSize > (int)tempTimeSeries.values().size()))
         {
+            staticSize = tempTimeSeries.values().size();
             bool ok;
             QString text =
                     QString(tr("How many of the %1 values take to a static part?"))
                             .arg(tempTimeSeries.values().size());
 
-            staticTSCount = QInputDialog::getInteger(
+            staticSize = QInputDialog::getInteger(
                         this, tr("Dynamic time series"),
                         text, tempTimeSeries.values().size() / 2,
                         1, tempTimeSeries.values().size(), 1, &ok);
@@ -199,14 +233,17 @@ QString MainWindow::loadTimeSeries(const QString &fileName, QString columnName, 
         m_dynamicTimeSeries.clear();
         m_forest.cleanup();
 
+        if (!m_isDynamicTS)
+            staticSize = tempTimeSeries.values().size();
+
         m_timeSeries.values().assign(
             tempTimeSeries.values().begin(),
-            tempTimeSeries.values().begin() + staticTSCount);
+            tempTimeSeries.values().begin() + staticSize);
 
-        if (m_isDynamicTS && staticTSCount < (int)tempTimeSeries.values().size())
+        if (m_isDynamicTS && staticSize < (int)tempTimeSeries.values().size())
         {
             m_dynamicTimeSeries.values().assign(
-                tempTimeSeries.values().begin() + staticTSCount,
+                tempTimeSeries.values().begin() + staticSize,
                 tempTimeSeries.values().end());
         }
     }
@@ -253,9 +290,12 @@ void MainWindow::readSettings()
     else
         setWindowState( QFlags<Qt::WindowState>(windowState() ^ ~Qt::WindowMaximized) );
 
+    int staticSize = m_settings.value("gui/defaultTimeSeriesStaticSize").toInt();
     loadTimeSeries(
                 m_settings.value("gui/defaultTimeSeriesFile", "").toString(),
-                m_settings.value("gui/defaultTimeSeriesColumn", "").toString());
+                m_settings.value("gui/defaultTimeSeriesColumn", "").toString(),
+                m_settings.value("gui/isDefaultTimeSeriesDynamic").toBool(),
+                staticSize);
 
     QString fileName = m_settings.value("gui/defaultPatternsFile", "").toString();
     loadPatterns(fileName, m_patterns);
@@ -298,7 +338,7 @@ void MainWindow::on_actionBuild_layers_triggered()
     if (m_forest.size() == 0)
         markup();
     else
-        parseLevel();
+        parseAll();
 }
 
 void MainWindow::on_actionMarkup_triggered()
@@ -330,7 +370,7 @@ void MainWindow::markup()
         if (m_markerPatterns.size() > 0)
         {
             FL::Parsers::SinglePass parser;
-            parser.parseAll(m_timeSeries, m_forest, m_markerPatterns);
+            parser.analyze(m_timeSeries, m_forest, m_markerPatterns, m_metrics);
             if (!parser.wasOk())
                 throw parser.lastError().arg();
         }
@@ -346,7 +386,7 @@ void MainWindow::markup()
     refreshForestInfo();
 }
 
-bool MainWindow::parseLevel()
+bool MainWindow::parseAll()
 {
     FL::Parsers::AbstractParser *parser = NULL;
 
@@ -366,7 +406,8 @@ bool MainWindow::parseLevel()
     parser->onProgress = delegate(this, &MainWindow::onParsingProgress);
 
     prepareForLongAnalysis();
-    FL::ParseResult parseResult = parser->analyze(m_timeSeries, m_forest, m_patterns);
+    FL::ParseResult parseResult = parser->analyze(
+                m_timeSeries, m_forest, m_patterns, m_metrics);
     longAnalysisComplete();
 
     bool result = parser->wasOk();
@@ -428,7 +469,7 @@ bool MainWindow::onParsingProgress(FL::ParseResult pr, FL::Trees::Forest *curren
     ui->statusBar->showMessage("Busy...");
     if (m_cyclesCount++ % 100 == 0)
     {
-        ui->lbTreeCount->setText(QString().setNum(pr.treesAdded));
+        ui->lbTreeCount->setText(QString().setNum(currentForest->size()));
         if (currentForest)
         {
             int memUsage = 0;
@@ -473,7 +514,7 @@ void MainWindow::spc_action_ExecuteFilter(QAction* a)
 
         // Parse
         parser = new Parsers::SinglePass();
-        parser->parseAll(m_timeSeries, m_forest, patterns);
+        parser->analyze(m_timeSeries, m_forest, patterns, m_metrics);
         if (!parser->wasOk())
             throw QString("Parsing error: %1").arg(QSTR(parser->lastError().arg()));
     }
@@ -526,8 +567,12 @@ void MainWindow::on_actionDynamic_Step_triggered()
 
     using namespace FL;
 
+    Markers::AbstractMarker *marker = NULL;
+    Parsers::AbstractDynamicParser *parser = NULL;
+
     // Prepare trees for dynamic analysis
-    if (m_isDynamicFirstStep)
+
+    //if (m_isDynamicFirstStep)
     {
         Trees::Forest::Iterator tree;
         forall(tree, m_forest)
@@ -535,27 +580,47 @@ void MainWindow::on_actionDynamic_Step_triggered()
         m_isDynamicFirstStep = false;
     }
 
+
     // Add new value to time series
     m_timeSeries.values().push_back(m_dynamicTimeSeries.values().front());
     m_dynamicTimeSeries.values().erase(m_dynamicTimeSeries.values().begin());
 
-    // Markup and parse with incremental algorithms
-    Markers::AbstractMarker *marker = new Markers::Incremental();
-    marker->analyze(m_timeSeries, m_forest, m_markerPatterns);
+    try
+    {
+        // Markup with incremental algorithm
+        marker = new Markers::Incremental();
+        marker->analyze(m_timeSeries, m_forest, m_markerPatterns);
+        if (!marker->wasOk())
+            throw marker->lastError();
+
+        // Parse with incremental algorithm
+        parser = new Parsers::DynamicMultiPass();
+        prepareForLongAnalysis();
+        ParseResult pr;
+
+        FL::ParseResult result, r;
+        //do
+        {
+            pr.reset();
+            pr = parser->analyze(m_timeSeries, m_forest, m_patterns, m_metrics, m_forecast);
+            result += pr;
+        }// while (parser->wasOk() && pr.treesAdded > 1);
+        longAnalysisComplete();
+
+        if (!parser->wasOk())
+            throw parser->lastError();
+    }
+    catch (const FL::Exceptions::EAnalyze& e)
+    {
+        ui->statusBar->showMessage(QSTR(e.arg()));
+    }
+
     delete marker;
-
-
-    //Parsers::AbstractDynamicParser *parser =
-      //      new Parsers::DynamicMultiPass();
-
-    //ParseResult pr =
-      //      parser->analyze(m_timeSeries, m_forest, m_patterns, m_metrics, m_forecast);
-
-    //delete parser;
-
+    delete parser;
 
     // Refresh UI
-    m_render->timeSeriesChanged();
+    refreshForestInfo();
+    m_render->forestChanged();
     ui->lbTimeSeriesSize->setText(QString().setNum(m_timeSeries.values().size()));
 }
 
@@ -569,12 +634,15 @@ void MainWindow::on_actionOpen_dynamic_time_series_triggered()
     if (!openDialog.exec())
         return;
 
-    QString loadedColumn = loadTimeSeries(openDialog.selectedFiles()[0], "", true);
+    int staticSize = NONE;
+    QString loadedColumn = loadTimeSeries(openDialog.selectedFiles()[0], "", true, staticSize);
     m_isDynamicFirstStep = true;
 
     m_settings.setValue("gui/defaultTimeSeriesPath", openDialog.directory().absolutePath());
     m_settings.setValue("gui/defaultTimeSeriesFile", openDialog.selectedFiles()[0]);
     m_settings.setValue("gui/defaultTimeSeriesColumn", loadedColumn);
+    m_settings.setValue("gui/isDefaultTimeSeriesDynamic", true);
+    m_settings.setValue("gui/defaultTimeSeriesStaticSize", staticSize);
 }
 
 void MainWindow::on_tbOpenMarkerPatternsSet_clicked()
@@ -599,6 +667,8 @@ void MainWindow::prepareForLongAnalysis()
     ui->menuBar->setEnabled(false);
     ui->dockWidgetProperties->setEnabled(false);
     ui->sbCurrentTreeIndex->setEnabled(false);
+    ui->bnClearForest->setEnabled(false);
+    ui->mainToolBar->setEnabled(false);
     ui->bnHalt->setEnabled(true);
     m_cyclesCount = 0;
     m_wantInterrupt = false;
@@ -609,10 +679,92 @@ void MainWindow::longAnalysisComplete()
     ui->menuBar->setEnabled(true);
     ui->dockWidgetProperties->setEnabled(true);
     ui->sbCurrentTreeIndex->setEnabled(true);
+    ui->bnClearForest->setEnabled(true);
+    ui->mainToolBar->setEnabled(true);
     ui->bnHalt->setEnabled(false);
 }
 
 void MainWindow::on_bnHalt_clicked()
 {
     m_wantInterrupt = true;
+}
+
+void MainWindow::on_bnClearForest_clicked()
+{
+    m_forest.cleanup();
+    refreshForestInfo();
+    m_render->forestChanged();
+}
+
+void MainWindow::on_tbClearMarkerPatterns_clicked()
+{
+    m_markerPatterns.cleanup();
+    ui->lbMarkerPatterns->setText("");
+    m_settings.setValue("gui/defaultMarkerPatternsFile", "");
+}
+
+void MainWindow::on_actionBuild_trees_triggered()
+{
+
+}
+
+void MainWindow::on_tblMetrics_currentItemChanged(QTableWidgetItem* current, QTableWidgetItem* previous)
+{
+    m_defMetricText = current->text();
+}
+
+void MainWindow::on_tblMetrics_itemChanged(QTableWidgetItem* item)
+{
+    if (m_isInitializing)
+        return;
+
+    if (item->column() == 2)
+    {
+        QTableWidgetItem *mItem = ui->tblMetrics->item(item->row(), 1);
+        if (!mItem) return;
+
+        FL::Trees::Metric *metric =
+                m_metrics.getByName( mItem->text().toStdString() );
+        if (metric)
+        {
+            bool ok;
+            double limit = item->text().toInt(&ok);
+            if (!ok)
+                item->setText(m_defMetricText);
+            else
+                item->setText( QString().setNum(metric->setLimit(limit)) );
+        }
+    }
+    else if (item->column() == 0)
+    {
+        QTableWidgetItem *mItem = ui->tblMetrics->item(item->row(), 1);
+        if (!mItem) return;
+
+        FL::Trees::Metric *metric =
+                m_metrics.getByName( mItem->text().toStdString() );
+        if (!metric) return;
+
+        QString newText;
+        if (item->text() == "1" || item->text().toLower() == "yes" || item->text().toLower() == "on")
+        {
+            newText = "yes";
+        }
+        else if (item->text() == "0" || item->text().toLower() == "no" || item->text().toLower() == "off")
+        {
+            newText = "no";
+        }
+        else
+        {
+            newText = m_defMetricText;
+            if (newText != "yes" && newText != "no")
+                newText = "yes";
+        }
+
+        metric->setEnabled(newText == "yes");
+        item->setText(newText);
+    }
+    else
+    {
+        item->setText(m_defMetricText);
+    }
 }

@@ -3,6 +3,7 @@
 #include "../../compilers/AbstractCompiler.h"
 #include "../../trees/Tree.h"
 
+using namespace FL;
 using namespace FL::Patterns::Standart;
 using namespace FL::Exceptions;
 using namespace FL::Compilers;
@@ -552,8 +553,8 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal {
             DescriptionEbnf *descEbnf = dynamic_cast<DescriptionEbnf*>(m_description);
             if (descEbnf != NULL)
             {
-                descEbnf->ebnfSet() = ebnf();
-                makeSet(descEbnf->ebnfSet());
+                descEbnf->sequences() = ebnf();
+                makeSet(descEbnf->sequences());
             }
             else
             {
@@ -751,41 +752,97 @@ EParsing DescriptionEbnf::compile(Compilers::Input &input)
 
 }
 
-bool DescriptionEbnf::check(Context &c, CheckInfo &info)
+bool DescriptionEbnf::check(Context &c, CheckInfo &info, CheckOptions checkOptions)
 {
     info.applicableSequences.clear();
     CISet::iterator seq;
 
-    int stillSize = c.roots().size() - c.currentRootPos();
-
-
-    // Check all sequences
-    forall(seq, m_ebnfSet)
+    if ((checkOptions & coContinueChecking) == 0)
     {
-        if ((int)(*seq).size() > stillSize)
-            continue;
 
-        bool found = true;
-        Trees::Layer::ConstIterator node = c.currentRoot();
-        CISequence::iterator cinode = seq->begin();
+        int stillSize = c.roots().size() - c.currentRootPos();
 
-        // Check current sequence
-        while (node   != c.parseTree().roots().end() &&
-               cinode != seq->end())
+        // Check all sequences
+        forall(seq, m_ebnfSet)
         {
-            if ((*node)->id() != cinode->id  &&  cinode->id != -1)
+            if ((int)(*seq).size() > stillSize  &&  !(checkOptions & coAllowPartialMatch))
+                continue;
+
+            int nodesMatched = 0;
+            Trees::Layer::ConstIterator node = c.currentRoot();
+            CISequence::iterator cinode = seq->begin();
+
+            // Check current sequence
+            while (node   != c.roots().end() &&
+                   cinode != seq->end())
             {
-                found = false;
-                break;
+                if ((*node)->id() != cinode->id  &&  cinode->id != -1)
+                    break;
+                ++node;
+                ++cinode;
+                ++nodesMatched;
             }
-            ++node;
+
+            // If sequence is [partial] applicable - add it
+            if ( nodesMatched == (int)seq->size() )
+            {
+                CISequenceInfo cisi;
+                cisi.checkResult = crExactMatch;
+                cisi.matchedCount = nodesMatched;
+                cisi.sequence = &(*seq);
+                info.applicableSequences.push_back(cisi);
+            }
+            else if ((nodesMatched > 0) &&
+                     (checkOptions & coAllowPartialMatch) &&
+                     (node == c.roots().end()))
+            {
+                CISequenceInfo cisi;
+                cisi.checkResult = crPartialMatch;
+                cisi.matchedCount = nodesMatched;
+                cisi.sequence = &(*seq);
+                info.applicableSequences.push_back(cisi);
+            }
+        }
+    }
+
+    // Continue possible node checking
+    else
+    {
+        using namespace FL::Trees;
+        Node *node = c.candidateNode();
+        Layer lastChildFollowers = c.outputTree().getFollowingRoots( node );
+        if (lastChildFollowers.size() == 0)
+            return true;
+
+
+        Trees::Layer::ConstIterator itNode =
+                lastChildFollowers.begin();
+
+        CISequence::const_iterator cinode =
+                node->origSequence()->begin() + node->children().size();
+
+        int nodesMatched = 0;
+
+        while (cinode != node->origSequence()->end() &&
+               itNode != lastChildFollowers.end())
+        {
+            if ((*itNode)->id() != cinode->id  &&  cinode->id != -1)
+                break;
+            ++itNode;
             ++cinode;
+            ++nodesMatched;
         }
 
-        // If it's applicable
-        if (found)
+        if (nodesMatched > 0)
         {
-            info.applicableSequences.push_back(&(*seq));
+            CISequenceInfo cisi;
+            cisi.matchedCount = nodesMatched + node->children().size();
+            cisi.checkResult =
+                    (cisi.matchedCount == (int)node->origSequence()->size()) ?
+                        crExactMatch : crPartialMatch;
+            cisi.sequence = node->origSequence();
+
+            info.applicableSequences.push_back(cisi);
         }
     }
 

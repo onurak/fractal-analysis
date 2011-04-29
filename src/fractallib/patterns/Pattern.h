@@ -7,14 +7,6 @@
 
 namespace FL { namespace Patterns {
 
-//! Result of pattern checking
-enum CheckResult
-{
-    crOK,
-    crInvalidDescription,
-    crInvalidGuard
-};
-
 //! Pattern's data factory
 class PatternConstructor
 {
@@ -37,17 +29,29 @@ public:
     Pattern(const PatternConstructor *pc, bool autoDeleteConstructor = true);
     Pattern(const std::string &name, const PatternConstructor *pc, bool autoDeleteConstructor = true);
 
+    //! Get pattern name
     const std::string& name() const;
+
+    //! Set patterns name. ID would be set automatically
     void setName(const std::string& name);
 
+    //! Get id of name of pattern
     int id() const;
+
+    //! Get maximal length of pattern's symbols sequence
+    int maxSequenceLength() const;
 
     Guard* guard() const;
     Description* description() const;
 
+    //! Compile pattern expression
     Exceptions::EParsing compile(const std::string &s);
+
+    //! Compile pattern expression
     Exceptions::EParsing compile(Compilers::Input *input);
-    CheckResult check(Context &c, CheckInfo &info);
+
+    //! Check if pattern is applicable in analysis context
+    CheckResult check(Context &c, CheckInfo &info, CheckOptions check = coNone);
 private:
     Pattern(const Pattern &p);
 private:
@@ -55,6 +59,9 @@ private:
     Description *m_description;
 };
 
+/*! \class PatternsSet
+  * \class Standart collection of patterns
+  */
 class PatternsSet : public std::vector<Pattern*>
 {
 public:
@@ -62,7 +69,12 @@ public:
     typedef const_iterator ConstIterator;
 public:
     virtual ~PatternsSet() { cleanup(); }
+
+    //! Clear and delete all patterns
     void cleanup() { FL::cleanup(*this); }
+
+    //! Get max size of sequence of symbols in pattern set
+    int maxSequenceLength() const;
 };
 
 } } // namepsace

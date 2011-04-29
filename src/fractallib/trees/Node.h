@@ -2,9 +2,11 @@
 #define NODE_H
 
 #include <vector>
+#include "../patterns/CheckInfo.h"
 
 namespace FL { namespace Patterns {
     class Context;
+    class Pattern;
 }}
 
 namespace FL {
@@ -78,6 +80,19 @@ public:
     //! Get cached relative node (warning)
     inline Node *relativeNode() const { return m_relativeNode; }
 
+    //! Get original sequence for node that have status nsPossible
+    inline Patterns::CISequence *origSequence() { return m_origSequence; }
+
+    //! Set original sequence for node that have status nsPossible
+    inline void setOrigSequence(Patterns::CISequence *sequence) { m_origSequence = sequence; }
+
+    //! Get original pattern for node that have status nsPossible
+    inline Patterns::Pattern *origPattern() { return m_origPattern; }
+
+    //! Set original pattern for node that have status nsPossible
+    inline void setOrigPattern(FL::Patterns::Pattern *pattern) { m_origPattern = pattern; }
+
+
     friend class Tree;
     friend class FL::Patterns::Context;
 private:
@@ -114,6 +129,14 @@ private:
     /*! Virtual parent node. Used by internal algorithms of Tree
       */
     Node *m_internalParent;
+
+    /*! If node have status nsPossible, then this would
+      * store original sequence that is possible for children of
+      * this node
+      */
+    Patterns::CISequence *m_origSequence;
+
+    Patterns::Pattern *m_origPattern;
 };
 
 }}
