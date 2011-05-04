@@ -1,9 +1,26 @@
+/** This file is part of Fractal Library.
+ *
+ * Fractal Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Fractal Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Fractal Library. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #ifndef PATTERN_H
 #define PATTERN_H
 
 #include "Guard.h"
 #include "Description.h"
 #include "../Common.h"
+#include "../Forecast.h"
 
 namespace FL { namespace Patterns {
 
@@ -52,6 +69,19 @@ public:
 
     //! Check if pattern is applicable in analysis context
     CheckResult check(Context &c, CheckInfo &info, CheckOptions check = coNone);
+
+    //! Get time series values range where guard still executable for this node
+    /*! \param node Node of interest
+      * \param tree Tree where node is defined
+      * \param ts Time series where tree is defined
+      * \param forecast Returned forecast data
+      * \return true if limits calculated, false if some error occures (invalid
+      *  parameters or guard never can't be applied to this node)
+      */
+    bool calcGuardLimits(FL::Trees::Node *node,
+                         FL::Trees::Tree &tree,
+                         FL::TimeSeries &ts,
+                         FL::ForecastItem &forecast);
 private:
     Pattern(const Pattern &p);
 private:

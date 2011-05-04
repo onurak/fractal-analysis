@@ -25,7 +25,8 @@ SOURCES += gui/main.cpp\
     fractallib/parsers/AbstractDynamicParser.cpp \
     fractallib/trees/Metrics.cpp \
     fractallib/Forecast.cpp \
-    fractallib/markers/Incremental.cpp
+    fractallib/markers/FractalIncremental.cpp \
+    fractallib/markers/SimpleIncremental.cpp
 
 HEADERS  += gui/MainWindow.h \
     gui/QParseTreeRender.h \
@@ -42,10 +43,11 @@ HEADERS  += gui/MainWindow.h \
     fractallib/parsers/AbstractDynamicParser.h \
     fractallib/trees/Metrics.h \
     fractallib/Forecast.h \
-    fractallib/markers/Incremental.h \
     fractallib/trees/metrics/Subtree.h \
     fractallib/trees/metrics/MaxLevelsCount.h \
-    fractallib/trees/metrics/MaxTrees.h
+    fractallib/trees/metrics/MaxTrees.h \
+    fractallib/markers/FractalIncremental.h \
+    fractallib/markers/SimpleIncremental.h
 
 FORMS    += gui/MainWindow.ui
 
@@ -62,7 +64,6 @@ SOURCES += \
     fractallib/parsers/SinglePass.cpp \
     fractallib/parsers/MultiPass.cpp \
     fractallib/parsers/AbstractParser.cpp \
-    fractallib/patterns/SynonymsTable.cpp \
     fractallib/patterns/Pattern.cpp \
     fractallib/patterns/Guard.cpp \
     fractallib/patterns/Description.cpp \
@@ -106,7 +107,6 @@ HEADERS += \
     fractallib/parsers/AbstractParser.h \
     fractallib/parsers/SinglePass.h \
     fractallib/parsers/MultiPass.h \
-    fractallib/patterns/SynonymsTable.h \
     fractallib/patterns/Pattern.h \
     fractallib/patterns/Guard.h \
     fractallib/patterns/Description.h \

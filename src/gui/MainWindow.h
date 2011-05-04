@@ -51,6 +51,7 @@ private:
     QString extractFileName(const QString &fullName);
     void prepareForLongAnalysis();
     void longAnalysisComplete();
+    void refreshForecastsData();
 private:
     Ui::MainWindow *ui;
     QSettings m_settings;
@@ -61,6 +62,13 @@ private:
     int m_cyclesCount;
     QString m_defMetricText;
     bool m_isInitializing;
+
+    int m_totalForecasts;
+    int m_totalSuccessForecasts;
+    double m_rangeMin;
+    double m_rangeMax;
+    double m_totalEffectiveness;
+    int m_effectivenessCount;
 private:
     FL::TimeSeries m_timeSeries;
     FL::TimeSeries m_dynamicTimeSeries;
@@ -89,9 +97,13 @@ private slots:
     void on_bnHalt_clicked();
     void on_bnClearForest_clicked();
     void on_tbClearMarkerPatterns_clicked();
-    void on_actionBuild_trees_triggered();
     void on_tblMetrics_currentItemChanged(QTableWidgetItem* current, QTableWidgetItem* previous);
     void on_tblMetrics_itemChanged(QTableWidgetItem* item);
+    void on_sliderVerticalZoom_sliderReleased();
+    void on_sliderVerticalZoom_sliderMoved(int position);
+    void on_actionDelete_current_tree_triggered();
+    void on_cbShowAllForecasts_clicked();
+    void on_actionDynamic_all_steps_triggered();
 };
 
 #endif // MAINWINDOW_H

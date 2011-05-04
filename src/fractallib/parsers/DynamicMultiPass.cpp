@@ -1,3 +1,19 @@
+/** This file is part of Fractal Library.
+ *
+ * Fractal Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Fractal Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Fractal Library. If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "DynamicMultiPass.h"
 
 using namespace FL::Parsers;
@@ -46,19 +62,16 @@ FL::ParseResult DynamicMultiPass::analyze(
         m_ts = &ts;
         m_patterns = &patterns;
 
-        // 1. Update previous "possible" patterns
+        // Update previous "possible" patterns
         updatePossiblePatterns(forest);
 
-        // 2. Find all possible patterns at the end of parse tree
+        // Find all possible patterns at the end of parse tree
         forecastTreeStructure(forest);
 
-        // 3. Calculate trees metrics, eclude those which are not satisfy metrics conditions
-        //calcMetrics(ts, forest, patterns, metrics, forecast);
+        // Make time series forecast
+        forecastTimeSeries(ts, forest, patterns, forecast);
 
-        // 4. Make time series forecast
-        //forecastTimeSeries(ts, forest, patterns, metrics, forecast);
-
-        // 5. Fix forest structure
+        // Fix forest structure
         Forest::Iterator tree;
         forall(tree, forest)
             (*tree)->fixup();
@@ -401,17 +414,6 @@ void DynamicMultiPass::newAnalysisBranch(Patterns::Context *context)
     }
 }
 
-//! Make time series forecast
-void DynamicMultiPass::forecastTimeSeries(
-    const TimeSeries &ts,
-    Trees::Forest &forest,
-    Patterns::PatternsSet &patterns,
-    Trees::MetricsSet &metrics,
-    Forecast &forecast)
-{
-
-}
-
 bool DynamicMultiPass::isSubtreeOfSomeTree(Trees::Tree *tree)
 {
     Forest::Iterator itTree;
@@ -452,4 +454,69 @@ bool DynamicMultiPass::isSubtreeOfSomeTree(Trees::Tree *tree)
     }
     else
         return true;
+}
+
+//! Make time series forecast
+void DynamicMultiPass::forecastTimeSeries(
+    const TimeSeries &ts,
+    Trees::Forest &forest,
+    Patterns::PatternsSet &patterns,
+    FL::Forecast &forecast)
+{
+    forecast.clear();
+
+    /*
+    int up   = IDGenerator::idOf("up");
+    int down = IDGenerator::idOf("down");
+    int a    = IDGenerator::idOf("a");
+    int b    = IDGenerator::idOf("b");
+    */
+
+
+    //double lastValue = ts.values()[ts.size()-1];
+    //double lastTime = ts.size()-1;
+
+    Forest::Iterator itTree;
+    forall(itTree, forest)
+    {
+        Tree *tree = *itTree;
+        const Layer &possibleNodes = tree->possibleNodes();
+
+        Layer::ConstIterator itNode;
+        forall(itNode, possibleNodes)
+        {
+            Node *node = *itNode;
+            if (node->status() != nsPossible) //BUG
+                continue;
+
+            FL::ForecastItem nodeForecast;
+
+            // Forecast based on max/min guards values
+            if (!node->origPattern()->calcGuardLimits(
+                        node, *tree, const_cast<TimeSeries&>(ts), nodeForecast))
+                continue;
+
+            // Get next symbol, if it's known - fill its characteristics
+            /*
+            int nextSymbol = (*node->origSequence())[ node->children().size() ].id;
+            if (nextSymbol == up || nextSymbol == a)
+            {
+                if (nodeForecast.maxValue < 0)
+                    continue;
+                nodeForecast.minValue = 0;
+            }
+            else if (nextSymbol == down || nextSymbol == b)
+            {
+                if (nodeForecast.minValue > 0)
+                    continue;
+                nodeForecast.maxValue = 0;
+            }
+            */
+
+            nodeForecast.pos = node->end();
+            nodeForecast.tree = tree;
+
+            forecast.push_back(nodeForecast);
+        }
+    }
 }

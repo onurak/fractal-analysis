@@ -9,6 +9,7 @@
 #include <QLinearGradient>
 #include <QGraphicsSceneMouseEvent>
 #include "../fractallib/TimeSeries.h"
+#include "../fractallib/Forecast.h"
 #include "../fractallib/parsers/SinglePass.h"
 #include "Utils.h"
 #include <cmath>
@@ -59,6 +60,9 @@ public:
     void setForest(FL::Trees::Forest *forest);
     void forestChanged();
 
+    void setForecast(FL::Forecast *forecast);
+    void forecastChanged();
+
     void setView(QGraphicsView *view);
 
     QParseTreeScene* scene() { return m_scene; }
@@ -76,12 +80,30 @@ public:
         forestChanged();
     }
 
+    double yMult() const { return m_yMult; }
+    void setYMult(double value)
+    {
+        m_yMult = value;
+        timeSeriesChanged();
+    }
+
+    bool isShowAllForecasts() const
+    {
+        return m_isShowAllForecasts;
+    }
+    void setIsShowAllForecasts(bool value)
+    {
+        m_isShowAllForecasts = value;
+        timeSeriesChanged();
+    }
+
 protected:
     void draw();
     void drawCoordinateSystem();
+    void drawTimeSeries();
+    void drawForecast();
     void drawParseTree(FL::Trees::Tree *tree);
     void drawForest();
-    void drawTimeSeries();
     void drawTreeLayer(const FL::Trees::Layer &layer,
                        QColor color,
                        LayerDrawingOptions options = ldoNone);
@@ -94,8 +116,11 @@ private:
     QGraphicsView *m_view;
     FL::TimeSeries *m_ts;
     FL::Trees::Forest *m_forest;
+    FL::Forecast *m_forecast;
     double m_tsYMin;
     double m_tsYMax;    
+    double m_yMult;
+    bool m_isShowAllForecasts;
     //QLinkedList<QGraphicsItem*> m_tsItems;
     //QLinkedList<QGraphicsItem*> m_coordSystemItems;
 };

@@ -14,21 +14,29 @@
  * along with Fractal Library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "EbnfRpnPattern.h"
+#ifndef SIMPLEINCREMETAL_H
+#define SIMPLEINCREMETAL_H
 
-using namespace FL::Patterns;
-using namespace FL::Patterns::Standart;
+#include "AbstractMarker.h"
 
-Guard* EbnfRpnPattern::createGuard(Description &d) const
+namespace FL { namespace Markers {
+
+
+class SimpleIncremental : public AbstractMarker
 {
-    DescriptionEbnf *dEbnf = dynamic_cast<DescriptionEbnf*>(&d);
-    if (dEbnf != NULL)
-        return new GuardRpn(*dEbnf);
-    else
-        return NULL;
-}
+public:
+    SimpleIncremental();
 
-Description* EbnfRpnPattern::createDescription() const
-{
-    return new DescriptionEbnf();
-}
+    virtual ~SimpleIncremental();
+
+    virtual ParseResult analyze(
+                      const TimeSeries &ts,
+                      Trees::Forest &forest,
+                      Patterns::PatternsSet &patterns);
+protected:
+
+};
+
+}} // namespaces
+
+#endif // SIMPLEINCREMETAL_H
