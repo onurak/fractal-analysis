@@ -8,8 +8,11 @@ QParseTreeRender::QParseTreeRender()
     m_view = NULL;
     m_ts = NULL;
     m_forest = NULL;
+    m_forecast = NULL;
     m_showRoots = true;
     m_currentTree = 0;
+    m_yMult = 5000;
+    m_isShowAllForecasts = true;
 }
 
 QParseTreeRender::~QParseTreeRender()
@@ -39,6 +42,16 @@ void QParseTreeRender::forestChanged()
     draw();
 }
 
+void QParseTreeRender::setForecast(FL::Forecast *forecast)
+{
+    m_forecast = forecast;
+}
+
+void QParseTreeRender::forecastChanged()
+{
+    draw();
+}
+
 void QParseTreeRender::draw()
 {
     m_scene->setBackgroundBrush(Qt::black);
@@ -47,6 +60,42 @@ void QParseTreeRender::draw()
     //drawCoordinateSystem();
     drawTimeSeries();
     drawForest();
+    drawForecast();
+}
+
+void QParseTreeRender::drawForecast()
+{
+    if (m_forecast == NULL || m_forecast->size() == 0)
+        return;
+
+    FL::Trees::Tree *currentTree = NULL;
+    if (!m_isShowAllForecasts &&
+        m_currentTree >= 0 && m_currentTree < (int)m_forest->size())
+        currentTree = m_forest->at(m_currentTree);
+
+    QPen pen(Qt::blue);
+    QBrush brush(QColor(0, 0, 255, 10));
+
+    double yMult = m_yMult / m_tsYMin;
+
+    FL::Forecast::const_iterator fi;
+    forall(fi, *m_forecast)
+    {
+        if (currentTree && fi->tree != currentTree)
+            continue;
+
+        double fiOffsetX = fi->pos * TIME_STEP;
+        double fiOffsetY = (m_ts->values()[fi->pos] - m_tsYMin) * yMult + m_tsYMin;
+
+        QGraphicsRectItem *item = NULL;
+
+        QRectF rect;
+        rect.setLeft(fiOffsetX + fi->minDuration * TIME_STEP);
+        rect.setRight(fiOffsetX + fi->maxDuration * TIME_STEP);
+        rect.setTop(fiOffsetY + fi->minValue * yMult);
+        rect.setBottom(fiOffsetY + fi->maxValue * yMult);
+        item = m_scene->addRect(rect, pen, brush);
+    }
 }
 
 void QParseTreeRender::drawForest()
@@ -90,7 +139,7 @@ void QParseTreeRender::drawTreeLayer(
     const double treeOffset = fabs(m_tsYMin - m_tsYMax) / 14;
     const double delta = 10;
 
-    double yMult = 5000 / m_tsYMin;
+    double yMult = m_yMult / m_tsYMin;
 
     FL::Trees::Layer::ConstIterator itNode;
     forall(itNode, layer)
@@ -160,7 +209,7 @@ void QParseTreeRender::drawTimeSeries()
 {
     if (m_ts)
     {
-        double yMult = 5000 / m_tsYMin;
+        double yMult = m_yMult / m_tsYMin;
 
         for (int time = 0; time < int(m_ts->values().size()-1); ++time)
         {

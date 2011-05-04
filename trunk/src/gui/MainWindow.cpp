@@ -35,6 +35,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->graphicsView->scale(1, -1);
     m_render->setTimeSeries(&m_timeSeries);
     m_render->setForest(&m_forest);
+    m_render->setForecast(&m_forecast);
     m_render->setView(ui->graphicsView);
 
     connect(m_render->scene(), SIGNAL(mouseMove(QGraphicsSceneMouseEvent*)),
@@ -232,6 +233,11 @@ QString MainWindow::loadTimeSeries(
         m_timeSeries.clear();
         m_dynamicTimeSeries.clear();
         m_forest.cleanup();
+        m_forecast.clear();
+        ui->lbForecastTotalSuccessPercent->setText("none");
+        ui->lbForecastStepSuccessPercent->setText("none");
+        ui->lbForecastTotalEffectiveness->setText("none");
+        ui->lbForecastStepEffectiveness->setText("none");
 
         if (!m_isDynamicTS)
             staticSize = tempTimeSeries.values().size();
@@ -246,6 +252,10 @@ QString MainWindow::loadTimeSeries(
                 tempTimeSeries.values().begin() + staticSize,
                 tempTimeSeries.values().end());
         }
+
+        m_totalForecasts = m_totalSuccessForecasts = 0;
+        m_totalEffectiveness = 0;
+        m_effectivenessCount = 0;
     }
     catch (const QString &err)
     {
@@ -306,6 +316,14 @@ void MainWindow::readSettings()
     loadPatterns(fileName, m_markerPatterns);
     ui->lbMarkerPatterns->setText(extractFileName(fileName));
 
+    ui->sliderVerticalZoom->setValue( m_settings.value("gui/mainform/vertSliderPos", 10000).toInt() );
+    m_render->setYMult( ui->sliderVerticalZoom->value() / 2 );
+
+
+    ui->cbShowAllForecasts->setChecked(
+        m_settings.value("gui/mainform/showAllForecasts", false).toBool());
+    m_render->setIsShowAllForecasts(ui->cbShowAllForecasts->isChecked());
+
     refreshFilters();
 }
 
@@ -321,6 +339,9 @@ void MainWindow::writeSettings()
         m_settings.setValue("gui/mainform/height", geometry().height());
         m_settings.setValue("gui/mainform/maximized", false);
     }
+
+    m_settings.setValue("gui/mainform/vertSliderPos", ui->sliderVerticalZoom->value());
+    m_settings.setValue("gui/mainform/showAllForecasts", ui->cbShowAllForecasts->isChecked());
 }
 
 void MainWindow::on_actionZoomIn_triggered()
@@ -572,14 +593,16 @@ void MainWindow::on_actionDynamic_Step_triggered()
 
     // Prepare trees for dynamic analysis
 
-    //if (m_isDynamicFirstStep)
+    /*if (m_isDynamicFirstStep)
     {
         Trees::Forest::Iterator tree;
         forall(tree, m_forest)
             (*tree)->makeDynamicEnd(m_timeSeries.values().size()-1);
         m_isDynamicFirstStep = false;
     }
+    */
 
+    refreshForecastsData();
 
     // Add new value to time series
     m_timeSeries.values().push_back(m_dynamicTimeSeries.values().front());
@@ -588,7 +611,7 @@ void MainWindow::on_actionDynamic_Step_triggered()
     try
     {
         // Markup with incremental algorithm
-        marker = new Markers::Incremental();
+        marker = new Markers::SimpleIncremental();
         marker->analyze(m_timeSeries, m_forest, m_markerPatterns);
         if (!marker->wasOk())
             throw marker->lastError();
@@ -596,15 +619,7 @@ void MainWindow::on_actionDynamic_Step_triggered()
         // Parse with incremental algorithm
         parser = new Parsers::DynamicMultiPass();
         prepareForLongAnalysis();
-        ParseResult pr;
-
-        FL::ParseResult result, r;
-        //do
-        {
-            pr.reset();
-            pr = parser->analyze(m_timeSeries, m_forest, m_patterns, m_metrics, m_forecast);
-            result += pr;
-        }// while (parser->wasOk() && pr.treesAdded > 1);
+        parser->analyze(m_timeSeries, m_forest, m_patterns, m_metrics, m_forecast);
         longAnalysisComplete();
 
         if (!parser->wasOk())
@@ -703,11 +718,6 @@ void MainWindow::on_tbClearMarkerPatterns_clicked()
     m_settings.setValue("gui/defaultMarkerPatternsFile", "");
 }
 
-void MainWindow::on_actionBuild_trees_triggered()
-{
-
-}
-
 void MainWindow::on_tblMetrics_currentItemChanged(QTableWidgetItem* current, QTableWidgetItem* previous)
 {
     m_defMetricText = current->text();
@@ -766,5 +776,122 @@ void MainWindow::on_tblMetrics_itemChanged(QTableWidgetItem* item)
     else
     {
         item->setText(m_defMetricText);
+    }
+}
+
+void MainWindow::on_sliderVerticalZoom_sliderReleased()
+{
+     //m_render->setYMult(ui->sliderVerticalZoom->value());
+}
+
+void MainWindow::on_sliderVerticalZoom_sliderMoved(int position)
+{
+    m_render->setYMult(double(position) / 2.0);
+}
+
+void MainWindow::on_actionDelete_current_tree_triggered()
+{
+    if (m_forest.size() == 0 ||
+        !ui->sbCurrentTreeIndex->isEnabled())
+    {
+        return;
+    }
+
+    FL::Trees::Tree *tree =
+            m_forest[ ui->sbCurrentTreeIndex->value()-1 ];
+    if (tree)
+    {
+        FL::Trees::Forest::Iterator i;
+        if (FL::search(m_forest, tree, i))
+            m_forest.erase(i);
+        delete tree;
+
+        FL::Forecast::iterator f;
+        for (f = m_forecast.begin(); f != m_forecast.end(); )
+        {
+            if (f->tree == tree)
+                f = m_forecast.erase(f);
+            else
+                ++f;
+        }
+
+        refreshForestInfo();
+        m_render->setCurrentTree( ui->sbCurrentTreeIndex->value()-1 );
+    }
+}
+
+void MainWindow::refreshForecastsData()
+{
+    if (!m_isDynamicTS)
+        return;
+
+    double prevValue = m_timeSeries.values(-1);
+    double newValue = m_dynamicTimeSeries.values(0) - prevValue;
+    m_rangeMin = -10e10;
+    m_rangeMax = 10e10;
+    int successCount = 0;
+    FL::Forecast::iterator f;
+    forall(f, m_forecast)
+    {
+        if (newValue >= f->minValue  &&  newValue <= f->maxValue)
+            successCount++;
+        if (f->minValue > m_rangeMin)
+            m_rangeMin = f->minValue;
+        if (f->maxValue < m_rangeMax)
+            m_rangeMax = f->maxValue;
+    }
+
+    if (m_totalForecasts > 0)
+    {
+        double effectiveness = 0;
+        if (newValue >= m_rangeMin && newValue <= m_rangeMax)
+        {
+            double a = fabs(newValue - m_rangeMin);
+            double b = fabs(m_rangeMax - newValue);
+            double c = fabs(m_rangeMax - m_rangeMin);
+            effectiveness = (std::min(a, b) / c) * 100.;
+        }
+        m_totalEffectiveness += effectiveness;
+        m_effectivenessCount++;
+
+        ui->lbForecastStepEffectiveness->setText(QString("%1%").arg(effectiveness));
+        ui->lbForecastTotalEffectiveness->setText(
+                    QString("%1%").arg(m_totalEffectiveness / m_effectivenessCount));
+    }
+
+    m_totalForecasts += m_forecast.size();
+    m_totalSuccessForecasts += successCount;
+
+    QString s;
+
+    if (m_totalForecasts != 0)
+        s.setNum( double(m_totalSuccessForecasts) / double(m_totalForecasts) * 100. );
+    else
+        s.setNum(0);
+    ui->lbForecastTotalSuccessPercent->setText(s + "%");
+
+    if (m_forecast.size() != 0)
+        s.setNum( double(successCount) / double(m_forecast.size()) * 100. );
+    else
+        s.setNum(0);
+    ui->lbForecastStepSuccessPercent->setText(s + "%");
+}
+
+void MainWindow::on_cbShowAllForecasts_clicked()
+{
+    m_render->setIsShowAllForecasts(ui->cbShowAllForecasts->isChecked());
+}
+
+void MainWindow::on_actionDynamic_all_steps_triggered()
+{
+    int step = 0;
+    while (m_dynamicTimeSeries.size() > 0)
+    {
+        on_actionDynamic_Step_triggered();
+        if (++step % 5 == 0)
+        {
+            refreshForestInfo();
+            QApplication::processEvents(QEventLoop::ExcludeUserInputEvents, 300);
+        }
     }
 }
