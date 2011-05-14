@@ -1,19 +1,3 @@
-/** This file is part of Fractal Library.
- *
- * Fractal Library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Fractal Library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Fractal Library. If not, see <http://www.gnu.org/licenses/>.
- */
-
 #ifndef TREE_H
 #define TREE_H
 
@@ -26,36 +10,20 @@ namespace FL { namespace Trees {
 /*! \struct TreeCompareResult
   * \brief Info on tree comparison procedure
   */
-class TreeCompareResult
+struct TreeCompareResult
 {
-public:
-    TreeCompareResult()
-    {
-        totalInFirst = totalInSecond = commonNodes = uniqueInFirst = uniqueInSecond = 0;
-    }
+    int totalNodesInFirst;
+    int totalNodesInSecond;
+    int totalCommonNodes;
 
-    int totalInFirst;   //!< Total nodes in first tree
-    int totalInSecond;  //!< Total nodes in second tree
-    int commonNodes;    //!< Identical nodes count
-    int uniqueInFirst;  //!< Count of unique nodes in first tree
-    int uniqueInSecond; //!< Count of unique nodes in second tree
-
-    //! Is the first tree is subtree of second
     bool isFirstSubtreeOfSecond() const
     {
-        return (commonNodes != 0 || totalInFirst == 0) && uniqueInFirst == 0;
+        return false;
     }
 
-    //! Is the second tree is subtree of first
     bool isSecondSubtreeOfFirst() const
     {
-        return (commonNodes != 0 || totalInSecond == 0) && uniqueInSecond == 0;
-    }
-
-    //! Percent of equivalent nodes in trees (0-100%)
-    int commonPercent() const
-    {
-        return int( (2*commonNodes) / double(totalInFirst + totalInSecond) * 100 );
+        return false;
     }
 };
 
@@ -67,7 +35,7 @@ class Tree
 {
 private:
     //! Use copy() mothod to create deep tree copy
-    Tree(const Tree &tree) { tree.roots(); }
+    Tree(const Tree &tree) {}
 public:
     //! Default constructor
     Tree();
@@ -91,67 +59,20 @@ public:
     //! Add node to tree. It is the only valid way to do this
     void add(Node *node);
 
-    //! Change node status (internal cache would be updated in this case)
-    void changeNodeStatus(Node *node, NodeStatus newStatus);
-
     //! Remove node from tree. It is the only valid way to do this
     void remove(Node *node);
 
     //! Make copy of tree
-    Tree* copy() const;
+    Tree* copy();
 
     //! Delete all nodes, clear information about them
     void clear();
 
-    //! Check if tree have identical node (same name, level and position)
-    Node* haveNode(const Node *likeThis, bool ignoreZeroLevel = false) const;
-
     //! Remove all nodes except roots, set roots level to 0
-    void markupWithRoots(int begin = 0, int end = -1);
+    void markupWithRoots();
 
     //! Compare this (first) tree to another (second) tree
     TreeCompareResult compare(const Tree &tree) const;
-
-    //! Get all nodes with status nsPossible
-    inline const Layer& possibleNodes() const
-    {
-        return m_possibleNodes;
-    }
-
-    //! Average memory usage
-    int bytesUsed() const;
-
-    //! Total nodes count
-    int nodesCount() const
-    {
-        return (int)m_allNodes.size();
-    }
-
-    //! Get segment where tree is applied to time series
-    void getSegment(int &min, int &max) const;
-
-    //! Remove error from tree structure
-    /*! It will sort all levels by time */
-    void validateStructure();
-
-    //! Make last nodes of tree to have status nsDynamic
-    /*! It is usefull for dynamic analysis.
-      * \param borderPos Only those nodes would be detached, whos end
-      * position less or equal to borderPos.
-      */
-    void makeDynamicEnd(int borderPos);
-
-    //! Get start position of ending nodes that have "floating" parameters (have status nsDynamic)
-    int dynamicEndPos() const;
-
-    //! Get nodes followed by specified node at the same level
-    Layer getFollowingRoots(Node *node);
-
-    //! Fixup tree structure (make all floating nodes to be fixed)
-    void fixup();
-
-    //! Destroy last nodes at last level.
-    Tree* detachLevelLastNodes(int count) const;
 protected:
     //! Insert one node to children's sequence of another at right place
     //! according to position in time series
@@ -165,9 +86,6 @@ private:
 
     //! Cached nodes by layers
     mutable std::map<int, Layer> m_nodesByLevel;
-
-    //! Cached possible nodes
-    mutable Layer m_possibleNodes;
 };
 
 }} // namespaces

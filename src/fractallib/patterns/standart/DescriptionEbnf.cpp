@@ -1,25 +1,8 @@
-/** This file is part of Fractal Library.
- *
- * Fractal Library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Fractal Library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Fractal Library. If not, see <http://www.gnu.org/licenses/>.
- */
-
 #include "DescriptionEbnf.h"
 #include "../Context.h"
 #include "../../compilers/AbstractCompiler.h"
 #include "../../trees/Tree.h"
 
-using namespace FL;
 using namespace FL::Patterns::Standart;
 using namespace FL::Exceptions;
 using namespace FL::Compilers;
@@ -509,14 +492,11 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal {
         EbnfCompiler(DescriptionEbnf *description)
         {
             m_description = description;
-            filterLexeme(LEX_EQ,         true);
-            filterLexeme(LEX_LPAREN,     true);
-            filterLexeme(LEX_RPAREN,     true);
-            filterLexeme(LEX_INTEGER,    true);
-            filterLexeme(LEX_AT,         true);
-            filterLexeme(LEX_MULT,       true);
-            filterLexeme(LEX_UNDERSCORE, true);
-            filterLexeme(LEX_QUESTION,   true);
+            filterLexeme(LEX_EQ,        true);
+            filterLexeme(LEX_LPAREN,    true);
+            filterLexeme(LEX_RPAREN,    true);
+            filterLexeme(LEX_INTEGER,   true);
+            filterLexeme(LEX_AT,        true);
         }
 
     protected:
@@ -569,8 +549,8 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal {
             DescriptionEbnf *descEbnf = dynamic_cast<DescriptionEbnf*>(m_description);
             if (descEbnf != NULL)
             {
-                descEbnf->sequences() = ebnf();
-                makeSet(descEbnf->sequences());
+                descEbnf->ebnfSet() = ebnf();
+                makeSet(descEbnf->ebnfSet());
             }
             else
             {
@@ -610,8 +590,7 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal {
         {
             CISet result = factor(set);
             while (m_l == LEX_NAME   || m_l == LEX_INDEXED ||
-                   m_l == LEX_LPAREN || m_l == LEX_LOPTION ||
-                   m_l == LEX_QUESTION)
+                   m_l == LEX_LPAREN || m_l == LEX_LOPTION)
             {
                 CISet r1 = factor(set);
                 result = closure(result, r1);
@@ -624,8 +603,7 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal {
             if (m_l == LEX_NAME)
             {
                 CINode node;
-                std::string name = m_symbolsTable[m_lex.index];
-                node.id    = IDGenerator::idOf(name);
+                node.id    = IDGenerator::idOf((char*)m_symbolsTable[m_lex.index]);
                 node.index = -1;
                 append(set, node);
                 gl();
@@ -633,33 +611,13 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal {
             else if (m_l == LEX_INDEXED)
             {
                 CINode node;
-                std::string name = m_symbolsTable[m_lex.index];
-                node.id    = IDGenerator::idOf(name);
+                node.id    = IDGenerator::idOf((char*)m_symbolsTable[m_lex.index]);
                 gl();
                 if (m_l != LEX_INTEGER)
                     error(E_EXPECTED_TOKEN, "Index");
                 node.index = m_symbolsTable[m_lex.index];
                 append(set, node);
                 gl();
-            }
-            else if (m_l == LEX_QUESTION)
-            {
-                CINode node;
-                node.id = IDGenerator::WILDCARD;
-                node.index = -1;
-                gl();
-                if (m_l == LEX_UNDERSCORE)
-                {
-                    gl();
-                    if (m_l == LEX_MULT)
-                        node.index = -1;
-                    else if (m_l == LEX_INTEGER)
-                        node.index = m_symbolsTable[m_lex.index];
-                    else
-                        error(E_EXPECTED_TOKEN, "index or wildcard");
-                    gl();
-                }
-                append(set, node);
             }
             else if (m_l == LEX_LPAREN)
             {
@@ -768,97 +726,41 @@ EParsing DescriptionEbnf::compile(Compilers::Input &input)
 
 }
 
-bool DescriptionEbnf::check(Context &c, CheckInfo &info, CheckOptions checkOptions)
+bool DescriptionEbnf::check(Context &c, CheckInfo &info)
 {
     info.applicableSequences.clear();
     CISet::iterator seq;
 
-    if ((checkOptions & coContinueChecking) == 0)
+    int stillSize = c.roots().size() - c.currentRootPos();
+
+
+    // Check all sequences
+    forall(seq, m_ebnfSet)
     {
+        if ((int)(*seq).size() > stillSize)
+            continue;
 
-        int stillSize = c.roots().size() - c.currentRootPos();
+        bool found = true;
+        Trees::Layer::ConstIterator node = c.currentRoot();
+        CISequence::iterator cinode = seq->begin();
 
-        // Check all sequences
-        forall(seq, m_ebnfSet)
+        // Check current sequence
+        while (node   != c.parseTree().roots().end() &&
+               cinode != seq->end())
         {
-            if ((int)(*seq).size() > stillSize  &&  !(checkOptions & coAllowPartialMatch))
-                continue;
-
-            int nodesMatched = 0;
-            Trees::Layer::ConstIterator node = c.currentRoot();
-            CISequence::iterator cinode = seq->begin();
-
-            // Check current sequence
-            while (node   != c.roots().end() &&
-                   cinode != seq->end())
+            if ((*node)->id() != cinode->id)
             {
-                if ((*node)->id() != cinode->id  &&  cinode->id != -1)
-                    break;
-                ++node;
-                ++cinode;
-                ++nodesMatched;
-            }
-
-            // If sequence is [partial] applicable - add it
-            if ( nodesMatched == (int)seq->size() )
-            {
-                CISequenceInfo cisi;
-                cisi.checkResult = crExactMatch;
-                cisi.matchedCount = nodesMatched;
-                cisi.sequence = &(*seq);
-                info.applicableSequences.push_back(cisi);
-            }
-            else if ((nodesMatched > 0) &&
-                     (checkOptions & coAllowPartialMatch) &&
-                     (node == c.roots().end()))
-            {
-                CISequenceInfo cisi;
-                cisi.checkResult = crPartialMatch;
-                cisi.matchedCount = nodesMatched;
-                cisi.sequence = &(*seq);
-                info.applicableSequences.push_back(cisi);
-            }
-        }
-    }
-
-    // Continue possible node checking
-    else
-    {
-        using namespace FL::Trees;
-        Node *node = c.candidateNode();
-        Layer lastChildFollowers = c.outputTree().getFollowingRoots( node );
-        if (lastChildFollowers.size() == 0)
-            return true;
-
-
-        Trees::Layer::ConstIterator itNode =
-                lastChildFollowers.begin();
-
-        CISequence::const_iterator cinode =
-                node->origSequence()->begin() + node->children().size();
-
-        int nodesMatched = 0;
-
-        while (cinode != node->origSequence()->end() &&
-               itNode != lastChildFollowers.end())
-        {
-            if ((*itNode)->id() != cinode->id  &&  cinode->id != -1)
+                found = false;
                 break;
-            ++itNode;
+            }
+            ++node;
             ++cinode;
-            ++nodesMatched;
         }
 
-        if (nodesMatched > 0)
+        // If it's applicable
+        if (found)
         {
-            CISequenceInfo cisi;
-            cisi.matchedCount = nodesMatched + node->children().size();
-            cisi.checkResult =
-                    (cisi.matchedCount == (int)node->origSequence()->size()) ?
-                        crExactMatch : crPartialMatch;
-            cisi.sequence = node->origSequence();
-
-            info.applicableSequences.push_back(cisi);
+            info.applicableSequences.push_back(&(*seq));
         }
     }
 

@@ -1,19 +1,3 @@
-/** This file is part of Fractal Library.
- *
- * Fractal Library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Fractal Library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Fractal Library. If not, see <http://www.gnu.org/licenses/>.
- */
-
 #include "IsPrev.h"
 #include "../../trees/Tree.h"
 
@@ -32,11 +16,7 @@ const GVariant& IsPrev::operator()(Patterns::Context &context, FunctionArgs &arg
     FL::Trees::Node *prevNode =
         context.outputTree().roots().getPrevNearestTo(context.candidateNode()->begin());
     if (prevNode == NULL)
-        return m_result = false;
+            return m_result = false;
     int prevId = FL::IDGenerator::idOf( *args[0] );
-
-    if (prevNode->id() == prevId || FL::IDGenerator::isSynonyms(prevNode->id(), prevId))
-        return m_result = true;
-    else
-        return m_result = false;
+    return m_result = (prevNode->id() == prevId);
 }
