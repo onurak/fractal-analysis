@@ -1,19 +1,3 @@
-/** This file is part of Fractal Library.
- *
- * Fractal Library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Fractal Library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Fractal Library. If not, see <http://www.gnu.org/licenses/>.
- */
-
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
@@ -42,6 +26,7 @@ namespace FL {
 
 namespace FL { namespace Patterns {
 
+
 class Context
 {
 public:
@@ -65,20 +50,17 @@ public:
     void buildLastParsed(const CISequence& seq);
 
     //! Get first node from last parsed sequence with specified parameters
-    Trees::Node* getNode(int nameId, int index) const;
+    Trees::Node* getNode(int nameId, int no) const;
 
     //! Get all nodes from last parsed sequence with specified parameters
-    const Trees::Layer& getNodes(int nameId, int index) const;
+    const Trees::Layer& getNodes(int nameId, int no) const;
 
 
     //! Get current position at the analyzing sequence of roots
     const std::list<Trees::Node*>::const_iterator& currentRoot();
 
-    //! Change position of current root to specified step > 0
+    //! Change position of current root
     void advanceCurrentRoot(int step);
-
-    //! Change position of current root to concrete point of time series
-    void advanceCurrentRootToPos(int tsPos);
 
     //! Get position to the end of roots()  (same as currentRoot() - roots().begin(),
     //! but operator- not defined for std::list::const_iterator).
@@ -86,48 +68,37 @@ public:
 
 
     //! Get analyzing tree
-    Trees::Tree& parseTree() const { return *m_parseTree; }
+    Trees::Tree& parseTree() { return *m_parseTree; }
 
     //! Set analyzing tree
-    void setParseTree(Trees::Tree *tree, bool wantAutodelete = false);
+    void setParseTree(Trees::Tree *tree);
 
 
     //! Get output tree where results of analysis are stored
-    Trees::Tree& outputTree() const { return *m_outputTree; }
+    Trees::Tree& outputTree() { return *m_outputTree; }
 
     //! Set output tree where results of analysis are stored
     void setOutputTree(Trees::Tree *tree);
 
 
     //! Get currently checking node that passed description check and going to check in guard
-    Trees::Node* candidateNode() const { return m_candidateNode; }
+    Trees::Node* candidateNode() { return m_candidateNode; }
 
     //! Set currently checking node that passed description check and going to check in guard
     void setCandidateNode(Trees::Node* newNode) { m_candidateNode = newNode; }
 
 
     //! Analyzing roots of tree
-    inline const std::list<Trees::Node*>& roots() const
+    inline std::list<Trees::Node*> roots()
     {
         return m_roots;
-    }
-
-    //! Set own layer to iterate over as roots
-    inline void setCustomRoots(const std::list<Trees::Node*>& roots)
-    {
-        m_roots.assign(roots.begin(), roots.end());
-        m_currentRoot = m_roots.begin();
-        m_currentRootPos = 0;
     }
 
     //! Check if currentRoot() == roots().end()
     inline bool isAtEnd()
     {
-        return m_currentRootPos >= (int)m_roots.size();
+        return m_currentRootPos == (int)m_roots.size();
     }
-
-    //! Check if currentRoot() reached specified point of time series
-    bool isAt(int tsPos);
 
     //! Get analyzing time series
     const FL::TimeSeries* timeSeries();
@@ -136,7 +107,7 @@ public:
     void setTimeSeries(const FL::TimeSeries* ts);
 
     //! Nodes, added during analysis
-    //FL::Trees::Layer& modification();
+    FL::Trees::Layer& modification();
 private:
     //! Current forest
     Trees::Forest *m_forest;
@@ -171,9 +142,6 @@ private:
 
     //! Nodes, added during analysis
     FL::Trees::Layer *m_modification;
-
-    //! Want autodelete parse tree with context destruction
-    bool m_wantAutodeleteParseTree;
 };
 
 }} // namespaces

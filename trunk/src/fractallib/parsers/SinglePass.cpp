@@ -1,19 +1,3 @@
-/** This file is part of Fractal Library.
- *
- * Fractal Library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * Fractal Library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with Fractal Library. If not, see <http://www.gnu.org/licenses/>.
- */
-
 #include "SinglePass.h"
 
 using namespace FL::Parsers;
@@ -25,13 +9,9 @@ SinglePass::SinglePass()
 {
 }
 
-FL::ParseResult SinglePass::analyze(
-    const TimeSeries &ts, Forest &forest, PatternsSet &patterns,
-    Trees::MetricsSet &metrics,
-    int begin, int end)
+FL::ParseResult SinglePass::analyze(const TimeSeries &ts, Forest &forest, PatternsSet &patterns)
 {
     m_result.reset();
-    int maxDepth = 10;
 
     try
     {
@@ -41,34 +21,12 @@ FL::ParseResult SinglePass::analyze(
             throw EAnalyze(E_EMPTY_FOREST);
         if (patterns.size() == 0)
             throw EAnalyze(E_EMPTY_PATTERNS);
-        if (begin >= (int)ts.values().size() ||
-            end >= (int)ts.values().size() ||
-            (end != -1 && begin >= end))
-            throw EAnalyze(E_INVALID_SEGMENT);
 
-        m_begin = begin;
-        if (end > 0)
-            m_end = end;
-        else
-            m_end = ts.values().size()-1;
-
-        int prevMaxLevel = forest.maxLevelCount(), newMaxLevel;
-
-        do
+        Forest::Iterator tree;
+        forall(tree, forest)
         {
-            Forest::Iterator tree;
-            forall(tree, forest)
-            {
-                (*tree)->validateStructure();
-                analyzeTree(ts, **tree, patterns);
-            }
-
-            newMaxLevel = forest.maxLevelCount();
-            if (prevMaxLevel < newMaxLevel && newMaxLevel <= maxDepth)
-                prevMaxLevel = newMaxLevel;
-            else
-                break;
-        } while (true);
+            analyzeTree(ts, **tree, patterns);
+        }
     }
     catch (const EAnalyze &e)
     {
@@ -90,10 +48,9 @@ void SinglePass::analyzeTree(const TimeSeries &ts, Tree &tree, PatternsSet &patt
     context.setParseTree(&tree);
     context.setOutputTree(&tree);
     context.setCandidateNode(new Node());
-    context.advanceCurrentRootToPos(m_begin);
 
     // Look for applicable patterns in each position of tree
-    while (!context.isAt(m_end))
+    while (!context.isAtEnd())
     {
         bool found = false;
         forall(pattern, patterns)
@@ -117,7 +74,7 @@ bool SinglePass::applyPattern(Pattern &pattern, Context &context)
     if (pattern.check(context, info) == crOK)
     {
         // Pattern sequence that was applied (use only one)
-        CISequence &seq = *(info.applicableSequences[0].sequence);
+        CISequence &seq = *info.applicableSequences[0];
 
         // Insert candidate node into output tree
         context.buildLastParsed(seq);
