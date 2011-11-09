@@ -251,7 +251,7 @@ p, li { white-space: pre-wrap; }
   <widget class="QDockWidget" name="wgtStatistics">
    <property name="minimumSize">
     <size>
-     <width>566</width>
+     <width>672</width>
      <height>100</height>
     </size>
    </property>
@@ -275,7 +275,7 @@ p, li { white-space: pre-wrap; }
    </attribute>
    <widget class="QWidget" name="dockWidgetContents">
     <layout class="QGridLayout" name="gridLayout_2">
-     <item row="1" column="1">
+     <item row="1" column="6">
       <widget class="QSpinBox" name="sbParseTreeIndex">
        <property name="minimumSize">
         <size>
@@ -285,7 +285,7 @@ p, li { white-space: pre-wrap; }
        </property>
       </widget>
      </item>
-     <item row="1" column="0">
+     <item row="1" column="5">
       <widget class="QLabel" name="label_6">
        <property name="text">
         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -296,39 +296,21 @@ p, li { white-space: pre-wrap; }
        </property>
       </widget>
      </item>
-     <item row="1" column="2">
+     <item row="1" column="7">
       <widget class="QLabel" name="label_7">
        <property name="text">
         <string>of</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="3">
+     <item row="1" column="8">
       <widget class="QLabel" name="lbParseTreeCount">
        <property name="text">
         <string>9999</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="label_8">
-       <property name="text">
-        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;State&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="QLabel" name="lbState">
-       <property name="text">
-        <string>Ready</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="6">
+     <item row="1" column="11">
       <widget class="QLabel" name="label_9">
        <property name="text">
         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -339,14 +321,14 @@ p, li { white-space: pre-wrap; }
        </property>
       </widget>
      </item>
-     <item row="1" column="7">
+     <item row="1" column="12">
       <widget class="QLabel" name="lbEfficiency">
        <property name="text">
         <string>100%</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="6">
+     <item row="2" column="11">
       <widget class="QLabel" name="label_10">
        <property name="text">
         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -357,21 +339,21 @@ p, li { white-space: pre-wrap; }
        </property>
       </widget>
      </item>
-     <item row="2" column="7">
+     <item row="2" column="12">
       <widget class="QLabel" name="lbAccuracy">
        <property name="text">
         <string>100%</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="5" rowspan="3">
+     <item row="1" column="10" rowspan="3">
       <widget class="Line" name="line">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
       </widget>
      </item>
-     <item row="0" column="11" rowspan="4">
+     <item row="0" column="16" rowspan="4">
       <spacer name="horizontalSpacer_2">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
@@ -384,14 +366,14 @@ p, li { white-space: pre-wrap; }
        </property>
       </spacer>
      </item>
-     <item row="1" column="8" rowspan="3">
+     <item row="1" column="13" rowspan="3">
       <widget class="Line" name="line_4">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
        </property>
       </widget>
      </item>
-     <item row="1" column="9">
+     <item row="1" column="14">
       <widget class="QLabel" name="label_11">
        <property name="text">
         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -402,14 +384,14 @@ p, li { white-space: pre-wrap; }
        </property>
       </widget>
      </item>
-     <item row="1" column="10">
+     <item row="1" column="15">
       <widget class="QLabel" name="lbTimeSeriesSize">
        <property name="text">
         <string>10000</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="9">
+     <item row="2" column="14">
       <widget class="QLabel" name="label_12">
        <property name="text">
         <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -420,14 +402,14 @@ p, li { white-space: pre-wrap; }
        </property>
       </widget>
      </item>
-     <item row="2" column="10">
+     <item row="2" column="15">
       <widget class="QLabel" name="lbTimeSeriesFile">
        <property name="text">
         <string>lbTimeSeriesFile</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="4">
+     <item row="1" column="9">
       <widget class="QPushButton" name="bnClearForest">
        <property name="minimumSize">
         <size>
@@ -446,7 +428,7 @@ p, li { white-space: pre-wrap; }
        </property>
       </widget>
      </item>
-     <item row="2" column="4">
+     <item row="1" column="2">
       <widget class="QPushButton" name="bnHalt">
        <property name="minimumSize">
         <size>
@@ -462,6 +444,49 @@ p, li { white-space: pre-wrap; }
        </property>
        <property name="text">
         <string>Halt</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_8">
+       <property name="text">
+        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;State&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLabel" name="lbState">
+       <property name="text">
+        <string>Ready</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3" rowspan="3">
+      <widget class="Line" name="line_5">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="5">
+      <widget class="QLabel" name="label_13">
+       <property name="text">
+        <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;span style=&quot; font-size:8pt; font-weight:600;&quot;&gt;Levels no&lt;/span&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="6">
+      <widget class="QLabel" name="lbLevelsNo">
+       <property name="text">
+        <string>lbLevelsNo</string>
        </property>
       </widget>
      </item>

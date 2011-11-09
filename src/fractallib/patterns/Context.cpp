@@ -108,9 +108,12 @@ void Context::setParseTree(Trees::Tree *tree)
 void Context::setOutputTree(Trees::Tree *tree)
 {
     m_outputTree = tree;
-    m_roots.assign(tree->roots().begin(), tree->roots().end());
-    m_currentRoot = m_roots.begin();
-    m_currentRootPos = 0;
+    if (tree)
+    {
+        m_roots.assign(tree->roots().begin(), tree->roots().end());
+        m_currentRoot = m_roots.begin();
+        m_currentRootPos = 0;
+    }
 }
 
 void Context::copyRoots(Trees::Tree *newOutputTree, const Context& c)
