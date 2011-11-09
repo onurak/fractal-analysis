@@ -61,8 +61,8 @@ public:
     int rowCount() const               { return m_data.size(); }
 
     int columnIndex(const std::string &name);
-    bool read(TimeSeries &ts, int column, TimeSeries::DataType dt);
-    bool read(TimeSeries &ts, const std::string &column, TimeSeries::DataType dt);
+    bool read(TimeSeries &ts, int valuesColumn, int timeColumn);
+    bool read(TimeSeries &ts, const std::string &valuesColumn, const std::string &timeColumn);
 
     std::string fileName() const { return m_fileName; }
 

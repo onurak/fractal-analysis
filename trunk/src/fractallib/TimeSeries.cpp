@@ -20,7 +20,7 @@ using namespace FL;
 
 TimeSeries::TimeSeries()
 {
-    m_dimCount = 1;
+    m_dimCount = 2;
 }
 
 TimeSeries::~TimeSeries()
@@ -30,7 +30,15 @@ TimeSeries::~TimeSeries()
 
 TimeSeries::Header& TimeSeries::header()
 {
-    while ((int)m_header.size() < m_dimCount + 1)
+    while ((int)m_header.size() < m_dimCount)
         m_header.push_back("");
     return m_header;
+}
+
+void TimeSeries::setLinearTime()
+{
+    m_time.clear();
+    for (int i = 0; i < size(); ++i)
+        m_time.push_back(i);
+    header()[1] = "";
 }

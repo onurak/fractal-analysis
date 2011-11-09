@@ -33,7 +33,7 @@ public:
     FL::Exceptions::EParsing compile(const std::string &s);
     virtual FL::Exceptions::EParsing compile(Compilers::Input &i) = 0;
 
-    virtual bool check(Context &c, CheckInfo &info) = 0;
+    virtual bool check(Context &c) = 0;
 protected:
     const FL::Patterns::Description &m_description;
 };

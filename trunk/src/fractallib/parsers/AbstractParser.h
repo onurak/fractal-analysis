@@ -20,8 +20,10 @@
 #include "../Common.h"
 #include "../TimeSeries.h"
 #include "../trees/Metrics.h"
+#include "../patterns/Matcher.h"
 #include "../patterns/Pattern.h"
 #include "../exceptions/EException.h"
+
 
 namespace FL
 {
@@ -56,6 +58,7 @@ public:
                       const TimeSeries &ts,
                       Trees::Forest &forest,
                       Patterns::PatternsSet &patterns,
+                      Patterns::Matcher &matcher,
                       Trees::MetricsSet &metrics,
                       int begin = 0,
                       int end = -1) = 0;

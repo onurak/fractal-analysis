@@ -17,23 +17,28 @@
 #ifndef DESCRIPTIONEBNF_H
 #define DESCRIPTIONEBNF_H
 
-#include "../Description.h"
+#include "../DescriptionCompiler.h"
 
-namespace FL { namespace Patterns { namespace Standart {
+namespace FL { namespace Patterns { namespace Standard {
 
-class DescriptionEbnf : public Description
+/*! \class DescriptionCompilerEbnf
+  * \brief Compiler of descriptions that are writen in EBNF format
+  *
+  * Supported grammar:
+  * \code
+  * name         = alpha {alpha | digit};
+  * indexed      = name "_" [uint];
+  * ebnf         = name "=" expr;
+  * expr         = term  {"|" term};
+  * term         = factor {factor};
+  * factor       = indexed | "(" expr ")" | "[" expr "]";
+  * \endcode
+  */
+class DescriptionCompilerEbnf : public DescriptionCompiler
 {
 public:
-    DescriptionEbnf();
-
-    virtual FL::Exceptions::EParsing compile(Compilers::Input &input);
-    virtual bool check(Context &c, CheckInfo &info, CheckOptions check = coNone);
-
-    //! Get set of sequences in CI-form
-    virtual CISet& sequences() { return m_ebnfSet; }
-protected:
-    //! Collection of all sequences possible for this description
-    CISet m_ebnfSet;
+    virtual FL::Exceptions::EParsing compile(
+        Compilers::Input &input, Description *description);
 };
 
 }}} // namespaces

@@ -16,7 +16,7 @@ const GVariant& Min::operator()(Patterns::Context &context, FunctionArgs &args)
     const FL::TimeSeries *ts = context.timeSeries();
 
     // Get most left and most right indices of time series
-    int begin = ts->values().size(), end = -1;
+    int begin = ts->size(), end = -1;
 
     FunctionArgs::iterator arg;
     forall(arg, args)
@@ -30,10 +30,10 @@ const GVariant& Min::operator()(Patterns::Context &context, FunctionArgs &args)
     }
 
     // Get min on interval
-    int min = ts->values()[begin];
+    int min = ts->value(begin);
     for (++begin; begin <= end; ++begin)
-        if (ts->values()[begin] < min)
-            min = ts->values()[begin];
+        if (ts->value(begin) < min)
+            min = ts->value(begin);
 
     return m_result = min;
 }

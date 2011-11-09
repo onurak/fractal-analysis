@@ -108,6 +108,17 @@ protected:
                        QColor color,
                        LayerDrawingOptions options = ldoNone);
     void prepare();
+
+    inline double tox(const double &x)
+    {
+        return (x - m_tsMinTime) / (m_tsMaxTime - m_tsMinTime);
+    }
+
+    inline double toy(const double &y)
+    {
+        return y / m_tsMaxValue;
+    }
+
 private:
     int m_currentTree;
     bool m_showRoots;
@@ -117,8 +128,10 @@ private:
     FL::TimeSeries *m_ts;
     FL::Trees::Forest *m_forest;
     FL::Forecast *m_forecast;
-    double m_tsYMin;
-    double m_tsYMax;    
+    double m_tsMinValue;
+    double m_tsMaxValue;
+    double m_tsMinTime;
+    double m_tsMaxTime;
     double m_yMult;
     bool m_isShowAllForecasts;
     //QLinkedList<QGraphicsItem*> m_tsItems;

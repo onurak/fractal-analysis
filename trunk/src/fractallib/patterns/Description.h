@@ -24,40 +24,84 @@
 
 namespace FL { namespace Patterns {
 
-class Context;
-
 /*! \class Description
-  * \brief Description (structure) part of Pattern
+  * \brief Descriptional (structural) part of Pattern
   */
 class Description
 {
 public:
-    //! Standart constructor
-    Description();
+    Description(const std::string &name = "")
+    {
+        setName(name);
+    }
 
     //! Get name of description (same as name of pattern)
-    const std::string& name() const;
+    inline const std::string& name() const
+    {
+        return IDGenerator::nameOf(m_id);
+    }
 
     //! Set name of description (same as name of pattern)
-    void setName(const std::string& newName);
+    inline void setName(const std::string& newName)
+    {
+        if (!newName.empty())
+            m_id = IDGenerator::idOf(newName);
+        else
+            m_id = IDGenerator::NONE;
+    }
 
     //! Get id of name of description (same as id of pattern)
-    int id() const;
+    inline int id() const
+    {
+        return m_id;
+    }
 
-    //! Compile string to description
-    FL::Exceptions::EParsing compile(const std::string &s);
-
-    //! Compile stream to description
-    virtual FL::Exceptions::EParsing compile(Compilers::Input &i) = 0;
-
-    //! Check if some sequence of description is applicable in context
-    virtual bool check(Context &c, CheckInfo &info, CheckOptions check = coNone) = 0;
-
-    //! Get set of sequences in CI-form
-    virtual CISet& sequences() = 0;
+    //! Sequences of symbols that satisfing description
+    inline CISet& sequences()
+    {
+        return m_sequences;
+    }
 private:
     int m_id;
+
+    CISet m_sequences;
 };
+
+
+//class Context;
+
+///*! \class Description
+//  * \brief Description (structure) part of Pattern
+//  */
+//class Description
+//{
+//public:
+//    //! Standart constructor
+//    Description();
+
+//    //! Get name of description (same as name of pattern)
+//    const std::string& name() const;
+
+//    //! Set name of description (same as name of pattern)
+//    void setName(const std::string& newName);
+
+//    //! Get id of name of description (same as id of pattern)
+//    int id() const;
+
+//    //! Compile string to description
+//    FL::Exceptions::EParsing compile(const std::string &s);
+
+//    //! Compile stream to description
+//    virtual FL::Exceptions::EParsing compile(Compilers::Input &i) = 0;
+
+//    //! Check if some sequence of description is applicable in context
+//    virtual bool check(Context &c, CheckInfo &info) = 0;
+
+//    //! Get set of sequences in CI-form
+//    virtual CISet& sequences() = 0;
+//private:
+//    int m_id;
+//};
 
 }} // namespaces
 

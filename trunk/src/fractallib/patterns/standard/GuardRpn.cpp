@@ -6,12 +6,12 @@
 #include <stack>
 
 
-using namespace FL::Patterns::Standart;
+using namespace FL::Patterns::Standard;
 using namespace FL::Patterns::Functions;
 using namespace FL::Exceptions;
 using namespace FL::Trees;
 
-namespace FL { namespace Patterns { namespace Standart { namespace Internal
+namespace FL { namespace Patterns { namespace Standard { namespace Internal
 {
     using namespace FL::Compilers;
 
@@ -361,7 +361,7 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
                         break;
                     }
                     // GOTO
-                case GOTO:
+                    case GOTO:
                     {
                         if (!m_pd.code.gotoPos(i.concr))
                             return error(INVALID_GOTO_LABEL);
@@ -369,7 +369,7 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
                     }
 
                     // GOTO_COND ("false jump")
-                case GOTO_COND:
+                    case GOTO_COND:
                     {
                         checkStack(1);
                         if (! (*st.pop()) )
@@ -379,7 +379,7 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
                     }
 
                     // LOAD_NODES
-                case LOAD_NODES:
+                    case LOAD_NODES:
                     {
                         checkStack(1);
                         IndexedName *in = *st.pop();
@@ -391,7 +391,7 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
                     }
 
                     // LOAD_NODE
-                case LOAD_NODE:
+                    case LOAD_NODE:
                     {
                         checkStack(1);
                         IndexedName *in = *st.pop();
@@ -401,13 +401,13 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
                     }
 
                     // NOP
-                case NOP:
-                    // do nothing
-                    break;
+                    case NOP:
+                        // do nothing
+                        break;
 
                     // UNKNOWN
-                default:
-                    return error(INVALID_INSTRUCTION);
+                    default:
+                        return error(INVALID_INSTRUCTION);
                 }
             }
             checkStack(1);
@@ -486,15 +486,49 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
     ///////////////////////////////////////////////////////
     // RPN COMPILER
     ///////////////////////////////////////////////////////
+
+    /** \class RpnCompiler
+      * \brief Actual RPN guard compiler
+      *
+      * Grammar:
+      * \code
+      * S            = [NodeCond ("," NodeCond)*] ";"
+      * NodeCond     = MaskedNode ":" Expr
+      * Expr         = BoolOr | IfThenElse
+      * BoolOr       = BoolAnd ("||" BoolAnd)*
+      * BoolAnd      = Relation ("&&" Relation)*
+      * Relation     = MathAdd (("==" | "!=" | ">=" | "<=" | ">" | "<") MathAdd)*
+      * MathAdd      = MathMult (("+" | "-") MathMult)
+      * MathMult     = NegTerm (("*" | "/") NegTerm)
+      * NegTerm      = ["+" | "-" | "!"] Term
+      * Term         = "(" BoolOr ")" | FuncCall | Number | BoolConst
+      *
+      * IfThenElse   = "if" "(" Expr ")" "then" Expr "else" Expr
+      *
+      * FuncCall     = Name ArgList
+      * ArgList      = "("   Expr ("," Expr)*   ")"
+      *
+      * Node         = Name ["_" digit+]
+      * MaskedNode   = NodeMask ["_" NodeIndex]
+      * NodeMask     = (Name | "*")
+      * NodeIndex    = digit+ | "*"
+      * Name         = alpha (digit | alpha)*
+      * Number       = digit* ["." digit*] | "." digit+
+      * BoolConst    = "true" | "false"
+      * \endcode
+      */
+
     class RpnCompiler : public AbstractCompiler
     {
     public:
+        GuardRpn::GuardSet *m_programs;
         Program *m_program;
-        int m_isFuncArg;
+        CINode m_cinode;
+        int m_funcCallingDepth;
     public:
-        RpnCompiler(Program *program)
+        RpnCompiler(GuardRpn::GuardSet *programs)
         {
-            m_program = program;
+            m_programs = programs;
             FunctionFactory::registerAll();
             m_oneLineCommentBegin = '#';
             // fill reserved word list
@@ -510,6 +544,7 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
             // enable standart lexems
             filterLexeme(LEX_PLUS,      true);
             filterLexeme(LEX_MINUS,     true);
+            filterLexeme(LEX_COLON,     true);
             filterLexeme(LEX_LPAREN,    true);
             filterLexeme(LEX_RPAREN,    true);
             filterLexeme(LEX_INTEGER,   true);
@@ -522,6 +557,7 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
             filterLexeme(LEX_LEQ,       true);
             filterLexeme(LEX_DIV,       true);
             filterLexeme(LEX_COMMA,     true);
+            //filterLexeme(LEX_DOT,       true);
             filterLexeme(LEX_SEMICOLON, true);
         }
 
@@ -615,259 +651,558 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
             }
         }
 
-
         virtual void S()
         {
-            m_isFuncArg = 0;
-            b_expr();
+            m_funcCallingDepth = 0;
+
             if (m_l != LEX_SEMICOLON)
-                error(E_EXPECTED_TOKEN, ";");
+            {
+                NodeCond();
+
+                while (m_l == LEX_COMMA)
+                {
+                    gl();
+                    NodeCond();
+                }
+
+                if (m_l != LEX_SEMICOLON)
+                    throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), ";");
+            }
         }
 
-        void b_expr()
+        void NodeCond()
         {
-            b_term();
+            m_program = new Program();
+            try
+            {
+                MaskedNode();
+                if (m_l != LEX_COLON)
+                    throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), ":");
+                gl();
+                Expr();
+                (*m_programs)[m_cinode] = m_program;
+            }
+            catch (...)
+            {
+                delete m_program;
+                m_program = NULL;
+            }
+        }
+
+        void Expr()
+        {
+            if (m_l == LEX_IF)
+                IfThenElse();
+            else
+                BoolOr();
+        }
+
+        void BoolOr()
+        {
+            BoolAnd();
             while (m_l == LEX_OR)
             {
                 gl();
-                b_term();
+                BoolAnd();
                 addOperation(BOOL_OR);
             }
         }
 
-        void b_term()
+        void BoolAnd()
         {
-            b_not();
+            Relation();
             while (m_l == LEX_AND)
             {
                 gl();
-                b_not();
+                Relation();
                 addOperation(BOOL_AND);
             }
         }
 
-        void b_not()
+        void Relation()
         {
-            if (m_l == LEX_NOT)
-            {
-                gl();
-                b_factor();
-                addOperation(BOOL_NOT);
-            }
-            else
-                b_factor();
-        }
+            MathAdd();
 
-        void b_factor()
-        {
-            /*
-                    if (m_l == LEX_TRUE)
-                    {
-                        gl();
-                        addOperand(true);
-                    }
-                    else if (m_l == LEX_FALSE)
-                    {
-                        gl();
-                        addOperand(false);
-                    }
-                    else
-                    */
-            relation();
-        }
-
-        void relation()
-        {
-            m_expr();
-            if (m_l == LEX_EQ   || m_l == LEX_NEQ || m_l == LEX_LESS ||
-                m_l == LEX_GRTR || m_l == LEX_LEQ || m_l == LEX_GEQ)
+            while (m_l == LEX_EQ  || m_l == LEX_NEQ  || m_l == LEX_GEQ ||
+                   m_l == LEX_LEQ || m_l == LEX_GRTR || m_l == LEX_LESS)
             {
                 LexemeId prevLex = m_l;
                 gl();
-                m_expr();
+                MathAdd();
                 addOperation(LEX2OP(prevLex));
             }
         }
 
-        void m_expr()
+        void MathAdd()
         {
-            m_term();
+            MathMult();
+
             while (m_l == LEX_PLUS || m_l == LEX_MINUS)
             {
                 LexemeId prevLex = m_l;
                 gl();
-                m_term();
-                addOperation(LEX2OP(prevLex));
+                MathMult();
+                addOperation(prevLex == LEX_PLUS ? MATH_ADD : MATH_SUB);
             }
         }
 
-        void m_term()
+        void MathMult()
         {
-            m_sig_factor();
+            NegTerm();
+
             while (m_l == LEX_MULT || m_l == LEX_DIV)
             {
                 LexemeId prevLex = m_l;
                 gl();
-                m_factor();
-                addOperation(LEX2OP(prevLex));
+                NegTerm();
+                addOperation(prevLex == LEX_MULT ? MATH_MUL : MATH_DIV);
             }
         }
 
-        void m_sig_factor()
+        void NegTerm()
         {
             if (m_l == LEX_PLUS)
             {
                 gl();
-                //addOperation(MATH_UNARY_PLUS); // better don't
             }
             else if (m_l == LEX_MINUS)
             {
                 gl();
-                addOperation(MATH_UNARY_MINUS);
+                addOperand(0);
+                addOperation(MATH_SUB);
             }
-            m_factor();
-        }
-
-        void m_factor()
-        {
-            if (m_l == LEX_IF)
+            else if (m_l == LEX_NOT)
             {
                 gl();
-                if_statement();
+                addOperation(BOOL_NOT);
+            }
+
+            Term();
+        }
+
+        void Term()
+        {
+            if (m_l == LEX_LPAREN)
+            {
+                gl();
+                Expr();
+                if (m_l != LEX_RPAREN)
+                    throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), ")");
+                gl();
             }
             else if (m_l == LEX_TRUE)
             {
+                addOperand(1);
                 gl();
-                addOperand(true);
             }
             else if (m_l == LEX_FALSE)
             {
-                gl();
-                addOperand(false);
-            }
-            else if (m_l == LEX_FLOAT || m_l == LEX_INTEGER)
-            {
-                addOperand((double)(m_symbolsTable[m_lex.index]));
+                addOperand(0);
                 gl();
             }
             else if (m_l == LEX_NAME)
             {
-                m_funcName = m_name;
-                gl();
-                if (m_l == LEX_LPAREN)
+                Functions::Function *f = Functions::FunctionFactory::get(m_name);
+                if (f != NULL)
                 {
-                    function();
+                    FuncCall();
                 }
-                else if (m_isFuncArg)
-                    addOperand(m_name);
+                else if (m_funcCallingDepth > 0)
+                {
+                    //int opIndex = addOperand(GVariant(IndexedName(IDGenerator::idOf(m_name), -1)));
+                    //addInstruction(LOAD_NODES, opIndex);
+                    addOperand(IDGenerator::idOf(m_name));
+                    gl();
+                }
                 else
-                    error(E_SYNTAX_ERROR, "Pattern name outside function");
+                    throw EParsing(E_UNEXPECTED_TOKEN, m_input->line(), m_input->column(), m_name);
             }
             else if (m_l == LEX_INDEXED_NAME)
             {
-                if (!m_isFuncArg)
-                    error(E_SYNTAX_ERROR, "Pattern name outside function");
-                std::string indexedName = m_name;
-                int indexedNo = 0;
+                if (m_funcCallingDepth > 0)
+                {
+                    int nameId = IDGenerator::idOf(m_name);
+
+                    gl();
+                    if (m_l == LEX_INTEGER)
+                    {
+                        int opIndex = addOperand(GVariant(IndexedName(
+                                       nameId,
+                                       m_symbolsTable[m_lex.index])));
+                        addInstruction(LOAD_NODE, opIndex);
+                        gl();
+                    }
+                    else if (m_l == LEX_MULT)
+                    {
+                        int opIndex = addOperand(GVariant(IndexedName(nameId, -1)));
+                        addInstruction(LOAD_NODES, opIndex);
+                        gl();
+                    }
+                    else
+                        throw EParsing(E_UNEXPECTED_TOKEN, m_input->line(), m_input->column());
+                }
+                else
+                    throw EParsing(E_UNEXPECTED_TOKEN, m_input->line(), m_input->column(), m_name);
+            }
+            else if (m_l == LEX_INTEGER)
+            {
+                addOperand(m_symbolsTable[m_lex.index]);
+                gl();
+            }
+            else if (m_l == LEX_FLOAT)
+            {
+                addOperand(m_symbolsTable[m_lex.index]);
+                gl();
+            }
+            else
+                throw EParsing(E_UNEXPECTED_TOKEN, m_input->line(), m_input->column());
+        }
+
+        void FuncCall()
+        {
+            if (m_l != LEX_NAME)
+                throw EParsing(E_UNEXPECTED_TOKEN, m_input->line(), m_input->column());
+
+            Functions::Function *f = Functions::FunctionFactory::get(m_name);
+            if (f == NULL)
+                throw EParsing(E_UNEXPECTED_TOKEN, m_input->line(), m_input->column());
+
+
+            gl();
+            int argCount = ArgList();
+            addCall(f, argCount);
+        }
+
+        int ArgList()
+        {
+            m_funcCallingDepth += 1;
+            if (m_l != LEX_LPAREN)
+                throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), "(");
+            gl();
+
+            int argCount = 0;
+            while (m_l != LEX_RPAREN && !m_input->isEoi())
+            {
+                Expr();
+                argCount++;
+                if (m_l != LEX_COMMA)
+                    break;
+                gl();
+            }
+
+            if (m_l != LEX_RPAREN)
+                throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), ")");
+            gl();
+            m_funcCallingDepth -= 1;
+
+            return argCount;
+        }
+
+        void IfThenElse()
+        {
+            if (m_l != LEX_IF)
+                throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), "if");
+            gl();
+
+            if (m_l != LEX_LPAREN)
+                throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), "(");
+            gl();
+
+            Expr();
+
+            if (m_l != LEX_RPAREN)
+                throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), ")");
+            gl();
+
+            if (m_l != LEX_ELSE)
+                throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), "else");
+            gl();
+
+            Expr();
+        }
+
+        void MaskedNode()
+        {
+            if (m_l == LEX_NAME)
+            {
+                m_cinode.id    = IDGenerator::idOf(m_name);
+                m_cinode.index = -1;
+                gl();
+            }
+            else if (m_l == LEX_INDEXED_NAME)
+            {
+                m_cinode.id    = IDGenerator::idOf(m_name);
                 gl();
                 if (m_l == LEX_INTEGER)
                 {
-                    indexedNo = m_symbolsTable[m_lex.index];
+                    m_cinode.index = m_symbolsTable[m_lex.index];
                     gl();
                 }
                 else if (m_l == LEX_MULT)
                 {
-                    if (IDGenerator::idOf(indexedName) == IDGenerator::WILDCARD)
-                        error(E_SYNTAX_ERROR, "* both on name and index");
-                    indexedNo = -1;
+                    m_cinode.index = -1;
                     gl();
                 }
                 else
-                    error(E_SYNTAX_ERROR, "Index or * expected");
-                // push indexed parameters
-                int opIndex = addOperand( GVariant(IndexedName(indexedName, indexedNo)) );
-                // push LOAD_NODE or LOAD_NODES instruction
-                if (indexedNo == -1)
-                    addInstruction(LOAD_NODES, opIndex);
-                else
-                    addInstruction(LOAD_NODE, opIndex);
+                    throw EParsing(E_UNEXPECTED_TOKEN, m_input->line(), m_input->column());
             }
-            else if (m_l == LEX_LPAREN)
-            {
-                gl();
-                b_expr();
-                if (m_l != LEX_RPAREN)
-                    error(E_EXPECTED_TOKEN, ")");
-                gl();
-            }
+            else
+                throw EParsing(E_UNEXPECTED_TOKEN, m_input->line(), m_input->column());
         }
 
-        // How it works:
-        // IF:
-        //     <condition code>
-        //     jump_if_false ELSE
-        // THEN:
-        //     <then code>
-        //     jump_to END
-        // ELSE:
-        //     <else code (optional)>
-        // END:
-        void if_statement()
-        {
-            b_expr();
-            if (m_l != LEX_THEN)
-                error(E_EXPECTED_TOKEN, "then");
-            // add "jump_if_false ELSE" dummy
-            m_program->pd().code.push_back(Instruction(GOTO_COND, -1));
-            int dummyPos = m_program->pd().code.size()-1;
-            gl();
-            b_expr();
-            // add "jump_to END" dummy, fill previous dummy
-            m_program->pd().code.push_back(Instruction(GOTO, -1));
-            m_program->pd().code[dummyPos].concr = m_program->pd().code.size();
-            dummyPos = m_program->pd().code.size()-1;
-            if (m_l == LEX_ELSE)
-            {
-                gl();
-                b_expr();
-            }
-            // fill previous dummy
-            m_program->pd().code[dummyPos].concr = m_program->pd().code.size();
-        }
+//        virtual void S()
+//        {
+//            m_isFuncArg = 0;
+//            b_expr();
+//            if (m_l != LEX_SEMICOLON)
+//                error(E_EXPECTED_TOKEN, ";");
+//        }
 
-        void function()
-        {
-            if (m_l != LEX_LPAREN)
-                error(E_EXPECTED_TOKEN, "(");
-            gl();
-            Function *f = FunctionFactory::get(m_funcName);
-            if (f == NULL)
-                error(E_UNKNOWN_IDENTIFIER, m_funcName);
-            m_isFuncArg++;
-            int argCount = 0;
-            if (m_l != LEX_RPAREN)
-            {
-                arg();
-                argCount++;
-            }
-            while (m_l == LEX_COMMA)
-            {
-                gl();
-                arg();
-                argCount++;
-            }
-            if (m_l != LEX_RPAREN)
-                error(E_EXPECTED_TOKEN, ")");
-            gl();
+//        void b_expr()
+//        {
+//            b_term();
+//            while (m_l == LEX_OR)
+//            {
+//                gl();
+//                b_term();
+//                addOperation(BOOL_OR);
+//            }
+//        }
 
-            addCall(f, argCount);
-            m_isFuncArg--;
-        }
+//        void b_term()
+//        {
+//            b_not();
+//            while (m_l == LEX_AND)
+//            {
+//                gl();
+//                b_not();
+//                addOperation(BOOL_AND);
+//            }
+//        }
 
-        void arg()
-        {
-            b_expr();
-        }
+//        void b_not()
+//        {
+//            if (m_l == LEX_NOT)
+//            {
+//                gl();
+//                b_factor();
+//                addOperation(BOOL_NOT);
+//            }
+//            else
+//                b_factor();
+//        }
+
+//        void b_factor()
+//        {
+//            /*
+//                    if (m_l == LEX_TRUE)
+//                    {
+//                        gl();
+//                        addOperand(true);
+//                    }
+//                    else if (m_l == LEX_FALSE)
+//                    {
+//                        gl();
+//                        addOperand(false);
+//                    }
+//                    else
+//                    */
+//            relation();
+//        }
+
+//        void relation()
+//        {
+//            m_expr();
+//            if (m_l == LEX_EQ   || m_l == LEX_NEQ || m_l == LEX_LESS ||
+//                m_l == LEX_GRTR || m_l == LEX_LEQ || m_l == LEX_GEQ)
+//            {
+//                LexemeId prevLex = m_l;
+//                gl();
+//                m_expr();
+//                addOperation(LEX2OP(prevLex));
+//            }
+//        }
+
+//        void m_expr()
+//        {
+//            m_term();
+//            while (m_l == LEX_PLUS || m_l == LEX_MINUS)
+//            {
+//                LexemeId prevLex = m_l;
+//                gl();
+//                m_term();
+//                addOperation(LEX2OP(prevLex));
+//            }
+//        }
+
+//        void m_term()
+//        {
+//            m_sig_factor();
+//            while (m_l == LEX_MULT || m_l == LEX_DIV)
+//            {
+//                LexemeId prevLex = m_l;
+//                gl();
+//                m_factor();
+//                addOperation(LEX2OP(prevLex));
+//            }
+//        }
+
+//        void m_sig_factor()
+//        {
+//            if (m_l == LEX_PLUS)
+//            {
+//                gl();
+//                //addOperation(MATH_UNARY_PLUS); // better don't
+//            }
+//            else if (m_l == LEX_MINUS)
+//            {
+//                gl();
+//                addOperation(MATH_UNARY_MINUS);
+//            }
+//            m_factor();
+//        }
+
+//        void m_factor()
+//        {
+//            if (m_l == LEX_IF)
+//            {
+//                gl();
+//                if_statement();
+//            }
+//            else if (m_l == LEX_TRUE)
+//            {
+//                gl();
+//                addOperand(true);
+//            }
+//            else if (m_l == LEX_FALSE)
+//            {
+//                gl();
+//                addOperand(false);
+//            }
+//            else if (m_l == LEX_FLOAT || m_l == LEX_INTEGER)
+//            {
+//                addOperand((double)(m_symbolsTable[m_l.index]));
+//                gl();
+//            }
+//            else if (m_l == LEX_NAME)
+//            {
+//                m_funcName = m_name;
+//                gl();
+//                if (m_l == LEX_LPAREN)
+//                {
+//                    function();
+//                }
+//                else if (m_isFuncArg)
+//                    addOperand(m_name);
+//                else
+//                    error(E_SYNTAX_ERROR, "Pattern name outside function");
+//            }
+//            else if (m_l == LEX_INDEXED_NAME)
+//            {
+//                if (!m_isFuncArg)
+//                    error(E_SYNTAX_ERROR, "Pattern name outside function");
+//                std::string indexedName = m_name;
+//                int indexedNo = 0;
+//                gl();
+//                if (m_l == LEX_INTEGER)
+//                {
+//                    indexedNo = m_symbolsTable[m_l.index];
+//                    gl();
+//                }
+//                else if (m_l == LEX_MULT)
+//                {
+//                    if (IDGenerator::idOf(indexedName) == IDGenerator::WILDCARD)
+//                        error(E_SYNTAX_ERROR, "* both on name and index");
+//                    indexedNo = -1;
+//                    gl();
+//                }
+//                else
+//                    error(E_SYNTAX_ERROR, "Index or * expected");
+//                // push indexed parameters
+//                int opIndex = addOperand(
+//                            GVariant(IndexedName(IDGenerator::idOf(indexedName), indexedNo)) );
+//                // push LOAD_NODE or LOAD_NODES instruction
+//                if (indexedNo == -1)
+//                    addInstruction(LOAD_NODES, opIndex);
+//                else
+//                    addInstruction(LOAD_NODE, opIndex);
+//            }
+//            else if (m_l == LEX_LPAREN)
+//            {
+//                gl();
+//                b_expr();
+//                if (m_l != LEX_RPAREN)
+//                    error(E_EXPECTED_TOKEN, ")");
+//                gl();
+//            }
+//        }
+
+//        // How it works:
+//        // IF:
+//        //     <condition code>
+//        //     jump_if_false ELSE
+//        // THEN:
+//        //     <then code>
+//        //     jump_to END
+//        // ELSE:
+//        //     <else code (optional)>
+//        // END:
+//        void if_statement()
+//        {
+//            b_expr();
+//            if (m_l != LEX_THEN)
+//                error(E_EXPECTED_TOKEN, "then");
+//            // add "jump_if_false ELSE" dummy
+//            m_program->pd().code.push_back(Instruction(GOTO_COND, -1));
+//            int dummyPos = m_program->pd().code.size()-1;
+//            gl();
+//            b_expr();
+//            // add "jump_to END" dummy, fill previous dummy
+//            m_program->pd().code.push_back(Instruction(GOTO, -1));
+//            m_program->pd().code[dummyPos].concr = m_program->pd().code.size();
+//            dummyPos = m_program->pd().code.size()-1;
+//            if (m_l == LEX_ELSE)
+//            {
+//                gl();
+//                b_expr();
+//            }
+//            // fill previous dummy
+//            m_program->pd().code[dummyPos].concr = m_program->pd().code.size();
+//        }
+
+//        void function()
+//        {
+//            if (m_l != LEX_LPAREN)
+//                error(E_EXPECTED_TOKEN, "(");
+//            gl();
+//            Function *f = FunctionFactory::get(m_funcName);
+//            if (f == NULL)
+//                error(E_UNKNOWN_IDENTIFIER, m_funcName);
+//            m_isFuncArg++;
+//            int argCount = 0;
+//            if (m_l != LEX_RPAREN)
+//            {
+//                arg();
+//                argCount++;
+//            }
+//            while (m_l == LEX_COMMA)
+//            {
+//                gl();
+//                arg();
+//                argCount++;
+//            }
+//            if (m_l != LEX_RPAREN)
+//                error(E_EXPECTED_TOKEN, ")");
+//            gl();
+
+//            addCall(f, argCount);
+//            m_isFuncArg--;
+//        }
+
+//        void arg()
+//        {
+//            b_expr();
+//        }
 
         inline void addInstruction(int type, int concr)
         {
@@ -881,8 +1216,23 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
 
         inline int addOperand(const GVariant &op)
         {
-            m_program->pd().vars.push_back(op);
-            int opIndex = m_program->pd().vars.size()-1;
+            int opIndex = -1;
+
+            for (int i = 0; i < (int) m_program->pd().vars.size(); ++i)
+            {
+                GVariant &v = m_program->pd().vars[i];
+                if (v.type() == op.type() && v == op)
+                {
+                    opIndex = i;
+                    break;
+                }
+            }
+            if (opIndex == -1)
+            {
+                m_program->pd().vars.push_back(op);
+                opIndex = m_program->pd().vars.size()-1;
+            }
+
             m_program->pd().code.push_back(Instruction(OPERAND, opIndex));
             return opIndex;
         }
@@ -909,30 +1259,72 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal
 
 
 
-GuardRpn::GuardRpn(const FL::Patterns::Standart::DescriptionEbnf &description)
+GuardRpn::GuardRpn(const FL::Patterns::Description &description)
     : Guard(description)
 {
-    m_rpnProgram = new Internal::Program();
 }
 
 GuardRpn::~GuardRpn()
 {
-    delete m_rpnProgram;
+    std::map<CINode, Internal::Program*>::iterator i;
+    forall(i, m_rpnPrograms)
+        delete i->second;
+    m_rpnPrograms.clear();
 }
 
 
 EParsing GuardRpn::compile(Compilers::Input &i)
 {
-    Internal::RpnCompiler compiler(this->m_rpnProgram);
+    Internal::RpnCompiler compiler(&this->m_rpnPrograms);
     if (!compiler.compile(&i))
         return compiler.lastError();
     else
         return EParsing(E_OK);
 }
 
-bool GuardRpn::check(Context &c, CheckInfo &info)
+bool GuardRpn::check(Context &c)
 {
-    bool result = (m_rpnProgram->execute(c)) &&
-                  (m_rpnProgram->lastError() == Internal::Program::NO_ERROR);
-    return result;
+    using namespace FL::Patterns;
+
+    // Check programs for those items which already
+    // added to last parsed
+
+    if (m_rpnPrograms.size() != 0)
+    {
+        Layer::ConstIterator itTreeNode;
+        forall(itTreeNode, c.lastParsed())
+        {
+            Node *treeNode = *itTreeNode;
+
+            // Find program for this node
+            CINode cinode;
+            cinode.id    = treeNode->id();
+            cinode.index = treeNode->index();
+            GuardSet::iterator itProgram = m_rpnPrograms.find(cinode);
+
+            // If program exists - execute it
+            if (itProgram != m_rpnPrograms.end())
+            {
+                Internal::Program *program = itProgram->second;
+
+                GVariant result = program->execute(c);
+                if (program->lastError() != Internal::Program::NO_ERROR)
+                    return false;
+
+                if (result.canCastTo(G_VAR_BOOL))
+                {
+                    if (! (bool)result)
+                        return false;
+                }
+                else if (result.type() == G_VAR_CUSTOM ||
+                         result.type() == G_VAR_PVOID)
+                {
+                    if ((void*) result == NULL)
+                        return false;
+                }
+            }
+        }
+    }
+
+    return true;
 }

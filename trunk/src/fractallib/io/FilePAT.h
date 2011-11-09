@@ -28,10 +28,10 @@ namespace FL { namespace IO {
   * Patterns file consists of few sections, there is common structure:
   * @verbatim
   * PATTERNS:
-  *     pattern1 = description1 @ guard1;
-  *     pattern2 = description2 @ guard2;
+  *     pattern1 = description1 @ guard1.
+  *     pattern2 = description2 @ guard2.
   *     ....
-  *     patternN = descriptionN @ guardN;
+  *     patternN = descriptionN @ guardN.
   * @endverbatim
   */
 class FilePAT

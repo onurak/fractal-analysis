@@ -67,7 +67,6 @@ void FunctionFactory::registerFunction(Function *f)
 
 void FunctionFactory::registerAll()
 {
-    if (get("Max") != NULL) return;
     registerFunction(new Max());
     registerFunction(new Min());
     registerFunction(new Value());

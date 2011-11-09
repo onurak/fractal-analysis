@@ -33,56 +33,56 @@ SimpleIncremental::~SimpleIncremental()
 FL::ParseResult SimpleIncremental::analyze(
     const TimeSeries &ts, Trees::Forest &forest, Patterns::PatternsSet &patterns)
 {
-    ParseResult result;
+//    ParseResult result;
 
-    try
-    {
-        if (ts.values().size() < 2)
-            throw EAnalyze(E_INVALID_INPUT);
-        if (forest.size() == 0)
-            throw EAnalyze(E_INVALID_INPUT);
+//    try
+//    {
+//        if (ts.values().size() < 2)
+//            throw EAnalyze(E_INVALID_INPUT);
+//        if (forest.size() == 0)
+//            throw EAnalyze(E_INVALID_INPUT);
 
-        const int up   = IDGenerator::idOf("up");
-        const int down = IDGenerator::idOf("down");
-        int begin, end;
+//        const int up   = IDGenerator::idOf("up");
+//        const int down = IDGenerator::idOf("down");
+//        int begin, end;
 
-        Forest::Iterator itTree;
-        forall(itTree, forest)
-        {
-            // Markup last non-marked up segment of time series with "a" and "b"
-            Tree *tree = *itTree;
-            tree->validateStructure();
-            tree->getSegment(begin, end);
-            begin = end;
-            end = ts.values().size()-1;
-            Layer& roots = const_cast<Layer&>(tree->nodesByLevel(0));
-            roots.sortByTime();
+//        Forest::Iterator itTree;
+//        forall(itTree, forest)
+//        {
+//            // Markup last non-marked up segment of time series with "a" and "b"
+//            Tree *tree = *itTree;
+//            tree->validateStructure();
+//            tree->getSegment(begin, end);
+//            begin = end;
+//            end = ts.values().size()-1;
+//            Layer& roots = const_cast<Layer&>(tree->nodesByLevel(0));
+//            roots.sortByTime();
 
-            for (int i = begin; i < end; i += 1)
-            {
-                const int &id =  (ts.values()[i] <= ts.values()[i+1])  ?  up  :  down;
+//            for (int i = begin; i < end; i += 1)
+//            {
+//                const int &id =  (ts.values()[i] <= ts.values()[i+1])  ?  up  :  down;
 
-                // Special case if this node same as previous
-                if (id == roots.back()->id())
-                {
-                    Node *node = roots.back();
-                    //int oldEnd = node->end();
-                    do
-                    {
-                        node->setEnd(i+1);
-                        node = node->parent();
-                    } while (node);
-                }
-                else
-                    tree->add(new Node(NULL, id, i, i+1, 0, nsFloating));
-            }
-        }
-    }
-    catch (const EAnalyze &e)
-    {
-        m_lastError = e;
-    }
+//                // Special case if this node same as previous
+//                if (id == roots.back()->id())
+//                {
+//                    Node *node = roots.back();
+//                    //int oldEnd = node->end();
+//                    do
+//                    {
+//                        node->setEnd(i+1);
+//                        node = node->parent();
+//                    } while (node);
+//                }
+//                else
+//                    tree->add(new Node(NULL, id, i, i+1, 0, nsFloating));
+//            }
+//        }
+//    }
+//    catch (const EAnalyze &e)
+//    {
+//        m_lastError = e;
+//    }
 
-    return result;
+//    return result;
 }
 

@@ -67,9 +67,9 @@ bool FileCSV::save(const std::string &fileName, TimeSeries &ts)
     }
 
     // Write data
-    for (int row = 0; row < (int)ts.time().size(); ++row)
+    for (int row = 0; row < ts.size(); ++row)
     {
-        file << std::endl << ts.time()[row] << m_separator << ts.values()[row];
+        file << std::endl << ts.time(row) << m_separator << ts.value(row);
     }
     file << std::endl;
     file.close();
@@ -248,9 +248,11 @@ int FileCSV::seekRow(int index)
     return m_lineNo;
 }
 
-bool FileCSV::read(TimeSeries &ts, int column, TimeSeries::DataType dt)
+bool FileCSV::read(TimeSeries &ts, int valuesColumn, int timeColumn)
 {
-    if (!isOpen() || column < 0 || column >= (int)m_header.size())
+    if (!isOpen() ||
+            valuesColumn < 0 || valuesColumn >= (int)m_header.size() ||
+            timeColumn < 0   || timeColumn >= (int)m_header.size())
         return false;
 
     seekRow(0);
@@ -258,25 +260,24 @@ bool FileCSV::read(TimeSeries &ts, int column, TimeSeries::DataType dt)
     Row row;
     ReadResult rr;
 
-    if (dt == TimeSeries::dtValues)
+    FL::TimeSeries::Data values, time;
+
+    while ( (rr = readRow(row)) == rrOK )
     {
-        ts.header()[1] = m_header[column];
-        while ( (rr = readRow(row)) == rrOK )
-            ts.values().push_back(row[column]);
+        values.push_back(row[valuesColumn]);
+        time.push_back(row[timeColumn]);
     }
-    else
-    {
-        ts.header()[0] = m_header[column];
-        while ( (rr = readRow(row)) == rrOK )
-            ts.time().push_back(row[column]);
-    }
+
+    ts.setData(values, time);
+    ts.header()[0] = m_header[valuesColumn];
+    ts.header()[1] = m_header[timeColumn];
 
     return rr == rrEmpty;
 }
 
-bool FileCSV::read(TimeSeries &ts, const std::string &column, TimeSeries::DataType dt)
+bool FileCSV::read(TimeSeries &ts, const std::string &valuesColumn, const std::string &timeColumn)
 {
-    return read(ts, this->columnIndex(column), dt);
+    return read(ts, columnIndex(valuesColumn), columnIndex(timeColumn));
 }
 
 int FileCSV::columnIndex(const std::string &name)

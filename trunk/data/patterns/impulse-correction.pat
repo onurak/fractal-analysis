@@ -1,15 +1,21 @@
 PATTERNS:
-	im = up_1   down_1   up_2   down_2   up_3 @ 
-		min(up_2) > min(up_1) and min(up_3) > min(up_2) and max(up_3) > max(up_2) and max(up_2) > max(up_1);
+	imup = up_1 dn_2 up_3 dn_4 up_5 | imup crdn imup crdn imup @ 
+		dn_2: min(dn_2) > min(up_1),
+        up_3: max(up_3) > max(up_1),
+        dn_4: min(dn_4) > max(up_1),
+        up_5: max(up_5) > max(up_3);
 
-    im = im cr im cr im @ true;
-        
-	cr =  down_1 up_1 down_2 @ 
-		isprev(im) and value(prev()) * 0.7 >= value(self());
-		
-	im = down_1   up_1   down_2   up_2   down_3 @ 
-		min(down_2) < min(down_1) and min(down_3) < min(down_2) and max(down_3) < max(down_2) and max(down_2) < max(down_1);
+    crdn = dn_1 up_2 dn_3 @
+        dn_1: prev(imup),
+        dn_3: max(prev()) > min(dn_3);
+    
+    
+    imdn = dn_1 up_2 dn_3 up_4 dn_5 | imdn crup imdn crup imdn @ 
+		up_2: max(up_2) < max(dn_1),
+        dn_3: min(dn_3) < min(dn_1),
+        up_4: max(up_4) < min(dn_1),
+        dn_5: min(dn_5) < min(dn_3);
 
-	cr = up_1 down_1 up_2 @ 
-		isprev(im) and value(prev()) * 0.7 >= value(self());
-		 
+    crup = up_1 dn_2 up_3 @
+        up_1: prev(imdn),
+        up_3: min(prev()) < max(up_3);
