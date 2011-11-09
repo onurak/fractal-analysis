@@ -26,7 +26,8 @@ SOURCES += gui/main.cpp\
     fractallib/trees/Metrics.cpp \
     fractallib/Forecast.cpp \
     fractallib/markers/FractalIncremental.cpp \
-    fractallib/markers/SimpleIncremental.cpp
+    fractallib/markers/SimpleIncremental.cpp \
+    fractallib/patterns/standard/TreeMatcher.cpp
 
 HEADERS  += gui/MainWindow.h \
     gui/QParseTreeRender.h \
@@ -47,7 +48,10 @@ HEADERS  += gui/MainWindow.h \
     fractallib/trees/metrics/MaxLevelsCount.h \
     fractallib/trees/metrics/MaxTrees.h \
     fractallib/markers/FractalIncremental.h \
-    fractallib/markers/SimpleIncremental.h
+    fractallib/markers/SimpleIncremental.h \
+    fractallib/patterns/DescriptionCompiler.h \
+    fractallib/patterns/Matcher.h \
+    fractallib/patterns/standard/TreeMatcher.h
 
 FORMS    += gui/MainWindow.ui
 
@@ -72,9 +76,9 @@ SOURCES += \
     fractallib/patterns/functions/Max.cpp \
     fractallib/patterns/functions/FunctionFactory.cpp \
     fractallib/patterns/functions/Function.cpp \
-    fractallib/patterns/standart/GuardRpn.cpp \
-    fractallib/patterns/standart/EbnfRpnPattern.cpp \
-    fractallib/patterns/standart/DescriptionEbnf.cpp \
+    fractallib/patterns/standard/GuardRpn.cpp \
+    fractallib/patterns/standard/EbnfRpnPattern.cpp \
+    fractallib/patterns/standard/DescriptionCompilerEbnf.cpp \
     fractallib/trees/Tree.cpp \
     fractallib/trees/Node.cpp \
     fractallib/trees/Layer.cpp \
@@ -115,9 +119,9 @@ HEADERS += \
     fractallib/patterns/functions/Max.h \
     fractallib/patterns/functions/FunctionFactory.h \
     fractallib/patterns/functions/Function.h \
-    fractallib/patterns/standart/GuardRpn.h \
-    fractallib/patterns/standart/EbnfRpnPattern.h \
-    fractallib/patterns/standart/DescriptionEbnf.h \
+    fractallib/patterns/standard/GuardRpn.h \
+    fractallib/patterns/standard/EbnfRpnPattern.h \
+    fractallib/patterns/standard/DescriptionCompilerEbnf.h \
     fractallib/trees/Tree.h \
     fractallib/trees/Node.h \
     fractallib/trees/Layer.h \

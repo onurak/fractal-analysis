@@ -1,13 +1,13 @@
-#include "DescriptionEbnf.h"
+#include "DescriptionCompilerEbnf.h"
 #include "../Context.h"
 #include "../../compilers/AbstractCompiler.h"
 #include "../../trees/Tree.h"
 
-using namespace FL::Patterns::Standart;
+using namespace FL::Patterns::Standard;
 using namespace FL::Exceptions;
 using namespace FL::Compilers;
 
-namespace FL { namespace Patterns { namespace Standart { namespace Internal {
+namespace FL { namespace Patterns { namespace Standard { namespace Internal {
 
     /////////////////////////////////////////////////////////////
     // SECTION: EBNF TREE STRUCTURE
@@ -471,14 +471,21 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal {
     /////////////////////////////////////////////////////////////
     // SECTION: EBNF COMPILER
     /////////////////////////////////////////////////////////////
-    /*
-     * name         = alpha {alpha | digit};
-     * indexed      = name "_" [uint];
-     * ebnf         = name '=' expr;
-     * expr         = term  {"|" term};
-     * term         = factor {factor};
-     * factor       = indexed | "(" expr ")" | "[" expr "]";
-     */
+
+
+    /*! \class EbnfCompiler
+      * \brief Actual EBNF compiler
+      *
+      * Grammar:
+      * \code
+      * name         = alpha {alpha | digit};
+      * indexed      = name "_" [uint];
+      * ebnf         = name '=' expr;
+      * expr         = term  {"|" term};
+      * term         = factor {factor};
+      * factor       = indexed | "(" expr ")" | "[" expr "]";
+      * \endcode
+      */
     class EbnfCompiler : public AbstractCompiler
     {
     public:
@@ -487,12 +494,12 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal {
         static const int LEX_ROPTION     = 7;
         static const int LEX_INDEXED     = 8;
     private:
-        DescriptionEbnf *m_description;
+        Description *m_description;
     public:
-        EbnfCompiler(DescriptionEbnf *description)
+        EbnfCompiler(Description *description)
         {
             m_description = description;
-            filterLexeme(LEX_EQ,        true);
+            filterLexeme(LEX_ASSIGN,    true);
             filterLexeme(LEX_LPAREN,    true);
             filterLexeme(LEX_RPAREN,    true);
             filterLexeme(LEX_INTEGER,   true);
@@ -546,16 +553,8 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal {
     protected:
         virtual void S()
         {
-            DescriptionEbnf *descEbnf = dynamic_cast<DescriptionEbnf*>(m_description);
-            if (descEbnf != NULL)
-            {
-                descEbnf->ebnfSet() = ebnf();
-                makeSet(descEbnf->ebnfSet());
-            }
-            else
-            {
-                throw EParsing(E_INVALID_DATA, -1, -1, "Non-EBNF description");
-            }
+            m_description->sequences() = ebnf();
+            makeSet(m_description->sequences());
         }
 
         CISet ebnf()
@@ -564,7 +563,7 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal {
                 error(E_EXPECTED_TOKEN, "Pattern name");
             m_description->setName(m_symbolsTable[m_lex.index]);
             gl();
-            if (m_l != LEX_EQ)
+            if (m_l != LEX_ASSIGN)
                 error(E_EXPECTED_TOKEN, "=");
             gl();
             CISet set;
@@ -692,6 +691,7 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal {
             }
         }
 
+        //! Insure that set contains om;y unique items
         void makeSet(CISet &set)
         {
             CISet::iterator i;
@@ -712,57 +712,52 @@ namespace FL { namespace Patterns { namespace Standart { namespace Internal {
 // SECTION: DescriptionEbnf
 /////////////////////////////////////////////////////
 
-DescriptionEbnf::DescriptionEbnf()
+EParsing DescriptionCompilerEbnf::compile(Compilers::Input &input, Description *description)
 {
-}
-
-EParsing DescriptionEbnf::compile(Compilers::Input &input)
-{
-    Internal::EbnfCompiler compiler(this);
+    Internal::EbnfCompiler compiler(description);
     if (!compiler.compile(&input))
         return compiler.lastError();
     else
         return EParsing(E_OK);
-
 }
 
-bool DescriptionEbnf::check(Context &c, CheckInfo &info)
-{
-    info.applicableSequences.clear();
-    CISet::iterator seq;
+//bool DescriptionEbnf::check(Context &c, CheckInfo &info)
+//{
+//    info.applicableSequences.clear();
+//    CISet::iterator seq;
 
-    int stillSize = c.roots().size() - c.currentRootPos();
+//    int stillSize = c.roots().size() - c.currentRootPos();
 
 
-    // Check all sequences
-    forall(seq, m_ebnfSet)
-    {
-        if ((int)(*seq).size() > stillSize)
-            continue;
+//    // Check all sequences
+//    forall(seq, m_ebnfSet)
+//    {
+//        if ((int)(*seq).size() > stillSize)
+//            continue;
 
-        bool found = true;
-        Trees::Layer::ConstIterator node = c.currentRoot();
-        CISequence::iterator cinode = seq->begin();
+//        bool found = true;
+//        Trees::Layer::ConstIterator node = c.currentRoot();
+//        CISequence::iterator cinode = seq->begin();
 
-        // Check current sequence
-        while (node   != c.parseTree().roots().end() &&
-               cinode != seq->end())
-        {
-            if ((*node)->id() != cinode->id)
-            {
-                found = false;
-                break;
-            }
-            ++node;
-            ++cinode;
-        }
+//        // Check current sequence
+//        while (node   != c.parseTree().roots().end() &&
+//               cinode != seq->end())
+//        {
+//            if ((*node)->id() != cinode->id)
+//            {
+//                found = false;
+//                break;
+//            }
+//            ++node;
+//            ++cinode;
+//        }
 
-        // If it's applicable
-        if (found)
-        {
-            info.applicableSequences.push_back(&(*seq));
-        }
-    }
+//        // If it's applicable
+//        if (found)
+//        {
+//            info.applicableSequences.push_back(&(*seq));
+//        }
+//    }
 
-    return info.applicableSequences.size() > 0;
-}
+//    return info.applicableSequences.size() > 0;
+//}

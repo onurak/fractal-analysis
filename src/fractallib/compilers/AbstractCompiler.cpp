@@ -256,8 +256,8 @@ void AbstractCompiler::vgl()
         // LEX_INTEGER, LEX_FLOAT
         /////////////////////////////////
         if (
-            (wantLexeme(LEX_INTEGER) && isdigit(c())) ||
-            (wantLexeme(LEX_FLOAT) && (isdigit(c()) || c() == '.'))
+            ((wantLexeme(LEX_INTEGER) || wantLexeme(LEX_FLOAT)) &&
+             isdigit(c()) )
             )
         {
             if (wantLexeme(LEX_FLOAT))
@@ -382,8 +382,14 @@ void AbstractCompiler::vgl()
 
         if (wantLexeme(LEX_EQ) && c() == '=')
         {
-            m_l = LEX_EQ;
             gc();
+            if (c() == '=')
+            {
+                m_l = LEX_EQ;
+                gc();
+            }
+            else
+                error(E_EXPECTED_TOKEN, "==");
             continue;
         }
 

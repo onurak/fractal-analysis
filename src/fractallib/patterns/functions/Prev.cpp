@@ -33,8 +33,17 @@ const GVariant& Prev::operator()(Patterns::Context& context, FunctionArgs& args)
 
     FL::Trees::Node *prevNode =
             context.outputTree().roots().getPrevNearestTo(context.candidateNode()->begin());
-    if (prevNode == NULL ||
-        (m_options["samelevel"] && prevNode->level() == context.candidateNode()->level()))
+
+    if (prevNode == NULL)
         return m_result = NULL;
-    return m_result = prevNode;
+
+    if (args.size() == 0)
+        return m_result = prevNode;
+
+    if (args.size() >= 1)
+    {
+        int nodeId = *args[0];
+        return m_result = (prevNode->id() == nodeId) ? prevNode : NULL;
+    }
+
 }

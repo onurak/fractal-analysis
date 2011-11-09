@@ -17,7 +17,7 @@ const GVariant& Max::operator()(Patterns::Context& context, FunctionArgs& args)
     const FL::TimeSeries *ts = context.timeSeries();
 
     // Get most left and most right indices of time series
-    int begin = ts->values().size(), end = -1;
+    int begin = ts->size(), end = -1;
 
     FunctionArgs::iterator arg;
     forall(arg, args)
@@ -31,10 +31,10 @@ const GVariant& Max::operator()(Patterns::Context& context, FunctionArgs& args)
     }
 
     // Get max on interval
-    int max = ts->values()[begin];
+    int max = ts->value(begin);
     for (++begin; begin <= end; ++begin)
-        if (ts->values()[begin] > max)
-            max = ts->values()[begin];
+        if (ts->value(begin) > max)
+            max = ts->value(begin);
 
     return m_result = max;
 }

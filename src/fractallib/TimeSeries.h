@@ -38,20 +38,73 @@ public:
     TimeSeries();
     ~TimeSeries();
 
-    inline int size() const { return (int)m_values.size(); }
-    inline Data& values() { return m_values; }
-    inline const Data& values() const { return m_values; }
-    inline double& values(int index)
+    inline int size() const
+    {
+        return (int) m_values.size();
+    }
+
+    inline double& value(int index)
     {
         if (index < 0)
             return m_values[m_values.size()+index];
         else
             return m_values[index];
     }
-    inline Data& time() { return m_time; }
-    inline const Data& time() const { return m_time; }
-    inline double operator[](int index) { return m_values[index]; }
-    inline void clear() { m_values.clear(); m_time.clear(); }
+
+    inline const double& value(int index) const
+    {
+        if (index < 0)
+            return m_values[m_values.size()+index];
+        else
+            return m_values[index];
+    }
+
+    inline double& time(int index)
+    {
+        if (index < 0)
+            return m_time[m_time.size()+index];
+        else
+            return m_time[index];
+    }
+
+    inline const double& time(int index) const
+    {
+        if (index < 0)
+            return m_time[m_time.size()+index];
+        else
+            return m_time[index];
+    }
+
+    inline void clear()
+    {
+        m_values.clear();
+        m_time.clear();
+    }
+
+    inline bool setData(const Data &values, const Data &time)
+    {
+        if (values.size() != time.size())
+            return false;
+
+        m_values.assign(values.begin(), values.end());
+        m_time.assign(time.begin(), time.end());
+
+        return true;
+    }
+
+    inline bool setValues(const Data &values)
+    {
+        m_values.assign(values.begin(), values.end());
+        return true;
+    }
+
+    inline bool setTime(const Data &time)
+    {
+        m_time.assign(time.begin(), time.end());
+        return true;
+    }
+
+    void setLinearTime();
 
     Header& header();
     const Header& header() const { return m_header; }

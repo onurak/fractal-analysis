@@ -1,6 +1,7 @@
 #include "Pattern.h"
 #include "Context.h"
 #include "../Trees/Tree.h"
+#include "standard/DescriptionCompilerEbnf.h"
 #include "../compilers/AbstractCompiler.h"
 
 using namespace FL::Patterns;
@@ -15,16 +16,28 @@ namespace Internal
     public:
         static const int LEX_RAW = 1;
     public:
-        Compiler(Description &d, Guard &g) : d(d), g(g) {}
+        Compiler(Description &d, Guard &g) : d(d), g(g)
+        {
+        }
+
+        virtual void vgl()
+        {
+            m_l = LEX_RAW;
+        }
     protected:
         virtual void S()
         {
             EParsing e;
 
-            e = d.compile(*m_input);
-            if (e.id() != FL::E_OK) throw e;
+            Standard::DescriptionCompilerEbnf descriptionCompiler;
+
+            e = descriptionCompiler.compile(*m_input, &d);
+            if (e.id() != FL::E_OK)
+                throw e;
+
             e = g.compile(*m_input);
-            if (e.id() != FL::E_OK) throw e;
+            if (e.id() != FL::E_OK)
+                throw e;
         }
     protected:
         Description &d;
@@ -114,37 +127,37 @@ EParsing Pattern::compile(Compilers::Input *input)
         return EParsing(E_OK);
 }
 
-CheckResult Pattern::check(Context &c, CheckInfo &info)
-{
-    // Prepare context
-    //c.clearLastParsed();
+//CheckResult Pattern::check(Context &c, CheckInfo &info)
+//{
+//    // Prepare context
+//    //c.clearLastParsed();
 
-    // Fill partial info on candidateNode
-    Trees::Node *candidate = c.candidateNode();
-    candidate->setId(m_description->id());
-    candidate->setBegin(-1);
-    candidate->setEnd(-1);
+//    // Fill partial info on candidateNode
+//    Trees::Node *candidate = c.candidateNode();
+//    candidate->setId(m_description->id());
+//    candidate->setBegin(-1);
+//    candidate->setEnd(-1);
 
-    // Check description
-    if (!m_description->check(c, info))
-        return crInvalidDescription;
+//    // Check description
+//    if (!m_description->check(c, info))
+//        return crInvalidDescription;
 
-    // For each applicable sequence check guard
-    std::vector<CISequence*>::iterator sequence =
-            info.applicableSequences.begin();
-    for (; sequence != info.applicableSequences.end(); )
-    {
-        c.buildLastParsed(**sequence);
-        // Check guard
-        if (!m_guard->check(c, info))
-        {
-            sequence = info.applicableSequences.erase(sequence);
-        }
-        else
-            ++sequence;
-    }
-    if (info.applicableSequences.size() == 0)
-        return crInvalidGuard;
+//    // For each applicable sequence check guard
+//    std::vector<CISequence*>::iterator sequence =
+//            info.applicableSequences.begin();
+//    for (; sequence != info.applicableSequences.end(); )
+//    {
+//        c.buildLastParsed(**sequence);
+//        // Check guard
+//        if (!m_guard->check(c, info))
+//        {
+//            sequence = info.applicableSequences.erase(sequence);
+//        }
+//        else
+//            ++sequence;
+//    }
+//    if (info.applicableSequences.size() == 0)
+//        return crInvalidGuard;
 
-    return crOK;
-}
+//    return crOK;
+//}

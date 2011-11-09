@@ -24,6 +24,14 @@
 
 namespace FL { namespace Patterns {
 
+//enum CheckResult
+//{
+//    crOK,
+//    crInvalidDescription,
+//    crInvalidGuard
+//};
+
+
 //! Pattern's data factory
 class PatternConstructor
 {
@@ -68,7 +76,7 @@ public:
     Exceptions::EParsing compile(Compilers::Input *input);
 
     //! Check if pattern is applicable in analysis context
-    CheckResult check(Context &c, CheckInfo &info, CheckOptions check = coNone);
+    //CheckResult check(Context &c, CheckInfo &info);
 
     //! Get time series values range where guard still executable for this node
     /*! \param node Node of interest

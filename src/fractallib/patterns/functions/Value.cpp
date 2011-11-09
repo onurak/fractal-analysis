@@ -35,8 +35,8 @@ const GVariant& Value::operator()(Patterns::Context& context, FunctionArgs& args
     // Get min/max on segment
     checkValidNode(args[0]);
     FL::Trees::Node *node = *(args[0]);
-    double vBeg = ts->values()[node->begin()];
-    double vEnd = ts->values()[node->end()];
+    double vBeg = ts->value(node->begin());
+    double vEnd = ts->value(node->end());
     double minimum = std::min(vBeg, vEnd);
     double maximum = std::max(vBeg, vEnd);
 
@@ -46,8 +46,8 @@ const GVariant& Value::operator()(Patterns::Context& context, FunctionArgs& args
         checkValidNode(*arg);
         node = **arg;
 
-        vBeg = ts->values()[node->begin()];
-        vEnd = ts->values()[node->end()];
+        vBeg = ts->value(node->begin());
+        vEnd = ts->value(node->end());
         if (vBeg > maximum)
             maximum = vBeg;
         if (vEnd > maximum)

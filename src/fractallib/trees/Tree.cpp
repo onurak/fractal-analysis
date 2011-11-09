@@ -4,6 +4,7 @@ using namespace FL::Trees;
 
 Tree::Tree()
 {
+    m_levelsCount = 0;
     m_virtualRoot = new Node(NULL, -1, -1, -1, -1);
 }
 
@@ -16,12 +17,10 @@ Tree::~Tree()
 void Tree::clear()
 {
     // Delete root links
-    Layer::Iterator node;
-    forall(node, m_virtualRoot->children())
-        (*node)->setParent(NULL);
     m_virtualRoot->children().clear();
 
     // Delete all nodes
+    Layer::Iterator node;
     forall(node, m_allNodes)
         delete *node;
     m_allNodes.clear();
@@ -30,19 +29,18 @@ void Tree::clear()
     m_nodesByLevel.clear();
 }
 
-Tree* Tree::copy()
+Tree* Tree::copy() const
 {
     Tree *tree = new Tree();
 
-    Layer::ConstIterator node, parent;
+    Layer::ConstIterator node, child;
 
     // Create nodes
     forall(node, m_allNodes)
     {
-        Node *newNode = new Node(
-                NULL, (*node)->id(), (*node)->begin(), (*node)->end(), (*node)->level());
+        Node *newNode = new Node(**node);
         tree->m_allNodes.push_back(newNode);
-        m_nodesByLevel[newNode->level()].push_back(newNode);
+        tree->m_nodesByLevel[newNode->level()].push_back(newNode);
         newNode->m_relativeNode = *node;
         (*node)->m_relativeNode = newNode;
     }
@@ -51,8 +49,10 @@ Tree* Tree::copy()
     forall(node, tree->m_allNodes)
     {
         Node *originalNode = (*node)->m_relativeNode;
-        forall(parent, originalNode->children())
-            (*node)->setParent((*parent)->m_relativeNode);
+        forall(child, originalNode->children())
+        {
+            (*child)->m_relativeNode->setParent(*node);
+        }
     }
 
     // Remember virtual node's children
@@ -60,8 +60,10 @@ Tree* Tree::copy()
     {
         Node *originalNode = (*node)->m_relativeNode;
         tree->m_virtualRoot->children().push_back(originalNode);
-        originalNode->m_parent = tree->m_virtualRoot;
+        originalNode->m_internalParent = tree->m_virtualRoot;
     }
+
+    tree->m_levelsCount = this->m_levelsCount;
 
     return tree;
 }
@@ -86,6 +88,9 @@ void Tree::add(Node *node)
 
         // Add to leveled cache
         m_nodesByLevel[node->level()].push_back(node);
+
+        if (m_levelsCount <= node->level())
+            m_levelsCount = node->level()+1;
     }
 }
 
@@ -138,11 +143,6 @@ const Layer& Tree::nodesByLevel(int level) const
     return m_nodesByLevel[level];
 }
 
-int Tree::levelCount() const
-{
-    return m_nodesByLevel.size();
-}
-
 void Tree::markupWithRoots()
 {
     Layer::Iterator node = m_allNodes.begin(), i;
@@ -163,8 +163,110 @@ void Tree::markupWithRoots()
     }
 }
 
+Node* Tree::findNode(Node *patternNode) const
+{
+    if (patternNode == NULL)
+        return NULL;
+
+    if (patternNode->level() >= levelCount())
+        return NULL;
+
+    const Layer &level = m_nodesByLevel[patternNode->level()];
+
+    Layer::ConstIterator itNode;
+    forall(itNode, level)
+    {
+        Node *node = *itNode;
+        if (node->begin() == patternNode->begin())
+        {
+            if (node->end() == patternNode->end() &&
+                node->id() == patternNode->id())
+            {
+                return node;
+            }
+        }
+    }
+
+    return NULL;
+}
+
 TreeCompareResult Tree::compare(const Tree &tree) const
 {
     TreeCompareResult tcr;
+
+    tcr.totalNodesInFirst  = (int) this->m_allNodes.size();
+    tcr.totalNodesInSecond = (int) tree.m_allNodes.size();
+
+    // Zero level is always equals in trees from same analysis run.
+    // We are not interested to compare trees from different analysis.
+    if (this->nodesByLevel(0).size() != tree.nodesByLevel(0).size())
+    {
+        tcr.uniqueNodesInFirst  = tcr.totalNodesInFirst;
+        tcr.uniqueNodesInSecond = tcr.totalNodesInSecond;
+        tcr.totalCommonNodes = 0;
+        return tcr;
+    }
+
+    tcr.uniqueNodesInFirst  = 0;
+    tcr.uniqueNodesInSecond = 0;
+    tcr.totalCommonNodes = (int) this->nodesByLevel(0).size();
+
+
+    ///////////////////////////////////////////////
+    // Perform deep analysis of non zero levels
+    ///////////////////////////////////////////////
+
+    // Nodes from usnique levels
+    if (this->levelCount() > tree.levelCount())
+    {
+        int treeLevelCount = this->levelCount();
+        for (int level = tree.levelCount(); level < treeLevelCount; ++level)
+            tcr.uniqueNodesInFirst += this->nodesByLevel(level).size();
+    } else if (this->levelCount() < tree.levelCount())
+    {
+        int treeLevelCount = tree.levelCount();
+        for (int level = this->levelCount(); level < treeLevelCount; ++level)
+            tcr.uniqueNodesInSecond += tree.nodesByLevel(level).size();
+    }
+
+    // Rest of nodes
+    for (int level = 1; level < this->levelCount() && level < tree.levelCount(); ++level)
+    {
+        const Layer& frstLevel = this->nodesByLevel(level);
+        const Layer& scndLevel = tree.nodesByLevel(level);
+        Layer::ConstIterator node;
+
+        std::map<Node*, bool> checkedNodes;
+
+        // Look for each node in the second tree,
+        // remember nodes that already been checked
+        forall(node, frstLevel)
+        {
+            Node *secondNode = tree.findNode(*node);
+            if (secondNode != NULL)
+            {
+                tcr.totalCommonNodes++;
+                checkedNodes[secondNode] = true;
+            }
+            else
+                tcr.uniqueNodesInFirst++;
+        }
+
+        // Look for nodes in second tree that wasn't been checked yet
+        forall(node, scndLevel)
+        {
+            if (checkedNodes.find(*node) == checkedNodes.end())
+               tcr.uniqueNodesInSecond++;
+        }
+    }
+
     return tcr;
 }
+
+
+int Tree::levelCount() const
+{
+    return m_levelsCount;
+}
+
+

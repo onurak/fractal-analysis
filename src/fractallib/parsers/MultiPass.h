@@ -18,15 +18,21 @@ public:
     virtual ParseResult analyze(
         const TimeSeries &ts,
         Trees::Forest &forest,
-        Patterns::PatternsSet &patterns);
+        Patterns::PatternsSet &patterns,
+        Patterns::Matcher &matcher,
+        Trees::MetricsSet &metrics,
+        int begin = 0,
+        int end = -1);
 protected:
     void newAnalysisBranchForTree(FL::Trees::Tree &tree);
 
     void newAnalysisBranch(Patterns::Context *context);
 
-    void runBranch(Patterns::Context *context);
+    void runBranch(Patterns::Context *context, Patterns::Matcher &matcher);
 
-    void applyPattern(Patterns::Pattern &pattern, Patterns::Context &context);
+    bool match(Patterns::Matcher &matcher, Patterns::Context &context);
+
+    int maxLevel(const FL::Trees::Forest &forest);
 
     FL::ParseResult m_result;
     const TimeSeries *m_ts;

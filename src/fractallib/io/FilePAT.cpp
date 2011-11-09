@@ -16,7 +16,7 @@
 
 #include "FilePAT.h"
 #include "../compilers/AbstractCompiler.h"
-#include "../patterns/standart/EbnfRpnPattern.h"
+#include "../patterns/standard/EbnfRpnPattern.h"
 
 using namespace FL::Patterns;
 using namespace FL::IO;
@@ -82,7 +82,7 @@ protected:
                 if (m_section == PATTERNS)
                 {
                     do { s += c(); gc(); }
-                    while (!isEoi() && c() != ':' && c() != ';');
+                    while (!isEoi() && c() != ';');
 
                     m_l = LEX_RAW;
                     m_lex.index = addSymbol(s);
@@ -111,6 +111,11 @@ protected:
             else if (c() == ',')
             {
                 m_l = LEX_COMMA;
+                gc();
+            }
+            else if (c() == '.')
+            {
+                m_l = LEX_DOT;
                 gc();
             }
             else if (c() == '#')
@@ -153,7 +158,7 @@ protected:
 
     void pattern()
     {
-        Standart::EbnfRpnPattern pc;
+        Standard::EbnfRpnPattern pc;
         Pattern *p = new Pattern(pc);
         std::string patString = m_symbolsTable[m_lex.index];
         EParsing e = p->compile(patString + ";");
@@ -226,8 +231,8 @@ bool FilePAT::open(const std::string &fileName, FL::Patterns::PatternsSet &set)
     std::ifstream file(fileName.c_str());
     file >> std::noskipws;
     FL::Compilers::Input::Iterator it(file);
-    FL::Compilers::Input input(it);
-    bool result = compiler.compile(&input);
+    FL::Compilers::Input *input = new FL::Compilers::Input(it);
+    bool result = compiler.compile(input);
     m_lastError = compiler.lastError();
     return result;
 }

@@ -11,20 +11,26 @@
 
 namespace FL {
 
+//! Shortcut for iterating over whole collection
 #define forall(iterator, collection) \
     for (iterator = (collection).begin(); iterator != (collection).end(); ++iterator)
 
+//! Shortcut for checking if collection's end i reached by iterator
 #define isend(iterator, collection) \
     iterator = collection.end()
 
+//! Iterate over two collections simultaneously with two iterators
 #define forboth(iterator1, collection1, iterator2, collection2) \
     for (iterator1 = (collection1).begin(), iterator2 = (collection2).begin(); \
          iterator1 != (collection1).end() && iterator2 != (collection2.end()); \
          ++iterator1, ++iterator2)
 
+//! Shortcut for range iterating
 #define forrange(iterator, start, end) \
     for (int iterator = start; iterator != end; start <= end ? ++iterator : --iterator)
 
+
+//! Check if specified item exists in collection and return iterator to this item
 template <typename Collection, typename Value>
 inline typename Collection::iterator
 search(Collection &c, const Value &v)
@@ -32,6 +38,8 @@ search(Collection &c, const Value &v)
     return std::find(c.begin(), c.end(), v);
 }
 
+
+//! Check if specified item exists in collection and return iterator to this item
 template <typename Collection, typename Value>
 inline bool
 search(Collection &c, const Value &v, typename Collection::iterator &i)
@@ -40,16 +48,17 @@ search(Collection &c, const Value &v, typename Collection::iterator &i)
     return i != c.end();
 }
 
+//! Check if specified item exists in collection
 template <typename Collection, typename Value>
 inline bool
-exists(Collection &c, const Value &v)
+exists(const Collection &c, const Value &v)
 {
     typename Collection::const_iterator i =
             std::find(c.begin(), c.end(), v);
     return i != c.end();
 }
 
-
+//! Call destructor for each item of collection and clear itself
 template <typename Collection>
 inline void
 cleanup(Collection &c)
@@ -63,7 +72,9 @@ cleanup(Collection &c)
     }
 }
 
-
+/*! \class ParseResult
+  * \brief Result of parsing pass
+  */
 class ParseResult
 {
 public:
@@ -74,23 +85,33 @@ public:
 
     inline void reset()
     {
-        treesAdded = treesModified = nodesAdded = 0;
+        treesAdded = nodesAdded = 0;
     }
 
     int treesAdded;
-    int treesModified;
     int nodesAdded;
 
     bool somethingAdded() const
     {
-        return treesAdded > 0 || treesModified > 0 || nodesAdded > 0;
+        return treesAdded > 0 || nodesAdded > 0;
+    }
+
+    void add(const ParseResult &pr)
+    {
+        treesAdded    += pr.treesAdded;
+        nodesAdded    += pr.nodesAdded;
     }
 };
 
+
+/*! \class IDGenerator
+  * \brief Generator of library-wide unique IDs for strings
+  */
 class IDGenerator
 {
 public:
     static const int WILDCARD = -1;
+    static const int NONE     = 0;
 public:
     static int idOf(const std::string &name);
     static const std::string& nameOf(int id);

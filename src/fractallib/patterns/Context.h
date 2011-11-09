@@ -47,7 +47,11 @@ public:
     inline Trees::Layer& lastParsed() { return *m_lastParsed; }
 
     //! Fill lastParsed from sequence of nodes
-    void buildLastParsed(const CISequence& seq);
+    /*! \param seq Sequence that must be used to build lastParsed
+      * \param nodesCount if greater then zero then only first nodesCount
+      *        will be used
+      */
+    void buildLastParsed(const CISequence& seq, int nodesCount = 0);
 
     //! Get first node from last parsed sequence with specified parameters
     Trees::Node* getNode(int nameId, int no) const;
@@ -68,16 +72,17 @@ public:
 
 
     //! Get analyzing tree
-    Trees::Tree& parseTree() { return *m_parseTree; }
+    Trees::Tree& parseTree() const { return *m_parseTree; }
 
     //! Set analyzing tree
     void setParseTree(Trees::Tree *tree);
 
 
-    //! Get output tree where results of analysis are stored
+    //! Get output tree where stored results of analysis
     Trees::Tree& outputTree() { return *m_outputTree; }
+    const Trees::Tree& outputTree() const { return *m_outputTree; }
 
-    //! Set output tree where results of analysis are stored
+    //! Set output tree where stored results of analysis
     void setOutputTree(Trees::Tree *tree);
 
 
@@ -89,15 +94,21 @@ public:
 
 
     //! Analyzing roots of tree
-    inline std::list<Trees::Node*> roots()
+    inline const std::list<Trees::Node*>& roots()
+    {
+        return m_roots;
+    }
+
+    //! Analyzing roots of tree
+    inline const std::list<Trees::Node*>& roots() const
     {
         return m_roots;
     }
 
     //! Check if currentRoot() == roots().end()
-    inline bool isAtEnd()
+    inline bool isAtEnd() const
     {
-        return m_currentRootPos == (int)m_roots.size();
+        return m_currentRootPos >= (int)m_roots.size();
     }
 
     //! Get analyzing time series
@@ -109,6 +120,8 @@ public:
     //! Nodes, added during analysis
     FL::Trees::Layer& modification();
 private:
+    void copyRoots(Trees::Tree *newOutputTree, const Context& c);
+
     //! Current forest
     Trees::Forest *m_forest;
 

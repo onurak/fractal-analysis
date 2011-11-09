@@ -15,15 +15,17 @@ struct TreeCompareResult
     int totalNodesInFirst;
     int totalNodesInSecond;
     int totalCommonNodes;
+    int uniqueNodesInFirst;
+    int uniqueNodesInSecond;
 
     bool isFirstSubtreeOfSecond() const
     {
-        return false;
+        return uniqueNodesInFirst == 0;
     }
 
     bool isSecondSubtreeOfFirst() const
     {
-        return false;
+        return uniqueNodesInSecond == 0;
     }
 };
 
@@ -63,7 +65,7 @@ public:
     void remove(Node *node);
 
     //! Make copy of tree
-    Tree* copy();
+    Tree* copy() const;
 
     //! Delete all nodes, clear information about them
     void clear();
@@ -73,6 +75,10 @@ public:
 
     //! Compare this (first) tree to another (second) tree
     TreeCompareResult compare(const Tree &tree) const;
+
+    //! Look for node with identical id, level, begin, end
+    Node* findNode(Node *patternNode) const;
+
 protected:
     //! Insert one node to children's sequence of another at right place
     //! according to position in time series
@@ -86,6 +92,9 @@ private:
 
     //! Cached nodes by layers
     mutable std::map<int, Layer> m_nodesByLevel;
+
+    //! Actual levels count
+    int m_levelsCount;
 };
 
 }} // namespaces

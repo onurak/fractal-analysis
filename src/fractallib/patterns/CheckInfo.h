@@ -13,6 +13,13 @@ struct CINode
     int index;
 };
 
+//! CINodes comparator(to enable them to be used as std::map elements)
+inline bool operator<(const CINode &n1, const CINode &n2)
+{
+    return n1.id < n2.id || n1.index < n2.index;
+}
+
+
 //! Sequence of CINode
 typedef std::vector<CINode> CISequence;
 
@@ -34,11 +41,23 @@ inline bool operator==(const CISequence &s1, const CISequence &s2)
     return true;
 }
 
+class Pattern;
+
 //! Info on pattern checking
 struct CheckInfo
 {
-    //! Set of applicable sequences
-    std::vector<CISequence*> applicableSequences;
+    //! Describes single sequence and its owner
+    struct ApplicableSeq
+    {
+        ApplicableSeq(CISequence* seq, Pattern *pattern)
+            : seq(seq), pattern(pattern) {}
+
+        CISequence* seq;
+        Pattern *pattern;
+    };
+
+    //! Sequences of symbol, applicable at the point of layer
+    std::vector<ApplicableSeq> applicableSequences;
 };
 
 }} // namepsace

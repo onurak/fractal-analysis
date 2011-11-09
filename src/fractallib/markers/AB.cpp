@@ -37,21 +37,21 @@ FL::ParseResult AB::analyze(
 
     try
     {
-        if (ts.values().size() < 2)
+        if (ts.size() < 2)
             throw EAnalyze(E_INVALID_INPUT);
 
         Tree *tree = new Tree();
         const int up   = IDGenerator::idOf("a");
         const int down = IDGenerator::idOf("b");
 
-        for (unsigned int i = 0; i < ts.values().size()-1; i += 1)
+        for (int i = 0; i < ts.size()-1; i += 1)
         {
-            const int &id =  (ts.values()[i] <= ts.values()[i+1])  ?  up  :  down;
+            const int &id =  (ts.value(i) <= ts.value(i+1))  ?  up  :  down;
             tree->add(new Node(NULL, id, i, i+1, 0));
         }
         forest.push_back(tree);
         result.treesAdded = 1;
-        result.nodesAdded = (ts.values().size() + 1) / 2;
+        result.nodesAdded = (ts.size() + 1) / 2;
     }
     catch (const EAnalyze &e)
     {

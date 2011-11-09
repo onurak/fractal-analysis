@@ -71,13 +71,12 @@ public:
     //! Getter of predicate's name
     const std::string& name() const { return m_name; }
 protected:
-    //! Define switch argument of function.
-    /*! Define optional argument of function.
-      * \param argName Name of argument that makes it enabled. It automaically
+    //! Define optional argument of function.
+    /*! \param argName Name of argument that makes it enabled. It automaically
       *                add argument with name "no<argName>" that makes it disabled
-      * \param defaultValue true if argument is enabled by default, false otherwise
+      * \param defaultValue default value of argument used if it is not specified
       */
-    void defineArg(const std::string &argName, bool defaultValue);
+    void defineArg(const std::string &argName, GVariant defaultValue);
 
     //! Parse optional arguments defined by defineArg method
     void parseArgs(FunctionArgs& args);
@@ -95,17 +94,6 @@ protected:
 
     //! Internal storage for last result
     GVariant m_result;
-
-    //! Available string arguments.
-    /*! It could be used for automatic parsing with parseArgs() method.
-      * Just define all acceptable arguments names in constructor with
-      * defineArg() method. After parseArgs() call it would contain pairs
-      * <argName, isEnabled>
-      */
-    std::map<std::string, bool> m_options;
-private:
-    //! Pairs of defined arguments - name and default value
-    std::map<std::string, bool> m_argsData;
 };
 
 
