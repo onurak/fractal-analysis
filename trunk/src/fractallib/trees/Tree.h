@@ -94,7 +94,7 @@ private:
     mutable std::map<int, Layer> m_nodesByLevel;
 
     //! Actual levels count
-    int m_levelsCount;
+    mutable int m_levelsCount;
 };
 
 }} // namespaces

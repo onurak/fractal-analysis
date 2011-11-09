@@ -32,7 +32,13 @@ protected:
 
     bool match(Patterns::Matcher &matcher, Patterns::Context &context);
 
+    void removeSubtrees(FL::Trees::Forest &forest);
+
     int maxLevel(const FL::Trees::Forest &forest);
+
+    bool isDuplicatingContext(Patterns::Context *context);
+
+    void deleteContext(Patterns::Context *context);
 
     FL::ParseResult m_result;
     const TimeSeries *m_ts;
@@ -40,6 +46,8 @@ protected:
     Patterns::PatternsSet *m_patterns;
     std::vector<Patterns::Context*> m_branches;
     bool m_interruption;
+
+    std::vector<Patterns::Context*> m_oldBranches;
 };
 
 }} // namespaces

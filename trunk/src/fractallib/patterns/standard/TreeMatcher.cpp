@@ -121,6 +121,18 @@ bool TreeMatcher::match(Context &context, CheckInfo &ci)
         }
     }
 
+    // End of root sequence reached, but there is completed pattern
+    if (treeNode != NULL)
+    {
+        std::vector<CheckInfo::ApplicableSeq>::iterator itAs;
+        forall(itAs, treeNode->sequences)
+        {
+            context.buildLastParsed(*itAs->seq);
+            if (itAs->pattern->guard()->check(context))
+                ci.applicableSequences.push_back(*itAs);
+        }
+    }
+
     return ci.applicableSequences.size() > 0;
 }
 

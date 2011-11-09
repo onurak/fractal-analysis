@@ -148,16 +148,24 @@ void Tree::markupWithRoots()
     Layer::Iterator node = m_allNodes.begin(), i;
     for (; node != m_allNodes.end(); )
     {
+        int lvl = (*node)->level();
+
         if (!exists(m_virtualRoot->children(), *node))
         {
-            if (search(m_nodesByLevel[(*node)->level()], *node, i))
-                m_nodesByLevel[(*node)->level()].erase(i);
+            if (search(m_nodesByLevel[lvl], *node, i))
+                m_nodesByLevel[lvl].erase(i);
             delete *node;
             node = m_allNodes.erase(node);
         }
         else
         {
-            (*node)->setLevel(0);
+            if (lvl != 0)
+            {
+                if (search(m_nodesByLevel[lvl], *node, i))
+                    m_nodesByLevel[lvl].erase(i);
+                (*node)->setLevel(0);
+                m_nodesByLevel[0].push_back(*node);
+            }
             ++node;
         }
     }
@@ -266,6 +274,11 @@ TreeCompareResult Tree::compare(const Tree &tree) const
 
 int Tree::levelCount() const
 {
+    while (m_nodesByLevel.size() != 0 &&
+           m_nodesByLevel[m_nodesByLevel.size()-1].size() == 0)
+        m_nodesByLevel.erase(m_nodesByLevel.size()-1);
+
+    m_levelsCount = m_nodesByLevel.size();
     return m_levelsCount;
 }
 

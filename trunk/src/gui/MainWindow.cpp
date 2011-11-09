@@ -537,7 +537,9 @@ void MainWindow::on_sbParseTreeIndex_valueChanged(int value)
         value = 1;
     if (value > (int)m_forest.size())
         value = (int)m_forest.size();
+    value -= 1;
 
+    ui->lbLevelsNo->setNum(m_forest[value]->levelCount());
     m_render->setCurrentTree(value);
 }
 
@@ -554,12 +556,14 @@ void MainWindow::updateForestInfo()
         ui->sbParseTreeIndex->setMaximum(m_forest.size());
         ui->sbParseTreeIndex->setValue(1);
         ui->sbParseTreeIndex->setEnabled(true);
+        ui->lbLevelsNo->setNum(m_forest[0]->levelCount());
     }
     else
     {
         ui->sbParseTreeIndex->setMaximum(1);
         ui->sbParseTreeIndex->setValue(1);
         ui->sbParseTreeIndex->setEnabled(false);
+        ui->lbLevelsNo->setNum(0);
     }
 
     ui->lbParseTreeCount->setNum((int)m_forest.size());

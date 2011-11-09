@@ -534,12 +534,12 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
             // fill reserved word list
             m_reservedWords["true"]    = LEX_TRUE;
             m_reservedWords["false"]   = LEX_FALSE;
-            m_reservedWords["if"]      = LEX_IF;
-            m_reservedWords["then"]    = LEX_THEN;
-            m_reservedWords["else"]    = LEX_ELSE;
-            m_reservedWords["not"]     = LEX_NOT;
-            m_reservedWords["or"]      = LEX_OR;
-            m_reservedWords["and"]     = LEX_AND;
+            //m_reservedWords["if"]      = LEX_IF;
+            //m_reservedWords["then"]    = LEX_THEN;
+            //m_reservedWords["else"]    = LEX_ELSE;
+            //m_reservedWords["not"]     = LEX_NOT;
+            //m_reservedWords["or"]      = LEX_OR;
+            //m_reservedWords["and"]     = LEX_AND;
 
             // enable standart lexems
             filterLexeme(LEX_PLUS,      true);
@@ -549,6 +549,9 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
             filterLexeme(LEX_RPAREN,    true);
             filterLexeme(LEX_INTEGER,   true);
             filterLexeme(LEX_FLOAT,     true);
+            filterLexeme(LEX_AND,       true);
+            filterLexeme(LEX_OR,        true);
+            filterLexeme(LEX_NOT,       true);
             filterLexeme(LEX_EQ,        true);
             filterLexeme(LEX_NEQ,       true);
             filterLexeme(LEX_GRTR,      true);
@@ -557,7 +560,6 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
             filterLexeme(LEX_LEQ,       true);
             filterLexeme(LEX_DIV,       true);
             filterLexeme(LEX_COMMA,     true);
-            //filterLexeme(LEX_DOT,       true);
             filterLexeme(LEX_SEMICOLON, true);
         }
 
