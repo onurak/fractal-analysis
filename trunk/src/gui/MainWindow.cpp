@@ -19,14 +19,18 @@ MainWindow::MainWindow(QWidget *parent) :
     m_render->setForest(&m_forest);
     m_render->setView(ui->graphicsView);
 
-    connect(m_render->scene(), SIGNAL(mouseMove(QGraphicsSceneMouseEvent*)),
-            this,              SLOT(onSceneMouseMove(QGraphicsSceneMouseEvent*)));
+    connect(m_render->scene(), SIGNAL(onMouseEvent(QGraphicsSceneMouseEvent*)),
+            this,              SLOT(onSceneMouseEvent(QGraphicsSceneMouseEvent*)));
+    connect(m_render->scene(), SIGNAL(onWheelEvent(QGraphicsSceneWheelEvent*)),
+            this,              SLOT(onSceneWheelEvent(QGraphicsSceneWheelEvent*)));
     connect(ui->bnOpenPatterns, SIGNAL(clicked()),
             ui->actionOpen_patterns, SLOT(trigger()));
     connect(ui->bnOpenPreprocessingPatterns, SIGNAL(clicked()),
             ui->actionOpen_preprocessing_patterns, SLOT(trigger()));
 
     readSettings();
+
+    initMetrics();
 
     ui->statusBar->showMessage(tr("Ready"), 5000);
     m_isInitializing = false;
@@ -45,11 +49,18 @@ MainWindow::~MainWindow()
     m_preprocessingPatterns.cleanup();
 }
 
-void MainWindow::onSceneMouseMove(QGraphicsSceneMouseEvent *event)
+void MainWindow::onSceneMouseEvent(QGraphicsSceneMouseEvent *event)
 {
+
     QString pos = QString("(%1, %2)").arg(event->lastScenePos().x())
                                      .arg(event->lastScenePos().y());
     ui->statusBar->showMessage(pos, 1000);
+}
+
+void MainWindow::onSceneWheelEvent(QGraphicsSceneWheelEvent *event)
+{
+    double s = event->delta() < 0 ? 0.9 : 1.0/0.9;
+    ui->graphicsView->scale(s, s);
 }
 
 void MainWindow::on_actionOpen_time_series_triggered()
@@ -352,7 +363,7 @@ void MainWindow::writeSettings()
 
 void MainWindow::on_actionZoomIn_triggered()
 {
-    ui->graphicsView->scale(1.1, 1.1);
+    ui->graphicsView->scale(1.0/0.9, 1.0/0.9);
 }
 
 void MainWindow::on_actionZoomOut_triggered()
@@ -405,6 +416,8 @@ void MainWindow::markup()
 
 void MainWindow::buildTrees()
 {
+    readMetrics();
+
     FL::Parsers::AbstractParser *parser = NULL;
     if (m_staticParserName == "SinglePass")
         parser = new FL::Parsers::SinglePass();
@@ -491,7 +504,8 @@ bool MainWindow::onParsingProgress(
     FL::ParseResult result, FL::Trees::Forest *forest)
 {
     ui->lbParseTreeCount->setNum((int)forest->size());
-    qApp->processEvents();
+    if (forest->size() % 10 == 0)
+        qApp->processEvents();
     return false;
 }
 
@@ -568,4 +582,71 @@ void MainWindow::updateForestInfo()
 
     ui->lbParseTreeCount->setNum((int)m_forest.size());
     m_render->setCurrentTree(ui->sbParseTreeIndex->value());
+}
+
+void MainWindow::initMetrics()
+{
+    ui->tableMetrics->clear();
+
+    QHeaderView *header = new QHeaderView(Qt::Horizontal);
+    header->setResizeMode(QHeaderView::ResizeToContents);
+    header->setStretchLastSection(true);
+    ui->tableMetrics->setHorizontalHeader(header);
+
+    ui->tableMetrics->setColumnCount(3);
+    ui->tableMetrics->setRowCount(m_metrics.size());
+
+    for (size_t i = 0; i < m_metrics.size(); ++i)
+    {
+        FL::Trees::Metric *metric = m_metrics[i];
+
+        QTableWidgetItem *itemName = new QTableWidgetItem(QString().fromStdString(metric->name()));
+        itemName->setFlags(Qt::ItemIsEnabled);
+        ui->tableMetrics->setItem(i, 0, itemName);
+
+        //QTableWidgetItem *itemEnabled = new QTableWidgetItem();
+        //itemEnabled->setFlags(Qt::ItemIsEnabled | Qt::ItemIsUserCheckable);
+        //ui->tableMetrics->setItem(i, 1, itemEnabled);
+        QCheckBox *itemEnabled = new QCheckBox();
+        itemEnabled->setChecked(true);
+        ui->tableMetrics->setCellWidget(i, 1, itemEnabled);
+
+
+        QTableWidgetItem *itemLimit = new QTableWidgetItem((char*) metric->limit());
+        itemLimit->setFlags(Qt::ItemIsEnabled | Qt::ItemIsEditable);
+        ui->tableMetrics->setItem(i, 2, itemLimit);
+    }
+}
+
+
+
+
+
+
+void MainWindow::on_tableMetrics_cellChanged(int row, int column)
+{
+    if (row < 0 || row >= (int) m_metrics.size())
+        return;
+
+    FL::Trees::Metric *metric = m_metrics[row];
+
+    switch (column)
+    {
+        case 2:
+        {
+            QTableWidgetItem *item = ui->tableMetrics->item(row, column);
+            metric->setLimit(item->text().toStdString());
+            item->setText((char*) metric->limit());
+            break;
+        }
+    }
+}
+
+void MainWindow::readMetrics()
+{
+    for (size_t i = 0; i < m_metrics.size(); ++i)
+    {
+        QCheckBox *cb = (QCheckBox*) ui->tableMetrics->cellWidget(i, 1);
+        m_metrics[i]->setEnabled(cb->isChecked());
+    }
 }

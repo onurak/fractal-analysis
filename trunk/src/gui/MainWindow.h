@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QThread>
 #include <QDesktopWidget>
+#include <QCheckBox>
 #include "QParseTreeRender.h"
 #include "Utils.h"
 #include "../fractallib/FL.h"
@@ -29,7 +30,8 @@ public:
     void showError(const QString &text);
     void showError(const std::string &text);
 public slots:
-    void onSceneMouseMove(QGraphicsSceneMouseEvent *event);
+    void onSceneMouseEvent(QGraphicsSceneMouseEvent *event);
+    void onSceneWheelEvent(QGraphicsSceneWheelEvent *event);
 
 private:
     void readSettings();
@@ -46,6 +48,9 @@ private:
         QString timeColumnName = "");
 
     void updateForestInfo();
+
+    void initMetrics();
+    void readMetrics();
 private:
     Ui::MainWindow *ui;
     QSettings m_settings;
@@ -99,6 +104,7 @@ private slots:
     void on_cbMarker_currentIndexChanged(const QString &arg1);
     void on_sbParseTreeIndex_valueChanged(int arg1);
     void on_bnClearForest_clicked();
+    void on_tableMetrics_cellChanged(int row, int column);
 };
 
 /* Background analysis task */

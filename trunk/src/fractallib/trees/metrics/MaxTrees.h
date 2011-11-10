@@ -24,19 +24,29 @@ namespace FL { namespace Trees { namespace Metrics {
 class MaxTrees: public Metric
 {
 public:
-    MaxTrees(double limit = 5000) : Metric(limit)
+    MaxTrees()
     {
+        setLimit(2000);
         m_name = "Max trees";
     }
 
-    virtual double apply(const Tree &tree, const Forest &forest)
+    virtual bool filter(Tree &tree, Forest &forest)
     {
-        return forest.size();
+        int limit = (int) m_limit;
+        while ((int) forest.size() >= limit)
+            forest.erase(forest.begin());
+
+        return (int) forest.size() < limit;
     }
 
-    virtual double setLimit(const double &value)
+    virtual void setLimit(const GVariant &value)
     {
-        return m_limit = value >= 1 ? value : 1;
+        if (value.canCastTo(G_VAR_INT))
+        {
+            m_limit = (int) value;
+            if ((int) m_limit <= 0)
+                m_limit = 1;
+        }
     }
 };
 

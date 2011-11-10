@@ -33,8 +33,8 @@ FL::ParseResult MultiPass::analyze(
             throw EAnalyze(E_EMPTY_PATTERNS);
 
         // Init
-        m_ts = &ts;
-        m_patterns = &patterns;
+        m_ts       = &ts;
+        m_metrics  = &metrics;
         m_forest.clear();
 
 
@@ -119,8 +119,13 @@ void MultiPass::runBranch(Patterns::Context *context, Patterns::Matcher &matcher
         context->advanceCurrentRoot(1);
     }
 
-    m_forest.push_back(&context->outputTree());
-    m_result.treesAdded++;
+    int oldForestSize = (int) m_forest.size();
+    if (m_metrics->filter(context->outputTree(), m_forest))
+        m_forest.push_back(&context->outputTree());
+    else
+        delete &context->outputTree();
+
+    m_result.treesAdded += int(m_forest.size() - oldForestSize);
 
 
     delete context->candidateNode();
@@ -262,6 +267,7 @@ void MultiPass::removeSubtrees(FL::Trees::Forest &forest)
     */
 }
 
+/*
 bool MultiPass::isDuplicatingContext(Patterns::Context *context)
 {
     std::vector<Patterns::Context*>::const_iterator itci;
@@ -293,6 +299,7 @@ bool MultiPass::isDuplicatingContext(Patterns::Context *context)
 
     return false;
 }
+*/
 
 void MultiPass::deleteContext(Patterns::Context *context)
 {

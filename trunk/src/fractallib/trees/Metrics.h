@@ -18,6 +18,7 @@
 #define METRICS_H
 
 #include "Forest.h"
+#include "../../G/GVariant.h"
 
 namespace FL { namespace Trees {
 
@@ -27,29 +28,22 @@ namespace FL { namespace Trees {
 class Metric
 {
 public:
-    Metric(double limit = 0)
-        : m_limit(limit), m_isEnabled(true)
+    Metric(): m_limit(0), m_isEnabled(true)
     {
     }
 
     virtual ~Metric() {}
 
     //! Get metric value for concreet tree
-    virtual double apply(const Tree &tree, const Forest &forest) = 0;
-
-    //! Check if metric of tree less than limit value
-    bool isLimited(const Tree &tree, const Forest &forest)
-    {
-        return apply(tree, forest) <= m_limit;
-    }
+    virtual bool filter(Tree &tree, Forest &forest) = 0;
 
     //! Get limit value for metric
-    double limit() const { return m_limit; }
+    GVariant limit() const { return m_limit; }
 
     //! Set limit value for metric
     /*! \return Actual value, assigned to limit
       */
-    virtual double setLimit(const double &value) { return m_limit = value; }
+    virtual void setLimit(const GVariant &value) { m_limit = value; }
 
     //! Get if metric is enabled
     bool isEnabled() const { return m_isEnabled; }
@@ -60,7 +54,7 @@ public:
     //! Get metric name
     const std::string& name() const { return m_name; }
 protected:
-    double m_limit;
+    GVariant m_limit;
     std::string m_name;
     bool m_isEnabled;
 };
@@ -87,17 +81,17 @@ public:
     }
 
     //! Check if all metrics are performed in tree
-    bool check(const Tree &tree, const Forest &forest)
+    bool filter(Tree &tree, Forest &forest)
     {
         MetricsSet::iterator metric;
+        bool result = true;
         forall(metric, *this)
         {
-            if (!(*metric)->isEnabled())
-                continue;
-            if (!(*metric)->isLimited(tree, forest))
-                return false;
+            if ((*metric)->isEnabled())
+                result = result && (*metric)->filter(tree, forest);
         }
-        return true;
+
+        return result;
     }
 
     Metric* createMetric(const std::string &metricName);
