@@ -30,30 +30,44 @@ namespace FL { namespace Trees { namespace Metrics {
 class Subtree : public Metric
 {
 public:
-    Subtree(double limit = 0) : Metric(limit)
+    Subtree()
     {
+        setLimit(true);
         m_name = "Subtree";
     }
 
-    virtual double apply(const Tree &tree, const Forest &forest)
+    virtual bool filter(Tree &tree, Forest &forest)
     {
-        Forest::ConstIterator itTree;
+        if (! (bool) m_limit)
+            return true;
 
-        for (itTree = forest.begin(); itTree != forest.end(); ++itTree)
+        bool result = true;
+
+        for (size_t i = 0; i < forest.size(); )
         {
-            if (*itTree == &tree)
-                continue;
-            TreeCompareResult tcr = (*itTree)->compare(tree);
+            Tree *fTree = forest[i];
+
+            TreeCompareResult tcr = fTree->compare(tree);
             if (tcr.isSecondSubtreeOfFirst())
-                return 1;
+            {
+                result = false;
+            }
+            else if (tcr.isFirstSubtreeOfSecond())
+            {
+                delete fTree;
+                forest.erase(forest.begin() + i);
+            }
+            else
+                ++i;
         }
 
-        return 0;
+        return result;
     }
 
-    virtual double setLimit(const double &value)
+    virtual void setLimit(const GVariant &value)
     {
-        return m_limit = value == 0 ? 0 : 1;
+        if (value.canCastTo(G_VAR_BOOL))
+            m_limit = (bool) value;
     }
 };
 

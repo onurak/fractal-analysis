@@ -36,18 +36,18 @@ protected:
 
     int maxLevel(const FL::Trees::Forest &forest);
 
-    bool isDuplicatingContext(Patterns::Context *context);
+    //bool isDuplicatingContext(Patterns::Context *context);
 
     void deleteContext(Patterns::Context *context);
 
     FL::ParseResult m_result;
     const TimeSeries *m_ts;
     Trees::Forest m_forest;
-    Patterns::PatternsSet *m_patterns;
     std::vector<Patterns::Context*> m_branches;
     bool m_interruption;
+    Trees::MetricsSet *m_metrics;
 
-    std::vector<Patterns::Context*> m_oldBranches;
+    //std::vector<Patterns::Context*> m_oldBranches;
 };
 
 }} // namespaces

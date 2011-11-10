@@ -70,24 +70,47 @@ union GVarData {
 };
 
 //! Does string means true constant?
-inline bool doesStringMeansTrue(const char* c)
+inline bool doesStringMeansTrue(const char* s)
 {
-    std::string s = lowerCase(c);
-    return s == "true" || s == "yes" || s == "y";
+    if (s == NULL)
+        return false;
+    return !strcmpi(s, "1")        ||
+           !strcmpi(s, "true")     ||
+           !strcmpi(s, "yes")      ||
+           !strcmpi(s, "y")        ||
+           !strcmpi(s, "on")       ||
+           !strcmpi(s, "ok")       ||
+           !strcmpi(s, "enable")   ||
+           !strcmpi(s, "enabled");
 }
 
-const int G_VAR_CAST_VALIDNESS_TABLE[7][7] =
+//! Does string means false constant?
+inline bool doesStringMeansFalse(const char* s)
+{
+    if (s == NULL)
+        return false;
+    return !strcmpi(s, "0")         ||
+           !strcmpi(s, "false")     ||
+           !strcmpi(s, "no")        ||
+           !strcmpi(s, "n")         ||
+           !strcmpi(s, "off")       ||
+           !strcmpi(s, "disnable")  ||
+           !strcmpi(s, "disnabled");
+}
+
+const int G_VAR_CAST_VALIDNESS_TABLE[8][8] =
 {
 // base type       |  new type =>
 //    ||           |
-//    \/           | NULL | INT | FLOAT | DOUBLE | PCHAR | PVOID | BOOL |
-/* NULL   */       {   0,    0,     0,       0,      0,     0,      0   },
-/* INT    */       {   0,    1,     1,       1,      1,     0,      1   },
-/* FLOAT  */       {   0,    1,     1,       1,      1,     0,      1   },
-/* DOUBLE */       {   0,    1,     1,       1,      1,     0,      1   },
-/* PCHAR  */       {   0,    2,     2,       2,      1,     1,      1   },
-/* PVOID  */       {   0,    0,     0,       0,      0,     1,      0   },
-/* BOOL   */       {   0,    1,     1,       1,      1,     0,      1   }
+//    \/           | NULL | INT | FLOAT | DOUBLE | PCHAR | PVOID | BOOL | CUSTOM |
+/* NULL   */       {   0,    0,     0,       0,      0,     0,      0,      0   },
+/* INT    */       {   0,    1,     1,       1,      1,     0,      1,      0   },
+/* FLOAT  */       {   0,    1,     1,       1,      1,     0,      1,      0   },
+/* DOUBLE */       {   0,    1,     1,       1,      1,     0,      1,      0   },
+/* PCHAR  */       {   0,    2,     2,       2,      1,     1,      2,      0   },
+/* PVOID  */       {   0,    0,     0,       0,      0,     1,      0,      0   },
+/* BOOL   */       {   0,    1,     1,       1,      1,     0,      1,      0   },
+/* CUSTOM */       {   0,    0,     0,       0,      0,     0,      0,      1   }
 };
 
 #define G_VAR_UNDEFINED_OPERATION \
@@ -404,7 +427,7 @@ public:
 
             case G_VAR_BOOL:
                 return _data.b ? createStaticBuffer(5 * sizeof(char), "true") :
-                                  createStaticBuffer(6 * sizeof(char), "false");
+                                 createStaticBuffer(6 * sizeof(char), "false");
 
             default:
                 GVarInvalidCast(typeName(), typeName(G_VAR_PCHAR));
@@ -495,6 +518,9 @@ public:
                         { float i; return _atof(_data.pc, i); }
                     case G_VAR_DOUBLE:
                         { double i; return _atod(_data.pc, i); }
+                    case G_VAR_BOOL:
+                        { return doesStringMeansTrue (_data.pc) ||
+                                 doesStringMeansFalse(_data.pc); }
                     default:
                         return false;
                 }

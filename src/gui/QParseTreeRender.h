@@ -29,14 +29,21 @@ public:
     }
 
 protected:
-    void mouseMoveEvent(QGraphicsSceneMouseEvent *event)
+    virtual void mouseMoveEvent(QGraphicsSceneMouseEvent *event)
     {
-        emit mouseMove(event);
+        emit onMouseEvent(event);
+        event->accept();
+    }
+
+    virtual void wheelEvent(QGraphicsSceneWheelEvent *event)
+    {
+        emit onWheelEvent(event);
         event->accept();
     }
 
 signals:
-    void mouseMove(QGraphicsSceneMouseEvent *event);
+    void onMouseEvent(QGraphicsSceneMouseEvent *event);
+    void onWheelEvent(QGraphicsSceneWheelEvent *event);
 };
 
 enum LayerDrawingOptions
