@@ -24,11 +24,13 @@ namespace FL { namespace Trees {
 
 /*! \class Metric
   * \brief Abstract metric of tree
+  *
+  *
   */
 class Metric
 {
 public:
-    Metric(): m_limit(0), m_isEnabled(true)
+    Metric(): m_value(0), m_isEnabled(true)
     {
     }
 
@@ -38,12 +40,10 @@ public:
     virtual bool filter(Tree &tree, Forest &forest) = 0;
 
     //! Get limit value for metric
-    GVariant limit() const { return m_limit; }
+    GVariant value() const { return m_value; }
 
     //! Set limit value for metric
-    /*! \return Actual value, assigned to limit
-      */
-    virtual void setLimit(const GVariant &value) { m_limit = value; }
+    virtual void setValue(const GVariant &value) { m_value = value; }
 
     //! Get if metric is enabled
     bool isEnabled() const { return m_isEnabled; }
@@ -54,7 +54,7 @@ public:
     //! Get metric name
     const std::string& name() const { return m_name; }
 protected:
-    GVariant m_limit;
+    GVariant m_value;
     std::string m_name;
     bool m_isEnabled;
 };

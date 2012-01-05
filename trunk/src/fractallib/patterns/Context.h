@@ -54,10 +54,10 @@ public:
     void buildLastParsed(const CISequence& seq, int nodesCount = 0);
 
     //! Get first node from last parsed sequence with specified parameters
-    Trees::Node* getNode(int nameId, int no) const;
+    Trees::Node* getNode(int nameId, int index) const;
 
     //! Get all nodes from last parsed sequence with specified parameters
-    const Trees::Layer& getNodes(int nameId, int no) const;
+    const Trees::Layer& getNodes(int nameId, int index) const;
 
 
     //! Get current position at the analyzing sequence of roots
@@ -89,6 +89,11 @@ public:
     //! Get currently checking node that passed description check and going to check in guard
     Trees::Node* candidateNode() { return m_candidateNode; }
 
+    //! Get current checking subnode of condidateNode.
+    //! Need by It() guard function.
+    Trees::Node* currentItNode() { return m_currentItNode; }
+    void setCurrentItNode(Trees::Node* node) { m_currentItNode = node; }
+
     //! Set currently checking node that passed description check and going to check in guard
     void setCandidateNode(Trees::Node* newNode) { m_candidateNode = newNode; }
 
@@ -111,11 +116,20 @@ public:
         return m_currentRootPos >= (int)m_roots.size();
     }
 
+    //! Check if current root on specified time position
+    bool isAtTime(int time) const;
+
     //! Get analyzing time series
     const FL::TimeSeries* timeSeries();
 
     //! Set analyzing time series
     void setTimeSeries(const FL::TimeSeries* ts);
+
+    //! Change analysing roots
+    void setRoots(const std::list<Trees::Node*> &layer);
+
+    //! Advance root interator to specified position
+    void advanceCurrentRootToPos(int pos);
 
     //! Nodes, added during analysis
     FL::Trees::Layer& modification();
@@ -134,6 +148,9 @@ private:
     //! Currently checking node that passed description check and going to
     //! check in guard
     Trees::Node *m_candidateNode;
+
+    //! Current checking subnode of m_candidateNode
+    Trees::Node *m_currentItNode;
 
     //! Analyzing roots of tree
     std::list<Trees::Node*> m_roots;

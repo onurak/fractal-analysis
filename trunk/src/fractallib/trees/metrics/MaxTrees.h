@@ -26,26 +26,26 @@ class MaxTrees: public Metric
 public:
     MaxTrees()
     {
-        setLimit(2000);
+        setValue(2000);
         m_name = "Max trees";
     }
 
     virtual bool filter(Tree &tree, Forest &forest)
     {
-        int limit = (int) m_limit;
+        int limit = (int) m_value;
         while ((int) forest.size() >= limit)
             forest.erase(forest.begin());
 
         return (int) forest.size() < limit;
     }
 
-    virtual void setLimit(const GVariant &value)
+    virtual void setValue(const GVariant &value)
     {
         if (value.canCastTo(G_VAR_INT))
         {
-            m_limit = (int) value;
-            if ((int) m_limit <= 0)
-                m_limit = 1;
+            m_value = (int) value;
+            if ((int) m_value <= 0)
+                m_value = 1;
         }
     }
 };

@@ -14,9 +14,7 @@ FL::ParseResult SinglePass::analyze(
     Trees::Forest &forest,
     Patterns::PatternsSet &patterns,
     Patterns::Matcher &matcher,
-    Trees::MetricsSet &metrics,
-    int begin,
-    int end)
+    Trees::MetricsSet &metrics)
 {
     m_result.reset();
     FL::ParseResult commonResult;
@@ -29,11 +27,6 @@ FL::ParseResult SinglePass::analyze(
             throw EAnalyze(E_EMPTY_FOREST);
         if (patterns.size() == 0)
             throw EAnalyze(E_EMPTY_PATTERNS);
-
-        m_begin = begin;
-        m_end   = end < 0 ? ts.size() : end;
-        if (m_begin < 0 || m_begin >= m_end || m_end > ts.size())
-            throw EAnalyze(E_INVALID_SEGMENT);
 
         while (true)
         {

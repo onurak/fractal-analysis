@@ -20,9 +20,7 @@ public:
         Trees::Forest &forest,
         Patterns::PatternsSet &patterns,
         Patterns::Matcher &matcher,
-        Trees::MetricsSet &metrics,
-        int begin = 0,
-        int end = -1);
+        Trees::MetricsSet &metrics);
 protected:
     void newAnalysisBranchForTree(FL::Trees::Tree &tree);
 
@@ -36,8 +34,6 @@ protected:
 
     int maxLevel(const FL::Trees::Forest &forest);
 
-    //bool isDuplicatingContext(Patterns::Context *context);
-
     void deleteContext(Patterns::Context *context);
 
     FL::ParseResult m_result;
@@ -46,8 +42,6 @@ protected:
     std::vector<Patterns::Context*> m_branches;
     bool m_interruption;
     Trees::MetricsSet *m_metrics;
-
-    //std::vector<Patterns::Context*> m_oldBranches;
 };
 
 }} // namespaces

@@ -25,6 +25,7 @@
 #include "Self.h"
 #include "IsPrev.h"
 #include "Near.h"
+#include "CurNode.h"
 
 using namespace FL::Patterns::Functions;
 
@@ -77,4 +78,5 @@ void FunctionFactory::registerAll()
     registerFunction(new Self());
     registerFunction(new IsPrev());
     registerFunction(new Near());
+    registerFunction(new CurNode());
 }

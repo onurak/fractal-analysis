@@ -39,6 +39,7 @@ public:
         Trees::Forest &forest,
         Patterns::PatternsSet &patterns,
         Trees::MetricsSet &metrics,
+        Patterns::Matcher &matcher,
         Forecast &forecast) = 0;
 
     //! Get last error

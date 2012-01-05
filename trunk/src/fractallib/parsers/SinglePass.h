@@ -36,9 +36,7 @@ public:
         Trees::Forest &forest,
         Patterns::PatternsSet &patterns,
         Patterns::Matcher &matcher,
-        Trees::MetricsSet &metrics,
-        int begin = 0,
-        int end = -1);
+        Trees::MetricsSet &metrics);
 protected:
     void analyzeTree(
         const TimeSeries &ts,
@@ -49,7 +47,6 @@ protected:
         Patterns::Matcher &matcher,
         Patterns::Context &context);
 
-    int m_begin, m_end;
     FL::ParseResult m_result;
 };
 

@@ -2,6 +2,7 @@
 #include "../trees/Tree.h"
 #include "../TimeSeries.h"
 #include <assert.h>
+#include <algorithm>
 
 using namespace FL::Patterns;
 using namespace FL::Trees;
@@ -33,19 +34,43 @@ Context::~Context()
     delete m_modification;
 }
 
-const Layer& Context::getNodes(int nameId, int no) const
+const Layer& Context::getNodes(int nameId, int index) const
 {
     m_cache->clear();
+
+    Trees::Layer::Iterator node;
+
+    if (nameId == FL::IDGenerator::WILDCARD && index != FL::IDGenerator::WILDCARD)
+    {
+        forall(node, *m_lastParsed)
+        {
+            if ((*node)->index() == index)
+                m_cache->push_back(*node);
+        }
+    }
+    else if (nameId != FL::IDGenerator::WILDCARD && index == FL::IDGenerator::WILDCARD)
+    {
+        forall(node, *m_lastParsed)
+        {
+            if ((*node)->id() == nameId)
+                m_cache->push_back(*node);
+        }
+    }
+    else
+    {
+        m_cache->assign(m_lastParsed->begin(), m_lastParsed->end());
+    }
+
     return *m_cache;
 }
 
-Node* Context::getNode(int nameId, int no) const
+Node* Context::getNode(int nameId, int index) const
 {
     Trees::Layer::Iterator itNode;
     forall(itNode, *m_lastParsed)
     {
         Node *node = *itNode;
-        if (node->id() == nameId && node->index() == no)
+        if (node->id() == nameId && node->index() == index)
             return node;
     }
     return NULL;
@@ -54,6 +79,11 @@ Node* Context::getNode(int nameId, int no) const
 const std::list<Node*>::const_iterator& Context::currentRoot()
 {
     return m_currentRoot;
+}
+
+bool Context::isAtTime(int time) const
+{
+    return (*m_currentRoot)->begin() >= time;
 }
 
 void Context::buildLastParsed(const CISequence& seq, int nodesCount)
@@ -109,11 +139,33 @@ void Context::setOutputTree(Trees::Tree *tree)
 {
     m_outputTree = tree;
     if (tree)
-    {
-        m_roots.assign(tree->roots().begin(), tree->roots().end());
-        m_currentRoot = m_roots.begin();
-        m_currentRootPos = 0;
+        setRoots(tree->roots());
+}
+
+
+struct comp {
+    bool operator() (FL::Trees::Node* n1, FL::Trees::Node* n2) {
+        return n1->begin() < n2->begin();
     }
+} comp_o;
+
+void Context::setRoots(const std::list<Trees::Node*> &layer)
+{
+    std::vector<Trees::Node*> tmpRoots(layer.begin(),  layer.end());
+    std::sort(tmpRoots.begin(), tmpRoots.end(), comp_o);
+
+    m_roots.assign(tmpRoots.begin(), tmpRoots.end());
+    m_currentRoot = m_roots.begin();
+    m_currentRootPos = 0;
+}
+
+void Context::advanceCurrentRootToPos(int pos)
+{
+    m_currentRoot = m_roots.begin();
+    m_currentRootPos = 0;
+
+    while (!isAtEnd() && (*m_currentRoot)->begin() < pos)
+        advanceCurrentRoot(1);
 }
 
 void Context::copyRoots(Trees::Tree *newOutputTree, const Context& c)

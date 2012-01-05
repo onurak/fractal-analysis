@@ -24,21 +24,21 @@ namespace FL { namespace Trees { namespace Metrics {
 /*! \class Subtree
   * \brief Subtree metric checks if specified tree is subtree of another tree
   *
-  * It return 1 if it's tree or 0 otherwise.
-  * So if limit is 0 then subtrees not acceptable for metrics and 1 otherwise
+  * Return false if new tree is subtree of some other tree in forest
+  * and true otherwise. Also it removes subtrees of new tree from forest.
   */
 class Subtree : public Metric
 {
 public:
     Subtree()
     {
-        setLimit(true);
+        setValue(true);
         m_name = "Subtree";
     }
 
     virtual bool filter(Tree &tree, Forest &forest)
     {
-        if (! (bool) m_limit)
+        if (! (bool) m_value)
             return true;
 
         bool result = true;
@@ -51,6 +51,7 @@ public:
             if (tcr.isSecondSubtreeOfFirst())
             {
                 result = false;
+                ++i;
             }
             else if (tcr.isFirstSubtreeOfSecond())
             {
@@ -64,10 +65,10 @@ public:
         return result;
     }
 
-    virtual void setLimit(const GVariant &value)
+    virtual void setValue(const GVariant &value)
     {
         if (value.canCastTo(G_VAR_BOOL))
-            m_limit = (bool) value;
+            m_value = (bool) value;
     }
 };
 

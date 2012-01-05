@@ -4,6 +4,7 @@
 #include "../Common.h"
 #include "Node.h"
 #include "Layer.h"
+#include "../TimeSeries.h"
 
 namespace FL { namespace Trees {
 
@@ -37,10 +38,10 @@ class Tree
 {
 private:
     //! Use copy() mothod to create deep tree copy
-    Tree(const Tree &tree) {}
+    Tree(const Tree &tree) : m_timeSeries(tree.m_timeSeries) {}
 public:
     //! Default constructor
-    Tree();
+    Tree(const FL::TimeSeries &timeSeries);
 
     //! Destructor
     virtual ~Tree();
@@ -64,6 +65,9 @@ public:
     //! Remove node from tree. It is the only valid way to do this
     void remove(Node *node);
 
+    //! Update level of node
+    void updateLevel(Node *node, int newLevel);
+
     //! Make copy of tree
     Tree* copy() const;
 
@@ -79,6 +83,11 @@ public:
     //! Look for node with identical id, level, begin, end
     Node* findNode(Node *patternNode) const;
 
+    //! Get begining of last unmarked segment
+    int getLastUnmarkedSegment() const;
+
+    //! Get time of first floating node at zero level
+    int floatingBegin() const;
 protected:
     //! Insert one node to children's sequence of another at right place
     //! according to position in time series
@@ -95,6 +104,9 @@ private:
 
     //! Actual levels count
     mutable int m_levelsCount;
+
+    //! Assigned time series
+    const FL::TimeSeries &m_timeSeries;
 };
 
 }} // namespaces

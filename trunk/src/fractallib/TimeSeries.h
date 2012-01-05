@@ -104,6 +104,21 @@ public:
         return true;
     }
 
+    inline void append(double time, double value)
+    {
+        m_time.push_back(time);
+        m_values.push_back(value);
+    }
+
+    inline void remove(int index, int count = 1)
+    {
+        if (index < 0 || count <= 0 || index + count > size())
+            return;
+
+        m_values.erase(m_values.begin() + index, m_values.begin() + index + count);
+        m_time.erase(m_time.begin() + index, m_time.begin() + index + count);
+    }
+
     void setLinearTime();
 
     Header& header();

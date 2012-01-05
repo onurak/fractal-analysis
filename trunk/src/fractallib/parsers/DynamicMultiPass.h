@@ -30,6 +30,14 @@ class DynamicMultiPass : public AbstractDynamicParser
 public:
     DynamicMultiPass();
 
+    virtual ParseResult analyze(
+        const TimeSeries &ts,
+        Trees::Forest &forest,
+        Patterns::PatternsSet &patterns,
+        Trees::MetricsSet &metrics,
+        Patterns::Matcher &matcher,
+        Forecast &forecast);
+
 //    virtual ParseResult analyze(
 //        const TimeSeries &ts,
 //        Trees::Forest &forest,
@@ -66,10 +74,10 @@ public:
 //    int m_maxLevelCount;
 
 //protected:
-//    bool m_interruption;
-//    FL::ParseResult m_result;
+    bool m_interruption;
+    FL::ParseResult m_result;
 
-//    std::vector<Patterns::Context*> m_branches;
+    std::vector<Patterns::Context*> m_branches;
 //    FL::Trees::Forest m_oldForest, m_newForest;
 
 //    FL::Patterns::PatternsSet *m_patterns;
