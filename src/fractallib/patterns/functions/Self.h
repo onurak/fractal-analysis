@@ -38,4 +38,4 @@ public:
 
 }}} // namespaces
 
-#endif // THIS_H
+#endif // SELF_H

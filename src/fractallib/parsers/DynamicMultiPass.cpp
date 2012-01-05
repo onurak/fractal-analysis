@@ -17,8 +17,6 @@
 #include "DynamicMultiPass.h"
 
 using namespace FL::Parsers;
-
-using namespace FL::Parsers;
 using namespace FL::Patterns;
 using namespace FL::Exceptions;
 using namespace FL::Trees;
@@ -26,6 +24,21 @@ using namespace FL::Trees;
 
 DynamicMultiPass::DynamicMultiPass()
 {
+}
+
+FL::ParseResult DynamicMultiPass::analyze(
+    const FL::TimeSeries &ts,
+    Trees::Forest &forest,
+    Patterns::PatternsSet &patterns,
+    Trees::MetricsSet &metrics,
+    Patterns::Matcher &matcher,
+    FL::Forecast &forecast)
+{
+    m_interruption = false;
+    m_result.reset();
+    forecast.clear();
+
+
 }
 
 

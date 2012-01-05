@@ -16,9 +16,7 @@ FL::ParseResult MultiPass::analyze(
     Trees::Forest &forest,
     Patterns::PatternsSet &patterns,
     Patterns::Matcher &matcher,
-    Trees::MetricsSet &metrics,
-    int begin,
-    int end)
+    Trees::MetricsSet &metrics)
 {
     FL::ParseResult commonResult;
     m_interruption = false;
@@ -67,13 +65,6 @@ FL::ParseResult MultiPass::analyze(
                 m_branches.erase(m_branches.begin());
             }
 
-            // Delete old contexts that are unused now
-            /*
-            for (size_t i = 0; i < m_oldBranches.size(); ++i)
-                deleteContext(m_oldBranches[i]);
-            m_oldBranches.clear();
-            */
-
             // Swap analysis results
             forest.cleanup();
             forest = m_forest;
@@ -90,7 +81,7 @@ FL::ParseResult MultiPass::analyze(
 
         }
 
-
+        // Remove subtrees from forest
         removeSubtrees(forest);
     }
     catch (const EAnalyze &e)
@@ -104,14 +95,6 @@ FL::ParseResult MultiPass::analyze(
 
 void MultiPass::runBranch(Patterns::Context *context, Patterns::Matcher &matcher)
 {
-    /*
-    if (isDuplicatingContext(context))
-    {
-        deleteContext(context);
-        return;
-    }
-    */
-
     // Look for applicable patterns in each position of tree
     while (!context->isAtEnd())
     {
@@ -119,25 +102,29 @@ void MultiPass::runBranch(Patterns::Context *context, Patterns::Matcher &matcher
         context->advanceCurrentRoot(1);
     }
 
+    // Check metrics of output tree and another trees in forest
     int oldForestSize = (int) m_forest.size();
     if (m_metrics->filter(context->outputTree(), m_forest))
         m_forest.push_back(&context->outputTree());
     else
         delete &context->outputTree();
 
+    // - Why not just ++m_result.treesAdded?
+    // - Because metrics could delete any trees in forest
     m_result.treesAdded += int(m_forest.size() - oldForestSize);
-
 
     delete context->candidateNode();
     delete context;
-    //m_oldBranches.push_back(context);
 }
 
 bool MultiPass::match(Matcher &matcher, Context &context)
 {
-    bool result;
     CheckInfo info;
-    if ((result = matcher.match(context, info)) == true)
+
+    // Find all patterns that matches in current position
+    bool matched = matcher.match(context, info);
+
+    if (matched)
     {
         std::vector<CheckInfo::ApplicableSeq>::iterator itSequence;
 
@@ -167,11 +154,10 @@ bool MultiPass::match(Matcher &matcher, Context &context)
             newContext->setCandidateNode(new Node());
 
             newAnalysisBranch(newContext);
-            //m_result.nodesAdded++;
         }
     }
 
-    return result;
+    return matched;
 }
 
 void MultiPass::newAnalysisBranchForTree(FL::Trees::Tree &tree)
@@ -236,70 +222,7 @@ void MultiPass::removeSubtrees(FL::Trees::Forest &forest)
         if (!isFirstTreeDeleted)
             ++i;
     }
-
-    /*
-    for (tree = m_forest.begin(); tree != m_forest.end(); )
-    {
-        TreeCompareResult tcr = (*tree)->compare(context->outputTree());
-        if (tcr.isSecondSubtreeOfFirst())
-        {
-            isTreeUnique = false;
-            break;
-        }
-        else if (tcr.isFirstSubtreeOfSecond())
-        {
-            tree = m_forest.erase(tree);
-            m_result.treesAdded--;
-        }
-        else
-            ++tree;
-
-    }
-    if (isTreeUnique)
-    {
-        m_forest.push_back(&context->outputTree());
-        m_result.treesAdded++;
-    }
-    else
-    {
-        delete &context->outputTree();
-    }
-    */
 }
-
-/*
-bool MultiPass::isDuplicatingContext(Patterns::Context *context)
-{
-    std::vector<Patterns::Context*>::const_iterator itci;
-
-    forall(itci, m_oldBranches)
-    {
-        Context *ci = *itci;
-        if (context->currentRootPos() == ci->currentRootPos() &&
-            context->roots().size()   == ci->roots().size())
-        {
-            const std::list<Trees::Node*>& roots1 = context->roots();
-            const std::list<Trees::Node*>& roots2 = ci->roots();
-            Layer::ConstIterator r1, r2;
-
-            forboth(r1, roots1, r2, roots2)
-            {
-                Node *n1 = *r1, *n2 = *r2;
-                if (n1->begin() == n2->begin() &&
-                    n1->end()   == n2->end()   &&
-                    n1->level() == n2->level() &&
-                    n1->id()    == n2->id())
-                {
-                    return true;
-                }
-
-            }
-        }
-    }
-
-    return false;
-}
-*/
 
 void MultiPass::deleteContext(Patterns::Context *context)
 {

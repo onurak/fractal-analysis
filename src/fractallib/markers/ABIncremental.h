@@ -22,23 +22,30 @@
 namespace FL { namespace Markers {
 
 
-class FractalIncremental : public AbstractMarker
+class ABIncremental : public AbstractMarker
 {
 public:
-    FractalIncremental();
+    ABIncremental();
 
-    virtual ~FractalIncremental();
+    virtual ~ABIncremental();
 
-//    virtual ParseResult analyze(
-//                      const TimeSeries &ts,
-//                      Trees::Forest &forest,
-//                      Patterns::PatternsSet &patterns);
-//protected:
-//    void growTree(const TimeSeries &ts, Trees::Tree &tree,
-//                  Patterns::PatternsSet &patterns, int begin, int end);
-//    bool growLayer(const TimeSeries &ts, Trees::Tree &tree,
-//                   Patterns::PatternsSet &patterns, int begin, int end);
-//    bool applyPattern(Patterns::Pattern &pattern, Patterns::Context &context);
+    virtual ParseResult analyze(
+                      const TimeSeries &ts,
+                      Trees::Forest &forest,
+                      Patterns::Matcher &matcher,
+                      Patterns::PatternsSet &patterns);
+protected:
+    void growTree(
+        const TimeSeries &ts, Trees::Tree &tree,
+        Patterns::Matcher &matcher, int begin, int end);
+
+    bool growLayer(
+        const TimeSeries &ts, Trees::Tree &tree,
+        Patterns::Matcher &matcher, int begin, int end);
+
+    void clamp(Trees::Tree &tree, Trees::Layer &nodes);
+
+    bool match(Patterns::Matcher &matcher, Patterns::Context &context);
 };
 
 }} // namespaces

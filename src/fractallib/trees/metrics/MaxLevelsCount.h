@@ -26,22 +26,22 @@ class MaxLevelsCount : public Metric
 public:
     MaxLevelsCount()
     {
-        setLimit(5);
+        setValue(5);
         m_name = "Max levels count";
     }
 
     virtual bool filter(Tree &tree, Forest &forest)
     {
-        return tree.levelCount() <= (int) m_limit;
+        return tree.levelCount() <= (int) m_value;
     }
 
-    virtual void setLimit(const GVariant &value)
+    virtual void setValue(const GVariant &value)
     {
         if (value.canCastTo(G_VAR_INT))
         {
-            m_limit = (int) value;
-            if ((int) m_limit <= 0)
-                m_limit = 1;
+            m_value = (int) value;
+            if ((int) m_value <= 0)
+                m_value = 1;
         }
     }
 };

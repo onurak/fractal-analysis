@@ -53,7 +53,7 @@ HEADERS  += \
     
 
 SOURCES += \
-	G/GLogger.cpp \
+    G/GLogger.cpp \
     fractallib/TimeSeries.cpp \
     fractallib/patterns/Pattern.cpp \
     fractallib/patterns/Context.cpp \

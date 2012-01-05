@@ -30,6 +30,7 @@ public:
     virtual ParseResult analyze(
                       const TimeSeries &ts,
                       Trees::Forest &forest,
+                      Patterns::Matcher &matcher,
                       Patterns::PatternsSet &patterns);
 };
 

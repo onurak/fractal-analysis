@@ -20,7 +20,7 @@ public:
         int id;
         //std::vector<Pattern*> patterns;
         std::vector<CheckInfo::ApplicableSeq> sequences;
-        std::map<int, TMNode*> children;
+        std::vector< std::pair<int, TMNode*> > children;
     };
 
 public:

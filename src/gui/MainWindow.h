@@ -9,6 +9,8 @@
 #include <QThread>
 #include <QDesktopWidget>
 #include <QCheckBox>
+#include <QMutex>
+#include <QMutexLocker>
 #include "QParseTreeRender.h"
 #include "Utils.h"
 #include "../fractallib/FL.h"
@@ -38,12 +40,23 @@ private:
     void writeSettings();
     void markup();
     void buildTrees();
+    void dynamicStep();
+
     void loadPatterns(const QString &fileName,
                       FL::Patterns::PatternsSet &patterns,
                       FL::Patterns::Matcher **matcher,
                       QLabel *label = NULL);
+
+
+
+    enum TSLoadMethod {
+        tloStatic,
+        tloDynamic
+    };
+
     bool loadTimeSeries(
         const QString &fileName,
+        TSLoadMethod options = tloStatic,
         QString valuesColumnName = "",
         QString timeColumnName = "");
 
@@ -63,31 +76,35 @@ private:
     /****************************************
      * FL data
      ****************************************/
-    FL::TimeSeries              m_timeSeries;
+    FL::TimeSeries              m_timeSeries;      // Current time series values
     FL::Patterns::PatternsSet   m_patterns;
     FL::Patterns::PatternsSet   m_preprocessingPatterns;
     FL::Trees::Forest           m_forest;
     FL::Trees::MetricsSet       m_metrics;
     FL::Patterns::Matcher      *m_matcher;
     FL::Patterns::Matcher      *m_preprocessingMatcher;
-
+    FL::Forecast                m_forecast;
+protected:
+    /****************************************
+     * Application internal data
+     ****************************************/
     QString m_staticParserName;
     QString m_markerName;
+    QList< QPair<double, double> > m_timeSeriesCache; // Arrived values that hasn't been analyzed yet
+    QMutex addDataMutex;
+    QVector<QThread*> m_backgroundTasks;
 protected:
     void setUiEnables(bool enabled);
+    void addBackgroundTask(QThread *task);
+    friend class BackgroundParserTask;
+private slots:
     void onParsingBegin();
     bool onParsingProgress(FL::ParseResult result, FL::Trees::Forest *forest);
     bool onParsingFinished(FL::Parsers::AbstractParser *parser);
-
-private:
-    QVector<QThread*> m_backgroundTasks;
-    void addBackgroundTask(QThread *task);
-
-    friend class BackgroundParserTask;
+    void onNewTimeSeriesData(const QList< QPair<double, double> > &data);
+    void onBackgroundTaskFinished();
 protected:
     virtual void resizeEvent(QResizeEvent *event);
-private slots:
-    void onBackgroundTaskFinished();
 private slots:
     void on_actionMarkup_triggered();
     void on_actionOpen_patterns_triggered();
@@ -105,6 +122,9 @@ private slots:
     void on_sbParseTreeIndex_valueChanged(int arg1);
     void on_bnClearForest_clicked();
     void on_tableMetrics_cellChanged(int row, int column);
+    void on_actionOpen_dynamic_time_series_triggered();
+    void on_action_Dynamic_step_triggered();
+    void on_bnDeleteCurrentTree_clicked();
 };
 
 /* Background analysis task */

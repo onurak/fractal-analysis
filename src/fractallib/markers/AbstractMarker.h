@@ -22,6 +22,7 @@
 #include "../trees/Forest.h"
 #include "../patterns/Pattern.h"
 #include "../exceptions/EException.h"
+#include "../patterns/Matcher.h"
 
 namespace FL
 {
@@ -39,6 +40,7 @@ public:
     virtual ParseResult analyze(
                       const TimeSeries &ts,
                       Trees::Forest &forest,
+                      Patterns::Matcher &matcher,
                       Patterns::PatternsSet &patterns) = 0;
 
     const Exceptions::EAnalyze& lastError() const { return m_lastError; }

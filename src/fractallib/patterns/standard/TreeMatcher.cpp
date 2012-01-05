@@ -62,14 +62,21 @@ void TreeMatcher::addTreePath(
     TMNode *nextNode;
 
     // Find child with same id
-    std::map<int, TMNode*>::iterator iNode =
-            node->children.find(symbol);
+    std::vector< std::pair<int, TMNode*> >::iterator iNode;
+    for (iNode = node->children.begin(); iNode != node->children.end(); ++iNode)
+    {
+        if (iNode->first == symbol)
+        {
+            nextNode = iNode->second;
+            break;
+        }
+    }
 
-    // Add new child if not found
+    // Add new child if not found.
+    // It is important to add child to the end
     if (iNode == node->children.end())
-        node->children[symbol] = nextNode = new TMNode(symbol);
-    else
-        nextNode = iNode->second;
+        node->children.push_back(
+                    std::make_pair(symbol, nextNode = new TMNode(symbol)));
 
     addTreePath(pattern, seq, nextNode, depth+1);
 }
@@ -78,7 +85,7 @@ void TreeMatcher::clearTree(TreeMatcher::TMNode *root)
 {
     if (root != NULL)
     {
-        std::map<int, TMNode*>::iterator child;
+        std::vector< std::pair<int, TMNode*> >::iterator child;
         forall(child, root->children)
             clearTree(child->second);
         delete root;
@@ -92,7 +99,7 @@ bool TreeMatcher::match(Context &context, CheckInfo &ci)
 
     Layer::ConstIterator itLayerNode = context.currentRoot();
     TMNode *treeNode = m_root;
-    std::map<int, TMNode*>::const_iterator itNextNode;
+    std::vector< std::pair<int, TMNode*> >::const_iterator itNextNode;
 
     while (treeNode != NULL &&
            itLayerNode != context.roots().end())
@@ -106,22 +113,28 @@ bool TreeMatcher::match(Context &context, CheckInfo &ci)
                 ci.applicableSequences.push_back(*itAs);
         }
 
-        // If exists arc with specified symbol then
-        // get to node pointed with this arc, otherwise exit
-        itNextNode = treeNode->children.find( (*itLayerNode)->id() );
+        std::string sss = FL::IDGenerator::nameOf((*itLayerNode)->id());
 
-        if (itNextNode != treeNode->children.end())
+        // If there is wildcard symbol or if exists edge with
+        // specified symbol then get to node pointed by this edge
+        for (itNextNode = treeNode->children.begin();
+             itNextNode != treeNode->children.end();
+             ++itNextNode)
         {
-            treeNode = itNextNode->second;
-            ++itLayerNode;
+            if (itNextNode->first == FL::IDGenerator::WILDCARD ||
+                itNextNode->first == (*itLayerNode)->id())
+            {
+                treeNode = itNextNode->second;
+                ++itLayerNode;
+                break;
+            }
         }
-        else
-        {
+
+        if (itNextNode == treeNode->children.end())
             treeNode = NULL;
-        }
     }
 
-    // End of root sequence reached, but there is completed pattern
+    // End of root sequence reached, but there are completed pattern
     if (treeNode != NULL)
     {
         std::vector<CheckInfo::ApplicableSeq>::iterator itAs;

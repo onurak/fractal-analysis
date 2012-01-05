@@ -41,10 +41,8 @@ MainWindow::~MainWindow()
     writeSettings();
     delete ui;
     delete m_render;
-    if (m_matcher)
-        delete m_matcher;
-    if (m_preprocessingMatcher)
-        delete m_preprocessingMatcher;
+    delete m_matcher;
+    delete m_preprocessingMatcher;
     m_patterns.cleanup();
     m_preprocessingPatterns.cleanup();
 }
@@ -86,6 +84,8 @@ void MainWindow::on_actionOpen_time_series_triggered()
                                 QString().fromStdString(m_timeSeries.header()[1]));
         else
             m_settings.setValue("gui/ts/TimeColumn", tr("[Use default time]"));
+
+        m_settings.setValue("gui/ts/IsDynamic", false);
     }
 }
 
@@ -169,6 +169,7 @@ void MainWindow::loadPatterns(
 
 bool MainWindow::loadTimeSeries(
     const QString &fileName,
+    TSLoadMethod loadMethod,
     QString valuesColumnName,
     QString timeColumnName)
 {
@@ -250,19 +251,58 @@ bool MainWindow::loadTimeSeries(
         }
         m_timeSeries.clear();
         m_forest.cleanup();
+        m_timeSeriesCache.clear();
+
+        // Get actual column index
+        if (timeColumnIndex > 0)
+            timeColumnIndex -= 1;
+        else
+            timeColumnIndex = 0;
 
         bool readOk;
-        if (timeColumnIndex > 0)
-            readOk = file.read(m_timeSeries, valuesColumnIndex, timeColumnIndex-1);
-        else
-        {
-            readOk = file.read(m_timeSeries, valuesColumnIndex, valuesColumnIndex);
-            if (readOk)
-                m_timeSeries.setLinearTime();
-        }
+
+        readOk = file.read(m_timeSeries, valuesColumnIndex, timeColumnIndex);
+        if (timeColumnIndex <= 0 && readOk)
+            m_timeSeries.setLinearTime();
 
         if (!readOk)
             throw QString(tr("Error opening %1")).arg(fileName);
+
+        // If loading method is dynamic then ask user how many values
+        // must be in static part, and how many in dynamic
+        if (loadMethod & tloDynamic)
+        {
+            int staticPartSize;
+
+            if (!m_isInitializing)
+            {
+                bool ok = false;
+                staticPartSize =
+                   QInputDialog::getInt(
+                        this, tr("Open time series"),
+                        tr("How many values must be in static part?"),
+                        m_timeSeries.size()/2,
+                        0, m_timeSeries.size(), 1,
+                        &ok);
+                if (!ok)
+                {
+                    m_timeSeries.clear();
+                    updateForestInfo();
+                    return false;
+                }
+
+                m_settings.setValue("gui/ts/StaticPartSize", staticPartSize);
+            }
+            else
+            {
+                staticPartSize = m_settings.value("gui/ts/StaticPartSize", m_timeSeries.size()/2).toInt();
+            }
+
+            for (int i = m_timeSeries.size()-1; i >= staticPartSize; --i)
+                m_timeSeriesCache.append(
+                            qMakePair(m_timeSeries.time(i), m_timeSeries.value(i)));
+            m_timeSeries.remove(staticPartSize, m_timeSeries.size() - staticPartSize);
+        }
 
         ui->lbTimeSeriesFile->setText(QFileInfo(fileName).fileName());
         ui->lbTimeSeriesSize->setNum(m_timeSeries.size());
@@ -312,15 +352,19 @@ void MainWindow::readSettings()
         height = QApplication::desktop()->geometry().height() - y;
 
     setGeometry(x, y, width, height);
+
     loadTimeSeries(
                 m_settings.value("gui/ts/File", "").toString(),
+                m_settings.value("gui/ts/IsDynamic", false).toBool() ? tloDynamic : tloStatic,
                 m_settings.value("gui/ts/ValuesColumn", "").toString(),
                 m_settings.value("gui/ts/TimeColumn", "").toString());
+
     loadPatterns(
                 m_settings.value("gui/patterns/File", "").toString(),
                 m_patterns,
                 &m_matcher,
                 ui->lbPatternsFile);
+
     loadPatterns(
                 m_settings.value("gui/patterns/PreprocessingFile", "").toString(),
                 m_preprocessingPatterns,
@@ -381,7 +425,7 @@ void MainWindow::markup()
     m_forest.cleanup();
 
     FL::Markers::AbstractMarker *marker = new FL::Markers::AB();
-    marker->analyze(m_timeSeries, m_forest, m_patterns);
+    marker->analyze(m_timeSeries, m_forest, *m_matcher, m_patterns);
     if (marker->wasOk())
     {
         if (m_preprocessingPatterns.size() > 0)
@@ -581,6 +625,8 @@ void MainWindow::updateForestInfo()
     }
 
     ui->lbParseTreeCount->setNum((int)m_forest.size());
+    ui->lbTimeSeriesSize->setNum((int)m_timeSeries.size());
+
     m_render->setCurrentTree(ui->sbParseTreeIndex->value());
 }
 
@@ -612,7 +658,7 @@ void MainWindow::initMetrics()
         ui->tableMetrics->setCellWidget(i, 1, itemEnabled);
 
 
-        QTableWidgetItem *itemLimit = new QTableWidgetItem((char*) metric->limit());
+        QTableWidgetItem *itemLimit = new QTableWidgetItem((char*) metric->value());
         itemLimit->setFlags(Qt::ItemIsEnabled | Qt::ItemIsEditable);
         ui->tableMetrics->setItem(i, 2, itemLimit);
     }
@@ -635,8 +681,8 @@ void MainWindow::on_tableMetrics_cellChanged(int row, int column)
         case 2:
         {
             QTableWidgetItem *item = ui->tableMetrics->item(row, column);
-            metric->setLimit(item->text().toStdString());
-            item->setText((char*) metric->limit());
+            metric->setValue(item->text().toStdString());
+            item->setText((char*) metric->value());
             break;
         }
     }
@@ -649,4 +695,102 @@ void MainWindow::readMetrics()
         QCheckBox *cb = (QCheckBox*) ui->tableMetrics->cellWidget(i, 1);
         m_metrics[i]->setEnabled(cb->isChecked());
     }
+}
+
+void MainWindow::onNewTimeSeriesData(const QList< QPair<double, double> > &data)
+{
+    addDataMutex.lock();
+    m_timeSeriesCache.append(data);
+    addDataMutex.unlock();
+}
+
+void MainWindow::on_actionOpen_dynamic_time_series_triggered()
+{
+    QFileDialog openDialog(
+            this, tr("Open dynamic time series"),
+            m_settings.value("gui/ts/Path", ".").toString(),
+            "Comma-separated values (*.csv);;Any files (*.*)");
+
+    if (!openDialog.exec())
+        return;
+
+    QString fileName = openDialog.selectedFiles()[0];
+
+    m_settings.setValue("gui/ts/Path", openDialog.directory().absolutePath());
+    m_settings.setValue("gui/ts/File", fileName);
+
+    if (loadTimeSeries(fileName, tloDynamic))
+    {
+        m_settings.setValue("gui/ts/ValuesColumn",
+                            QString().fromStdString(m_timeSeries.header()[0]));
+
+        if (!m_timeSeries.header()[1].empty())
+            m_settings.setValue("gui/ts/TimeColumn",
+                                QString().fromStdString(m_timeSeries.header()[1]));
+        else
+            m_settings.setValue("gui/ts/TimeColumn", tr("[Use default time]"));
+
+        m_settings.setValue("gui/ts/IsDynamic", true);
+    }
+}
+
+void MainWindow::dynamicStep()
+{
+    if (m_timeSeriesCache.size() == 0)
+        return;
+
+    const QPair<double, double> p = m_timeSeriesCache.back();
+    m_timeSeries.append(p.first, p.second);
+    m_timeSeriesCache.pop_back();
+
+    FL::ParseResult pr;
+
+    FL::Markers::AbstractMarker *marker = NULL;
+    FL::Parsers::AbstractDynamicParser *parser = NULL;
+
+    try
+    {
+        marker = new FL::Markers::ABIncremental();
+        pr = marker->analyze(m_timeSeries, m_forest, *m_preprocessingMatcher, m_preprocessingPatterns);
+        if (!marker->wasOk())
+            throw "Can not markup";
+
+
+        parser = new FL::Parsers::DynamicMultiPass();
+        //pr = parser->analyze(
+        //            m_timeSeries, m_forest, m_patterns, m_metrics, *m_matcher, m_forecast);
+        //if (!parser->wasOk())
+          //  throw "Can not parse";
+    }
+    catch (const char *s)
+    {
+        showError(QString(s));
+    }
+
+
+    delete marker;
+    delete parser;
+
+    updateForestInfo();
+    on_actionFitAll_triggered();
+}
+
+void MainWindow::on_action_Dynamic_step_triggered()
+{
+    dynamicStep();
+}
+
+void MainWindow::on_bnDeleteCurrentTree_clicked()
+{
+    size_t treeIndex = size_t(ui->sbParseTreeIndex->value()) - 1;
+
+    if (m_forest.size() == 0 || treeIndex < 0 || treeIndex >= m_forest.size())
+        return;
+
+    delete m_forest[treeIndex];
+    m_forest.erase(m_forest.begin() + treeIndex);
+    updateForestInfo();
+
+    if (m_forest.size() > 0)
+        ui->sbParseTreeIndex->setValue(std::min(treeIndex+1, m_forest.size()));
 }

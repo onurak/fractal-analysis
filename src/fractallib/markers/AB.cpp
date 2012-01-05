@@ -31,7 +31,7 @@ AB::~AB()
 }
 
 FL::ParseResult AB::analyze(
-        const TimeSeries &ts, Forest &forest, PatternsSet &patterns)
+        const TimeSeries &ts, Forest &forest, Patterns::Matcher &matcher, PatternsSet &patterns)
 {
     ParseResult result;
 
@@ -40,7 +40,7 @@ FL::ParseResult AB::analyze(
         if (ts.size() < 2)
             throw EAnalyze(E_INVALID_INPUT);
 
-        Tree *tree = new Tree();
+        Tree *tree = new Tree(ts);
         const int up   = IDGenerator::idOf("a");
         const int down = IDGenerator::idOf("b");
 

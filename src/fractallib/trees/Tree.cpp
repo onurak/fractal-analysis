@@ -2,7 +2,8 @@
 
 using namespace FL::Trees;
 
-Tree::Tree()
+Tree::Tree(const FL::TimeSeries &timeSeries)
+    : m_timeSeries(timeSeries)
 {
     m_levelsCount = 0;
     m_virtualRoot = new Node(NULL, -1, -1, -1, -1);
@@ -31,7 +32,7 @@ void Tree::clear()
 
 Tree* Tree::copy() const
 {
-    Tree *tree = new Tree();
+    Tree *tree = new Tree(m_timeSeries);
 
     Layer::ConstIterator node, child;
 
@@ -86,8 +87,22 @@ void Tree::add(Node *node)
             node->m_internalParent = NULL;
         }
 
-        // Add to leveled cache
-        m_nodesByLevel[node->level()].push_back(node);
+        // Add to cache by level in proper place
+        Layer &layer = m_nodesByLevel[node->level()];
+        if (layer.size() > 0)
+        {
+            Layer::Iterator i;
+            forall(i, layer)
+            {
+                if ((*i)->end() <= node->begin())
+                {
+                    layer.insert(i, node);
+                    break;
+                }
+            }
+        }
+        else
+            layer.push_back(node);
 
         if (m_levelsCount <= node->level())
             m_levelsCount = node->level()+1;
@@ -124,6 +139,19 @@ void Tree::remove(Node *node)
         // It could be among roots
         if (search(m_virtualRoot->children(), node, i))
             m_virtualRoot->children().erase(i);
+    }
+}
+
+void Tree::updateLevel(Node *node, int newLevel)
+{
+    if (node && node->level() != newLevel)
+    {
+        Layer::Iterator i;
+        if (search(m_nodesByLevel[node->level()], node, i))
+            m_nodesByLevel[node->level()].erase(i);
+
+        node->setLevel(newLevel);
+        m_nodesByLevel[newLevel].push_back(node);
     }
 }
 
@@ -196,6 +224,43 @@ Node* Tree::findNode(Node *patternNode) const
     }
 
     return NULL;
+}
+
+int Tree::getLastUnmarkedSegment() const
+{
+    if (levelCount() == 0)
+        return 0;
+    //return std::min(leafs().back()->end(), m_timeSeries.size());
+
+    int r = 0;
+    const Layer &leafs = this->leafs();
+    Layer::ConstIterator node;
+
+    forall(node, leafs)
+    {
+        if ((*node)->end() > r)
+            r = (*node)->end();
+    }
+
+    return r;
+}
+
+int Tree::floatingBegin() const
+{
+    if (levelCount() == 0)
+        return 0;
+
+    int r = 0;
+    const Layer &leafs = this->leafs();
+    Layer::ConstIterator node;
+
+    forall(node, leafs)
+    {
+        if ((*node)->status() == nsFloating && (*node)->begin() < r)
+            r = (*node)->begin();
+    }
+
+    return r;
 }
 
 TreeCompareResult Tree::compare(const Tree &tree) const
@@ -281,5 +346,4 @@ int Tree::levelCount() const
     m_levelsCount = m_nodesByLevel.size();
     return m_levelsCount;
 }
-
 

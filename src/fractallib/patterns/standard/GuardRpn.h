@@ -37,6 +37,8 @@ public:
     virtual FL::Exceptions::EParsing compile(Compilers::Input &i);
     virtual bool check(Context &c);
 private:
+    Internal::Program* getProgramForNodes(int nodeId, int nodeIndex);
+
     GuardSet m_rpnPrograms;
 };
 

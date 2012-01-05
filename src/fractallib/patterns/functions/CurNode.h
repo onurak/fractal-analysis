@@ -14,21 +14,28 @@
  * along with Fractal Library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FL_H
-#define FL_H
+#ifndef NODE_H
+#define NODE_H
 
-#include "markers/AB.h"
-#include "markers/ABIncremental.h"
-#include "markers/SimpleIncremental.h"
-#include "parsers/MultiPass.h"
-#include "parsers/DynamicMultiPass.h"
-#include "parsers/SinglePass.h"
-#include "TimeSeries.h"
-#include "patterns/Pattern.h"
-#include "patterns/standard/EbnfRpnPattern.h"
-#include "patterns/standard/TreeMatcher.h"
-#include "trees/Forest.h"
-#include "io/FileCSV.h"
-#include "io/FilePAT.h"
+#include "Function.h"
 
-#endif // FL_H
+namespace FL { namespace Patterns { namespace Functions {
+
+/*! \class Node
+  * \brief Return pointer to current indexed subnode of currently analyzing node.
+  *
+  * It don't want any arguments.
+  * Return pointer to FL::Trees::Node*.
+  */
+class CurNode : public Function
+{
+public:
+    CurNode();
+
+    //! Main function of class
+    virtual const GVariant& operator()(Patterns::Context& context, FunctionArgs& args);
+};
+
+}}} // namespaces
+
+#endif // NODE_H
