@@ -14,23 +14,23 @@
  * along with Fractal Library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef CURNODE_H
-#define CURNODE_H
+#ifndef LENGTH_H
+#define LENGTH_H
 
 #include "Function.h"
 
 namespace FL { namespace Patterns { namespace Functions {
 
-/*! \class CurNode
-  * \brief Return pointer to current indexed subnode of currently analyzing node.
+/*! \class Length
+  * \brief Get length of time series segment.
   *
-  * It don't want any arguments.
-  * Return pointer to FL::Trees::Node*.
+  * Arguments is any number of FL::Trees::Node*.
+  * If count of arguments is 0 than it throw EAnalyze exception.
   */
-class CurNode : public Function
+class Length : public Function
 {
 public:
-    CurNode();
+    Length();
 
     //! Main function of class
     virtual const GVariant& operator()(Patterns::Context& context, FunctionArgs& args);
@@ -38,4 +38,4 @@ public:
 
 }}} // namespaces
 
-#endif // CURNODE_H
+#endif // LENGTH_H

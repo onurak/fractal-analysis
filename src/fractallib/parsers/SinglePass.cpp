@@ -82,13 +82,24 @@ bool SinglePass::match(Patterns::Matcher &matcher, Context &context)
 
     if ((result = matcher.match(context, ci)) == true)
     {
-        // Pattern sequence that was applied (use only one)
-        CISequence &seq = *ci.applicableSequences[0].seq;
+        // Pattern sequence that was applied (use only one
+        // with maximal length)
+        CISequence *seq;
+        size_t maxSeqSize = 0;
+        std::vector<CheckInfo::ApplicableSeq>::const_iterator itseq;
+        forall(itseq, ci.applicableSequences)
+        {
+            if (itseq->seq->size() > maxSeqSize)
+            {
+                seq = itseq->seq;
+                maxSeqSize = seq->size();
+            }
+        }
 
         Node *candidate = context.candidateNode();
 
         // Insert candidate node into output tree
-        context.buildLastParsed(seq);
+        context.buildLastParsed(*seq);
         Layer::Iterator child;
         forall(child, context.lastParsed())
             (*child)->setParent(candidate);
@@ -100,7 +111,7 @@ bool SinglePass::match(Patterns::Matcher &matcher, Context &context)
         //context.modification().push_back(context.candidateNode());
 
         // Update result, advance current roots position
-        context.advanceCurrentRoot(seq.size());
+        context.advanceCurrentRoot(seq->size());
         m_result.nodesAdded += 1;
         context.setCandidateNode(new Node());
     }

@@ -80,8 +80,14 @@ EArguments::EArguments(const std::string &name, int expectedCountFrom,
                        int expectedCountTo, int gotCount)
 {
     m_id = E_INVALID_COUNT;
+    std::string maxCount =
+            expectedCountTo >= expectedCountFrom ?
+                "-" + intToString(expectedCountTo) :
+                " or more";
+
+
     m_arg = "In function " + name + ": invalid arguments count (expected " +
-            intToString(expectedCountFrom) + "-" + intToString(expectedCountTo) +
+            intToString(expectedCountFrom) + maxCount +
             " arguments, got " + intToString(gotCount) + ")";
 }
 

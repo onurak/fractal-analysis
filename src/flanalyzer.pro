@@ -28,7 +28,9 @@ SOURCES += gui/main.cpp\
     fractallib/markers/SimpleIncremental.cpp \
     fractallib/patterns/standard/TreeMatcher.cpp \
     fractallib/markers/ABIncremental.cpp \
-    fractallib/patterns/functions/CurNode.cpp
+    fractallib/patterns/functions/CurNode.cpp \
+    fractallib/patterns/functions/IsNode.cpp \
+    fractallib/patterns/functions/Length.cpp
 
 HEADERS  += gui/MainWindow.h \
     gui/QParseTreeRender.h \
@@ -53,7 +55,9 @@ HEADERS  += gui/MainWindow.h \
     fractallib/patterns/Matcher.h \
     fractallib/patterns/standard/TreeMatcher.h \
     fractallib/markers/ABIncremental.h \
-    fractallib/patterns/functions/CurNode.h
+    fractallib/patterns/functions/CurNode.h \
+    fractallib/patterns/functions/IsNode.h \
+    fractallib/patterns/functions/Length.h
 
 FORMS    += gui/MainWindow.ui
 

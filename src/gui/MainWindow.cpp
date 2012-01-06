@@ -794,3 +794,21 @@ void MainWindow::on_bnDeleteCurrentTree_clicked()
     if (m_forest.size() > 0)
         ui->sbParseTreeIndex->setValue(std::min(treeIndex+1, m_forest.size()));
 }
+
+void MainWindow::on_bnRefreshPreprocessingPatterns_clicked()
+{
+    loadPatterns(
+                m_settings.value("gui/patterns/PreprocessingFile", "").toString(),
+                m_preprocessingPatterns,
+                &m_preprocessingMatcher,
+                ui->lbPreprocessingPatternsFile);
+}
+
+void MainWindow::on_bnRefreshPatterns_clicked()
+{
+    loadPatterns(
+                m_settings.value("gui/patterns/File", "").toString(),
+                m_patterns,
+                &m_matcher,
+                ui->lbPatternsFile);
+}

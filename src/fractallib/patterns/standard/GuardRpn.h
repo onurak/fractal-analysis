@@ -37,7 +37,21 @@ public:
     virtual FL::Exceptions::EParsing compile(Compilers::Input &i);
     virtual bool check(Context &c);
 private:
-    Internal::Program* getProgramForNodes(int nodeId, int nodeIndex);
+    //! Find guards suitable for node.
+    /*! List of guard programs will be returned into
+      * m_nodeGuards variable.
+      *
+      * Search order:
+      * \li Exact match (match both id and index).
+      * \li Match by id with index wildcard.
+      * \li Match by index with id wildcard.
+      * \li Match by both id and index wildcard.
+      *
+      * \returns true if some guards are found, false otherwise.
+      */
+    bool getGuardsForNode(FL::Trees::Node *node);
+
+    std::vector<Internal::Program*> m_nodeGuards;
 
     GuardSet m_rpnPrograms;
 };
