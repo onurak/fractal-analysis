@@ -21,11 +21,10 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal {
       * \code
       * name         = alpha {alpha | digit};
       * indexed      = name ["_" uint];
-      * wildcard     = "?" ["_" uint];
       * ebnf         = name '=' expr;
       * expr         = term  {"|" term};
       * term         = factor {factor};
-      * factor       = name | indexed | wildcard | "(" expr ")" | "[" expr "]";
+      * factor       = name | indexed | "(" expr ")" | "[" expr "]";
       * \endcode
       */
     class EbnfCompiler : public AbstractCompiler
@@ -35,8 +34,6 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal {
         static const int LEX_LOPTION           = 6;
         static const int LEX_ROPTION           = 7;
         static const int LEX_INDEXED           = 8;
-        static const int LEX_WILDCARD          = 9;
-        static const int LEX_INDEXED_WILDCARD  = 10;
     private:
         Description *m_description;
     public:
@@ -73,16 +70,6 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal {
                     else
                         m_l = LEX_NAME;
                     m_lex.index = addSymbol(name);
-                }
-                else if (c() == '?')
-                {
-                    if (gc() == '_')
-                    {
-                        m_l = LEX_INDEXED_WILDCARD;
-                        gc();
-                    }
-                    else
-                        m_l = LEX_WILDCARD;
                 }
                 else if (c() == '|')
                 {
@@ -142,8 +129,7 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal {
         CISet term(CISet set)
         {
             CISet result = factor(set);
-            while (m_l == LEX_NAME     || m_l == LEX_INDEXED          ||
-                   m_l == LEX_WILDCARD || m_l == LEX_INDEXED_WILDCARD ||
+            while (m_l == LEX_NAME     || m_l == LEX_INDEXED ||
                    m_l == LEX_LPAREN   || m_l == LEX_LOPTION)
             {
                 CISet r1 = factor(set);
@@ -170,29 +156,6 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal {
                 {
                     CINode node;
                     node.id = IDGenerator::idOf((char*)m_symbolsTable[m_lex.index]);
-                    gl();
-                    if (m_l != LEX_INTEGER)
-                        error(E_EXPECTED_TOKEN, "Index");
-                    node.index = m_symbolsTable[m_lex.index];
-                    append(set, node);
-                    gl();
-                    break;
-                }
-
-                case LEX_WILDCARD:
-                {
-                    CINode node;
-                    node.id    = IDGenerator::WILDCARD;
-                    node.index = -1;
-                    append(set, node);
-                    gl();
-                    break;
-                }
-
-                case LEX_INDEXED_WILDCARD:
-                {
-                    CINode node;
-                    node.id = IDGenerator::WILDCARD;
                     gl();
                     if (m_l != LEX_INTEGER)
                         error(E_EXPECTED_TOKEN, "Index");

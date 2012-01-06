@@ -14,13 +14,16 @@ namespace FL { namespace Patterns { namespace Standard {
 class TreeMatcher : public Matcher
 {
 public:
+    struct TMNode;
+    typedef std::map<int, TMNode*> TMChildren;
+
     struct TMNode
     {
         TMNode(int id): id(id) {}
         int id;
         //std::vector<Pattern*> patterns;
         std::vector<CheckInfo::ApplicableSeq> sequences;
-        std::vector< std::pair<int, TMNode*> > children;
+        TMChildren children;
     };
 
 public:

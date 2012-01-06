@@ -222,14 +222,15 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
         GVariant execute(FL::Patterns::Context &context)
         {
             #define checkStack(sz) \
-            if (st.size() < sz)  \
-                return error(INVALID_PROGRAM);
+                if (st.size() < sz)  \
+                    return error(INVALID_PROGRAM);
 
 
             if (m_pd.code.size() == 0)
                 return error(EMPTY_PROGRAM);
             m_pd.code.begin();
             st.clear();
+
             while (!m_pd.code.last())
             {
                 Instruction &i = m_pd.code.next();
@@ -337,15 +338,15 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
                     {
                         if (i.concr < 0 || i.concr >= int(m_pd.funcs.size()))
                             return error(INVALID_FUNCTION_REFERENCE);
+
                         // collect args
                         checkStack(1);
                         int nArgs = int(*st.pop());
                         checkStack(nArgs);
-                        FunctionArgs args;
+                        FunctionArgs args(nArgs);
                         for ( ; nArgs > 0; nArgs--)
-                            args.push_back(st.pop());
-                        if (args.size() > 1)
-                            std::reverse(args.begin(), args.end());
+                            args[nArgs-1] = st.pop();
+
                         // call function
                         Function &f = *m_pd.funcs[i.concr];
                         try
@@ -368,16 +369,6 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
                         break;
                     }
 
-                    // GOTO_COND ("false jump")
-                    case GOTO_COND:
-                    {
-                        checkStack(1);
-                        if (! (*st.pop()) )
-                            if (!m_pd.code.gotoPos(i.concr))
-                                return error(INVALID_GOTO_LABEL);
-                        break;
-                    }
-
                     // LOAD_NODES
                     case LOAD_NODES:
                     {
@@ -397,6 +388,17 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
                         IndexedName *in = *st.pop();
                         Node* node = context.getNode(in->nameId, in->no);
                         st_push( node );
+                        break;
+                    }
+
+
+                    // GOTO_COND ("false jump")
+                    case GOTO_COND:
+                    {
+                        checkStack(1);
+                        if (! (*st.pop()) )
+                            if (!m_pd.code.gotoPos(i.concr))
+                                return error(INVALID_GOTO_LABEL);
                         break;
                     }
 
@@ -503,7 +505,7 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
       * NegTerm      = ["+" | "-" | "!"] Term
       * Term         = "(" BoolOr ")" | FuncCall | Number | BoolConst
       *
-      * IfThenElse   = "if" "(" Expr ")" "then" Expr "else" Expr
+      * IfThenElse   = "if" Expr "then" Expr "else" Expr
       *
       * FuncCall     = Name ArgList
       * ArgList      = "("   Expr ("," Expr)*   ")"
@@ -534,9 +536,9 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
             // fill reserved word list
             m_reservedWords["true"]    = LEX_TRUE;
             m_reservedWords["false"]   = LEX_FALSE;
-            //m_reservedWords["if"]      = LEX_IF;
-            //m_reservedWords["then"]    = LEX_THEN;
-            //m_reservedWords["else"]    = LEX_ELSE;
+            m_reservedWords["if"]      = LEX_IF;
+            m_reservedWords["then"]    = LEX_THEN;
+            m_reservedWords["else"]    = LEX_ELSE;
             //m_reservedWords["not"]     = LEX_NOT;
             //m_reservedWords["or"]      = LEX_OR;
             //m_reservedWords["and"]     = LEX_AND;
@@ -614,13 +616,14 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
                     gc();
 
                     // Is it name or index?
-                    if (m_lexprev.id != LEX_INDEXED_NAME)
+                    if (m_lexprev.id != LEX_INDEXED_WILDCARD &&
+                        m_lexprev.id != LEX_INDEXED_NAME)
                     {
                         if (c() != '_')
                             throw EParsing(E_SYNTAX_ERROR, m_input->line(), m_input->column(),
                                            "Name wildcard must have an index");
                         m_name = "?";
-                        m_l = LEX_INDEXED_NAME;
+                        m_l = LEX_INDEXED_WILDCARD;
                         gc();
                     }
                     else
@@ -637,13 +640,14 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
 
     protected:
         //**** LEXEMES *****
-        static const LexemeId LEX_TRUE           = 1;
-        static const LexemeId LEX_FALSE          = 2;
-        static const LexemeId LEX_IF             = 20;
-        static const LexemeId LEX_THEN           = 21;
-        static const LexemeId LEX_ELSE           = 22;
-        static const LexemeId LEX_INDEXED_NAME   = 23;
-        static const LexemeId LEX_WILDCARD       = 24;
+        static const LexemeId LEX_TRUE              = 1;
+        static const LexemeId LEX_FALSE             = 2;
+        static const LexemeId LEX_IF                = 20;
+        static const LexemeId LEX_THEN              = 21;
+        static const LexemeId LEX_ELSE              = 22;
+        static const LexemeId LEX_INDEXED_NAME      = 23;
+        static const LexemeId LEX_WILDCARD          = 24;
+        static const LexemeId LEX_INDEXED_WILDCARD  = 25;
 
         int LEX2OP(LexemeId lex)
         {
@@ -774,23 +778,21 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
 
         void NegTerm()
         {
-            if (m_l == LEX_PLUS)
-            {
+            LexemeId prevL = m_l;
+            if (m_l == LEX_PLUS || m_l == LEX_MINUS || m_l == LEX_NOT)
                 gl();
-            }
-            else if (m_l == LEX_MINUS)
+
+            Term();
+
+            if (prevL == LEX_MINUS)
             {
-                gl();
                 addOperand(0);
                 addOperation(MATH_SUB);
             }
-            else if (m_l == LEX_NOT)
+            else if (prevL == LEX_NOT)
             {
-                gl();
                 addOperation(BOOL_NOT);
             }
-
-            Term();
         }
 
         void Term()
@@ -834,10 +836,14 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
             {
                 if (m_funcCallingDepth > 0)
                 {
+                    /*
                     int nameId =
                             m_name != "?" ?
                                 IDGenerator::idOf(m_name) :
                                 IDGenerator::WILDCARD;
+                    */
+
+                    int nameId = IDGenerator::idOf(m_name);
 
                     gl();
                     if (m_l == LEX_INTEGER)
@@ -850,12 +856,14 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
                              opIndex);
                         gl();
                     }
+                    /*
                     else if (m_l == LEX_WILDCARD)
                     {
                         int opIndex = addOperand(GVariant(IndexedName(nameId, IDGenerator::WILDCARD)));
                         addInstruction(LOAD_NODES, opIndex);
                         gl();
                     }
+                    */
                     else
                         throw EParsing(E_UNEXPECTED_TOKEN, m_input->line(), m_input->column());
                 }
@@ -918,25 +926,38 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
 
         void IfThenElse()
         {
+            // Compile condition
             if (m_l != LEX_IF)
                 throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), "if");
             gl();
 
-            if (m_l != LEX_LPAREN)
-                throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), "(");
-            gl();
-
             Expr();
 
-            if (m_l != LEX_RPAREN)
-                throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), ")");
+            // GOTO FALSE instruction stub
+            size_t iGotoFalse = addInstruction(GOTO_COND, 0);
+
+            if (m_l != LEX_THEN)
+                throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), "then");
             gl();
 
+            // TRUE branch instructions
+            Expr();
+
+            // GOTO end of IF instruction stub
+            size_t iGotoEnd = addInstruction(GOTO, 0);
+
+            // Correct stub
+            m_program->pd().code[iGotoFalse].concr = m_program->pd().code.size();
+
+            // FALSE brach instructions
             if (m_l != LEX_ELSE)
                 throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), "else");
             gl();
 
             Expr();
+
+            // Correct stub
+            m_program->pd().code[iGotoEnd].concr = m_program->pd().code.size();
         }
 
         void MaskedNode()
@@ -944,10 +965,10 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
             if (m_l == LEX_NAME)
             {
                 m_cinode.id    = IDGenerator::idOf(m_name);
-                m_cinode.index = -1;
+                m_cinode.index = IDGenerator::WILDCARD;
                 gl();
             }
-            else if (m_l == LEX_INDEXED_NAME)
+            else if (m_l == LEX_INDEXED_NAME || m_l == LEX_INDEXED_WILDCARD)
             {
                 m_cinode.id =
                         m_name != "?" ?
@@ -961,7 +982,7 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
                 }
                 else if (m_l == LEX_WILDCARD)
                 {
-                    m_cinode.index = -1;
+                    m_cinode.index = IDGenerator::WILDCARD;
                     gl();
                 }
                 else
@@ -973,16 +994,26 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
 
 
 
-        inline void addInstruction(int type, int concr)
+        //! Add instruction to code
+        /*! \return Index of added instruction
+          */
+        inline size_t addInstruction(int type, int concr)
         {
             m_program->pd().code.push_back(Instruction(type, concr));
+            return m_program->pd().code.size()-1;
         }
 
+        //! Add instruction to load operand to stack
+        /*! Operand must be in in program vars in specified position
+          */
         inline void addOperation(int concr)
         {
             m_program->pd().code.push_back(Instruction(OPERATION, concr));
         }
 
+        //! Add instruction to load operand to stack
+        /*! Operand will be added to program variables
+          */
         inline int addOperand(const GVariant &op)
         {
             int opIndex = -1;
@@ -1006,6 +1037,7 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
             return opIndex;
         }
 
+        //! Add instruction to call function
         inline void addCall(Function *f, int argCount)
         {
             int functionIndex;
@@ -1017,8 +1049,11 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
             {
                 m_program->pd().funcs.push_back(f);
                 functionIndex = m_program->pd().funcs.size()-1;
-            } else
+            }
+            else
+            {
                 functionIndex = it - m_program->pd().funcs.begin();
+            }
             addOperand(argCount);
             m_program->pd().code.push_back(Instruction(FUNCTION, functionIndex));
         }
@@ -1051,41 +1086,42 @@ EParsing GuardRpn::compile(Compilers::Input &i)
         return EParsing(E_OK);
 }
 
-Internal::Program* GuardRpn::getProgramForNodes(int nodeId, int nodeIndex)
+bool GuardRpn::getGuardsForNode(FL::Trees::Node *node)
 {
-    GuardSet::iterator i;
+    m_nodeGuards.clear();
 
-    CINode node;
+    GuardSet::iterator i;
+    CINode cinode;
 
     // Look for exact match
-    node.id = nodeId;
-    node.index = nodeIndex;
-    i = m_rpnPrograms.find(node);
+    cinode.id = node->id();
+    cinode.index = node->index();
+    i = m_rpnPrograms.find(cinode);
     if (i != m_rpnPrograms.end())
-        return i->second;
+        m_nodeGuards.push_back(i->second);
 
     // Look for match with index wildcard
-    node.id = nodeId;
-    node.index = FL::IDGenerator::WILDCARD;
-    i = m_rpnPrograms.find(node);
+    cinode.id = node->id();
+    cinode.index = FL::IDGenerator::WILDCARD;
+    i = m_rpnPrograms.find(cinode);
     if (i != m_rpnPrograms.end())
-        return i->second;
+        m_nodeGuards.push_back(i->second);
 
     // Look for match with name wildcard
-    node.id = FL::IDGenerator::WILDCARD;
-    node.index = nodeIndex;
-    i = m_rpnPrograms.find(node);
+    cinode.id = FL::IDGenerator::WILDCARD;
+    cinode.index = node->index();
+    i = m_rpnPrograms.find(cinode);
     if (i != m_rpnPrograms.end())
-        return i->second;
+        m_nodeGuards.push_back(i->second);
 
     // Look for match with name and index wildcards
-    node.id = FL::IDGenerator::WILDCARD;
-    node.index = FL::IDGenerator::WILDCARD;
-    i = m_rpnPrograms.find(node);
+    cinode.id = FL::IDGenerator::WILDCARD;
+    cinode.index = FL::IDGenerator::WILDCARD;
+    i = m_rpnPrograms.find(cinode);
     if (i != m_rpnPrograms.end())
-        return i->second;
+        m_nodeGuards.push_back(i->second);
 
-    return NULL;
+    return m_nodeGuards.size() > 0;
 }
 
 bool GuardRpn::check(Context &c)
@@ -1095,26 +1131,27 @@ bool GuardRpn::check(Context &c)
     // Check programs for those items which already
     // added to last parsed
 
-    if (m_rpnPrograms.size() != 0)
+    if (m_rpnPrograms.size() == 0)
+        return true;
+
+    Layer::ConstIterator treeNode;
+    forall(treeNode, c.lastParsed())
     {
-        Layer::ConstIterator itTreeNode;
-        forall(itTreeNode, c.lastParsed())
+        // If program exists - execute it
+        if (getGuardsForNode(*treeNode))
         {
-            Node *treeNode = *itTreeNode;
+            // Remember node for Node() function
+            c.setCurrentItNode(*treeNode);
 
-            // Find program for this node
-            Internal::Program *program = getProgramForNodes(
-                        treeNode->id(), treeNode->index());
-
-            // If program exists - execute it
-            if (program != NULL)
+            std::vector<Internal::Program*>::iterator itGuardProgram;
+            forall(itGuardProgram, m_nodeGuards)
             {
-                // Remember node for It() function
-                c.setCurrentItNode(treeNode);
+                Internal::Program *program = *itGuardProgram;
 
                 // Execute program
                 GVariant result = program->execute(c);
 
+                // Check guard execution result
                 if (program->lastError() != Internal::Program::NO_ERROR)
                     return false;
 

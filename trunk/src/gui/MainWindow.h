@@ -125,6 +125,8 @@ private slots:
     void on_actionOpen_dynamic_time_series_triggered();
     void on_action_Dynamic_step_triggered();
     void on_bnDeleteCurrentTree_clicked();
+    void on_bnRefreshPreprocessingPatterns_clicked();
+    void on_bnRefreshPatterns_clicked();
 };
 
 /* Background analysis task */

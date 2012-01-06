@@ -14,43 +14,50 @@
  * along with Fractal Library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Max.h"
-#include "../../TimeSeries.h"
+#include "IsNode.h"
 #include "../../trees/Tree.h"
+
 
 using namespace FL::Patterns::Functions;
 
-Max::Max()
+IsNode::IsNode()
 {
-    m_name = "Max";
+    m_name = "IsNode";
 }
 
 
-const GVariant& Max::operator()(Patterns::Context& context, FunctionArgs& args)
+const GVariant& IsNode::operator()(Patterns::Context& context, FunctionArgs& args)
 {
-    if (args.size() == 0)
-        throw FL::Exceptions::EArguments(m_name, -1, 0);
-    const FL::TimeSeries *ts = context.timeSeries();
+    if (args.size() < 1)
+        throw FL::Exceptions::EArguments(m_name, 1, -1, args.size());
 
-    // Get most left and most right indices of time series
-    int begin = ts->size(), end = -1;
+    /*
+    checkValidNode(args[0]);
+    FL::Trees::Node *node = *args[0];
 
-    FunctionArgs::iterator arg;
-    forall(arg, args)
+    if (node->id() != FL::IDGenerator::WILDCARD &&
+        node->id() != context.currentItNode()->id())
     {
-        checkValidNode(*arg);
-        FL::Trees::Node *node = **arg;
-        if (node->begin() < begin)
-            begin = node->begin();
-        if (node->end() > end)
-            end = node->end();
+        return m_result = false;
     }
 
-    // Get max on interval
-    int max = ts->value(begin);
-    for (++begin; begin <= end; ++begin)
-        if (ts->value(begin) > max)
-            max = ts->value(begin);
+    if (node->index() != FL::IDGenerator::WILDCARD &&
+        node->index() != context.currentItNode()->index())
+    {
+        return m_result = false;
+    }
 
-    return m_result = max;
+    return m_result = true;
+    */
+
+    FunctionArgs::const_iterator arg;
+    forall(arg, args)
+    {
+        FL::Trees::Node *node = **arg;
+        if (node == context.currentItNode())
+            return m_result = true;
+    }
+
+    return m_result = false;
 }
+

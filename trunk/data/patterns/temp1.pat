@@ -1,9 +1,7 @@
 PATTERNS:
-    L = up_1  ?_2  up_3 | L dn G @
-        ?_2:  value(node()) < value(up_1);
-
-	G = up_1  ?_2  up  |  (L_1 | G_1)  ?_2  (L | G) @
-        ?_2:  value(node()) > value(?_1);
+    up = a_1 b_2 a_3 | a @
+        a_3: length(b_2) < (length(a_1) + length(a_3))*0.5;
         
-    
-    
+    dn = b_1 a_2 b_3 | b @
+        b_3: length(a_2) < (length(b_1) + length(b_3))*0.5;
+            
