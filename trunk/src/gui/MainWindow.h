@@ -11,6 +11,7 @@
 #include <QCheckBox>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QTime>
 #include "QParseTreeRender.h"
 #include "Utils.h"
 #include "../fractallib/FL.h"
@@ -84,6 +85,8 @@ private:
     FL::Patterns::Matcher      *m_matcher;
     FL::Patterns::Matcher      *m_preprocessingMatcher;
     FL::Forecast                m_forecast;
+    bool                        m_wantInterrupt;
+    QTime                       m_lastUpdateTime;
 protected:
     /****************************************
      * Application internal data
@@ -127,6 +130,7 @@ private slots:
     void on_bnDeleteCurrentTree_clicked();
     void on_bnRefreshPreprocessingPatterns_clicked();
     void on_bnRefreshPatterns_clicked();
+    void on_bnHalt_clicked();
 };
 
 /* Background analysis task */

@@ -64,13 +64,17 @@ void QParseTreeRender::drawForest()
 
 void QParseTreeRender::drawParseTree(FL::Trees::Tree *tree)
 {
-    if (!tree) return;
+    if (!tree || tree->levelCount() == 0)
+        return;
 
-    QColor normalColor(200, 50, 50);
-    for (int level = 0; level < tree->levelCount(); ++level)
+    QColor leafsColor(150, 50, 50);
+    drawTreeLayer(tree->nodesByLevel(0), leafsColor, ldoDrawTimeSeries);
+
+    QColor normalColor(100, 0, 100);
+    for (int level = 1; level < tree->levelCount(); ++level)
     {
         const FL::Trees::Layer & layer = tree->nodesByLevel(level);
-        drawTreeLayer(layer, normalColor);
+        drawTreeLayer(layer, normalColor, ldoDrawTimeSeries);
     }
 
     if (m_showRoots)
@@ -110,11 +114,12 @@ void QParseTreeRender::drawTreeLayer(
             nodeName = "?";
         QGraphicsSimpleTextItem *item = m_scene->addSimpleText(nodeName, font);
         item->setBrush(color);
-        item->setPos((x1 + x2)/2, y);
+        //item->setPos((x1 + x2)/2, y);
+        item->setPos(x1, y);
         qreal hScale = 0.5/(m_view->matrix().m11());
         qreal vScale = 0.5/(m_view->matrix().m22());
 
-        item->scale(hScale, vScale);
+        item->scale(hScale*0.5, vScale*0.5);
 
         // Draw node connections
         if (node->level() == 0)

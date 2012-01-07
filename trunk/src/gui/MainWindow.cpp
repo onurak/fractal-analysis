@@ -7,6 +7,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_settings(QSettings::IniFormat, QSettings::UserScope, "FL", "FLAnalyzer")
 {
     m_isInitializing = true;
+    m_wantInterrupt = false;
     ui->setupUi(this);
 
     m_matcher = NULL;
@@ -372,7 +373,7 @@ void MainWindow::readSettings()
                 ui->lbPreprocessingPatternsFile);
 
 
-    m_markerName       = ui->cbMarker->currentText();
+    m_markerName = ui->cbMarker->currentText();
 
     QString staticParser = m_settings.value("gui/StaticParser", "MultiPass").toString();
     int staticParserIndex = ui->cbStaticParser->findText(staticParser);
@@ -532,37 +533,67 @@ void MainWindow::on_cbMarker_currentIndexChanged(const QString &arg)
 
 void MainWindow::setUiEnables(bool enabled)
 {
-     QList<QWidget*> uicontrols = findChildren<QWidget*>();
-     QList<QWidget*>::iterator w;
-     forall(w, uicontrols)
-         (*w)->setEnabled(enabled);
+    /*
+    QList<QWidget*> uicontrols = findChildren<QWidget*>();
+    QList<QWidget*>::iterator w;
+    forall(w, uicontrols)
+        (*w)->setEnabled(enabled);
+    */
+
+    ui->bnHalt->setEnabled(!enabled);
+    ui->bnClearForest->setEnabled(enabled);
+    ui->bnClearPatterns->setEnabled(enabled);
+    ui->bnClearPreprocessingPatterns->setEnabled(enabled);
+    ui->bnDeleteCurrentTree->setEnabled(enabled);
+    ui->bnOpenPatterns->setEnabled(enabled);
+    ui->bnOpenPreprocessingPatterns->setEnabled(enabled);
+    ui->bnRefreshPatterns->setEnabled(enabled);
+    ui->bnRefreshPreprocessingPatterns->setEnabled(enabled);
+    ui->cbStaticParser->setEnabled(enabled);
+    ui->cbDynamicParser->setEnabled(enabled);
+    ui->cbMarker->setEnabled(enabled);
+    ui->sbParseTreeIndex->setEnabled(enabled);
+
+    QList<QAction*> uicontrols = findChildren<QAction*>();
+    QList<QAction*>::iterator w;
+    forall(w, uicontrols)
+        (*w)->setEnabled(enabled);
 }
 
 void MainWindow::onParsingBegin()
 {
+    m_wantInterrupt = false;
     setUiEnables(false);
-    ui->bnHalt->setEnabled(true);
+    ui->lbState->setText("Analyzing...");
+    m_lastUpdateTime = QTime::currentTime();
 }
 
 bool MainWindow::onParsingProgress(
     FL::ParseResult result, FL::Trees::Forest *forest)
 {
-    ui->lbParseTreeCount->setNum((int)forest->size());
-    if (forest->size() % 10 == 0)
+    const int MAX_CALC_TIME_SECS = 1;
+
+    if (forest->size() % 10 == 0 ||
+        m_lastUpdateTime.secsTo(QTime::currentTime()) > MAX_CALC_TIME_SECS)
+    {
+        ui->lbParseTreeCount->setNum((int)forest->size());
         qApp->processEvents();
-    return false;
+        m_lastUpdateTime = QTime::currentTime();
+    }
+    return m_wantInterrupt;
 }
 
 bool MainWindow::onParsingFinished(FL::Parsers::AbstractParser *parser)
 {
     setUiEnables(true);
-    ui->bnHalt->setEnabled(false);
 
     if (!parser->wasOk())
         showError(parser->lastError().arg());
     delete parser;
 
     updateForestInfo();
+    m_wantInterrupt = false;
+    ui->lbState->setText("Ready");
 }
 
 void MainWindow::addBackgroundTask(QThread *task)
@@ -627,7 +658,7 @@ void MainWindow::updateForestInfo()
     ui->lbParseTreeCount->setNum((int)m_forest.size());
     ui->lbTimeSeriesSize->setNum((int)m_timeSeries.size());
 
-    m_render->setCurrentTree(ui->sbParseTreeIndex->value());
+    m_render->setCurrentTree(ui->sbParseTreeIndex->value()-1);
 }
 
 void MainWindow::initMetrics()
@@ -811,4 +842,11 @@ void MainWindow::on_bnRefreshPatterns_clicked()
                 m_patterns,
                 &m_matcher,
                 ui->lbPatternsFile);
+}
+
+void MainWindow::on_bnHalt_clicked()
+{
+    m_wantInterrupt = true;
+    ui->lbState->setText("Aborting...");
+    qApp->processEvents();
 }

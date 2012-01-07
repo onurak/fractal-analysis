@@ -123,7 +123,8 @@ protected:
 
     inline double toy(const double &y)
     {
-        return y / m_tsMaxValue;
+        double r = ((fabs(y) - m_tsMinValue) / (m_tsMaxValue - m_tsMinValue) / 2);
+        return y >= 0 ? r : -r;
     }
 
 private:

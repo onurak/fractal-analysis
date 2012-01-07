@@ -29,7 +29,30 @@ namespace Internal
 class GuardRpn : public Guard
 {
 public:
-    typedef std::map<CINode, Internal::Program*> GuardSet;
+    struct GuardPair {
+        GuardPair(int id = -1, int index = -1, Internal::Program* program = NULL)
+            : id(id), index(index), program(program)
+        {}
+
+        int id;
+        int index;
+        Internal::Program* program;
+    };
+
+    class GuardSet : public std::vector<GuardPair>
+    {
+    public:
+        //! Find guard in guard set by exact id and index
+        Internal::Program* findGuard(int id, int index) const
+        {
+            GuardSet::const_iterator i;
+            forall(i, *this)
+                if (i->id == id && i->index == index)
+                    return i->program;
+
+            return NULL;
+        }
+    };
 public:
     GuardRpn(const FL::Patterns::Description &description);
     virtual ~GuardRpn();
