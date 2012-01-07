@@ -30,7 +30,7 @@ const GVariant& Min::operator()(Patterns::Context &context, FunctionArgs &args)
     }
 
     // Get min on interval
-    int min = ts->value(begin);
+    double min = ts->value(begin);
     for (++begin; begin <= end; ++begin)
         if (ts->value(begin) < min)
             min = ts->value(begin);

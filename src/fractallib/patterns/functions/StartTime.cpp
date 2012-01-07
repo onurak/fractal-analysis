@@ -31,5 +31,6 @@ const GVariant& StartTime::operator()(Patterns::Context& context, FunctionArgs& 
     if (args.size() != 1)
         throw FL::Exceptions::EArguments(m_name, 1, args.size());
     checkValidNode(args[0]);
-    return m_result = ((FL::Trees::Node*)(*args[0]))->begin();
+    FL::Trees::Node* node = *args[0];
+    return m_result = context.timeSeries()->time(node->begin());
 }

@@ -47,7 +47,7 @@ const GVariant& Max::operator()(Patterns::Context& context, FunctionArgs& args)
     }
 
     // Get max on interval
-    int max = ts->value(begin);
+    double max = ts->value(begin);
     for (++begin; begin <= end; ++begin)
         if (ts->value(begin) > max)
             max = ts->value(begin);

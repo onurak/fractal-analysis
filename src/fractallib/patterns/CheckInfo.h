@@ -13,10 +13,10 @@ struct CINode
     int index;
 };
 
-//! CINodes comparator(to enable them to be used as std::map elements)
+//! CINodes partial ordering operator (to enable them to be used as std::map elements)
 inline bool operator<(const CINode &n1, const CINode &n2)
 {
-    return n1.id < n2.id || n1.index < n2.index;
+    return n1.id < n2.id && n1.index < n2.index;
 }
 
 

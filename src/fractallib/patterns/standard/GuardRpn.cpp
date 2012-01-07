@@ -539,11 +539,11 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
             m_reservedWords["if"]      = LEX_IF;
             m_reservedWords["then"]    = LEX_THEN;
             m_reservedWords["else"]    = LEX_ELSE;
-            //m_reservedWords["not"]     = LEX_NOT;
-            //m_reservedWords["or"]      = LEX_OR;
-            //m_reservedWords["and"]     = LEX_AND;
+            m_reservedWords["not"]     = LEX_NOT;
+            m_reservedWords["or"]      = LEX_OR;
+            m_reservedWords["and"]     = LEX_AND;
 
-            // enable standart lexems
+            // enable standard lexems
             filterLexeme(LEX_PLUS,      true);
             filterLexeme(LEX_MINUS,     true);
             filterLexeme(LEX_MULT,      true);
@@ -552,9 +552,9 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
             filterLexeme(LEX_RPAREN,    true);
             filterLexeme(LEX_INTEGER,   true);
             filterLexeme(LEX_FLOAT,     true);
-            filterLexeme(LEX_AND,       true);
-            filterLexeme(LEX_OR,        true);
-            filterLexeme(LEX_NOT,       true);
+            //filterLexeme(LEX_AND,       true);
+            //filterLexeme(LEX_OR,        true);
+            //filterLexeme(LEX_NOT,       true);
             filterLexeme(LEX_EQ,        true);
             filterLexeme(LEX_NEQ,       true);
             filterLexeme(LEX_GRTR,      true);
@@ -693,11 +693,17 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
             try
             {
                 MaskedNode();
+
+                if (m_programs->findGuard(m_cinode.id, m_cinode.index))
+                    error(E_SYNTAX_ERROR, "Duplicated guard");
+
                 if (m_l != LEX_COLON)
                     throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), ":");
                 gl();
                 Expr();
-                (*m_programs)[m_cinode] = m_program;
+
+                m_programs->push_back(
+                            GuardRpn::GuardPair(m_cinode.id, m_cinode.index, m_program));
             }
             catch (...)
             {
@@ -1070,9 +1076,9 @@ GuardRpn::GuardRpn(const FL::Patterns::Description &description)
 
 GuardRpn::~GuardRpn()
 {
-    std::map<CINode, Internal::Program*>::iterator i;
+    GuardSet::iterator i;
     forall(i, m_rpnPrograms)
-        delete i->second;
+        delete i->program;
     m_rpnPrograms.clear();
 }
 
@@ -1090,36 +1096,23 @@ bool GuardRpn::getGuardsForNode(FL::Trees::Node *node)
 {
     m_nodeGuards.clear();
 
-    GuardSet::iterator i;
-    CINode cinode;
+    Internal::Program *p;
 
     // Look for exact match
-    cinode.id = node->id();
-    cinode.index = node->index();
-    i = m_rpnPrograms.find(cinode);
-    if (i != m_rpnPrograms.end())
-        m_nodeGuards.push_back(i->second);
+    if ((p = m_rpnPrograms.findGuard(node->id(), node->index())) != NULL)
+        m_nodeGuards.push_back(p);
 
     // Look for match with index wildcard
-    cinode.id = node->id();
-    cinode.index = FL::IDGenerator::WILDCARD;
-    i = m_rpnPrograms.find(cinode);
-    if (i != m_rpnPrograms.end())
-        m_nodeGuards.push_back(i->second);
+    if ((p = m_rpnPrograms.findGuard(node->id(), FL::IDGenerator::WILDCARD)) != NULL)
+        m_nodeGuards.push_back(p);
 
     // Look for match with name wildcard
-    cinode.id = FL::IDGenerator::WILDCARD;
-    cinode.index = node->index();
-    i = m_rpnPrograms.find(cinode);
-    if (i != m_rpnPrograms.end())
-        m_nodeGuards.push_back(i->second);
+    if ((p = m_rpnPrograms.findGuard(FL::IDGenerator::WILDCARD, node->index())) != NULL)
+        m_nodeGuards.push_back(p);
 
     // Look for match with name and index wildcards
-    cinode.id = FL::IDGenerator::WILDCARD;
-    cinode.index = FL::IDGenerator::WILDCARD;
-    i = m_rpnPrograms.find(cinode);
-    if (i != m_rpnPrograms.end())
-        m_nodeGuards.push_back(i->second);
+    if ((p = m_rpnPrograms.findGuard(FL::IDGenerator::WILDCARD, FL::IDGenerator::WILDCARD)) != NULL)
+        m_nodeGuards.push_back(p);
 
     return m_nodeGuards.size() > 0;
 }
