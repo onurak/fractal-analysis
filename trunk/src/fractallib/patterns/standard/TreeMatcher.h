@@ -2,6 +2,7 @@
 #define TREEMATCHER_H
 
 #include "../Matcher.h"
+#include <queue>
 
 namespace FL { namespace Patterns { namespace Standard {
 
@@ -21,8 +22,7 @@ public:
     {
         TMNode(int id): id(id) {}
         int id;
-        //std::vector<Pattern*> patterns;
-        std::vector<CheckInfo::ApplicableSeq> sequences;
+        CheckInfo::ASVec sequences;
         TMChildren children;
     };
 
@@ -38,6 +38,9 @@ protected:
     void clearTree(TMNode *root);
     void addTreePath(Pattern &pattern, CISequence &seq);
     void addTreePath(Pattern &pattern, CISequence &seq, TMNode *node, int depth);
+
+    //! Look for patterns that can be finished from specified tree node
+    void getUnfinishedPatterns(Context &context, TMNode *node, CheckInfo::ASVec &result);
 private:
     TMNode *m_root;
     int m_treeDepth;

@@ -161,3 +161,24 @@ EParsing Pattern::compile(Compilers::Input *input)
 
 //    return crOK;
 //}
+
+
+//! Check for left recursion in patterns set
+bool PatternsSet::haveLeftRecursion() const
+{
+    ConstIterator itPattern;
+    forall(itPattern, *this)
+    {
+        Pattern *p = *itPattern;
+        CISet::const_iterator itSeq;
+        forall(itSeq, p->description()->sequences())
+        {
+            if ((*itSeq)[0].id == p->id())
+                return true;
+        }
+    }
+
+    return false;
+}
+
+

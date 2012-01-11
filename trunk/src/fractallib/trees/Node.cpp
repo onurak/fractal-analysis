@@ -29,18 +29,23 @@ Node::Node(Node *parent, int id, int begin, int end, int level, NodeStatus ns)
 
 Node::Node(const Node &node)
 {
+    this->operator=(node);
+}
+
+Node& Node::operator=(const Node &node)
+{
     m_children = new Layer();
     m_id = node.id();
     m_index = node.index();
     m_level = node.level();
     m_begin = node.begin();
     m_end = node.end();
+    m_status = node.status();
     m_parent = NULL;
     m_relativeNode = NULL;
     m_internalParent = NULL;
     m_origSequence = NULL;
     m_origPattern = NULL;
-    m_status = FL::nsFixed;
 }
 
 Node::~Node()

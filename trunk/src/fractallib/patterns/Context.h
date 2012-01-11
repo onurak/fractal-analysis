@@ -47,7 +47,10 @@ public:
     inline Trees::Layer& lastParsed() { return *m_lastParsed; }
 
     //! Fill lastParsed from sequence of nodes
-    /*! \param seq Sequence that must be used to build lastParsed
+    /*! It is ok if \a seq is incomplete in roots sequence so
+      * unfinished sequences can be builded too.
+      *
+      * \param seq Sequence that must be used to build lastParsed
       * \param nodesCount if greater then zero then only first nodesCount
       *        will be used
       */

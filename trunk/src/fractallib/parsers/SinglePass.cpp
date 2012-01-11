@@ -28,14 +28,22 @@ FL::ParseResult SinglePass::analyze(
         if (patterns.size() == 0)
             throw EAnalyze(E_EMPTY_PATTERNS);
 
-        while (true)
+        m_metrics = &metrics;
+        int newLevelsCount,  prevLevelsCount = maxLevel(forest);
+
+
+        for (int iter = 0; true; ++iter)
         {
             Forest::Iterator tree;
             forall(tree, forest)
-            {
                 analyzeTree(ts, **tree, matcher);
-            }
 
+            forest.cleanup();
+            forest = m_forest;
+            m_forest.clear();
+
+
+            /*
             if (m_result.somethingAdded())
             {
                 commonResult.add(m_result);
@@ -43,7 +51,21 @@ FL::ParseResult SinglePass::analyze(
             }
             else
                 break;
+                */
+            // Was new level parsed from last operation?
+            // If no then quit - everything that can be found is founded
+            newLevelsCount = maxLevel(forest);
+            if (newLevelsCount != prevLevelsCount && !m_interruption)
+                prevLevelsCount = newLevelsCount;
+            else
+                break;
         }
+
+
+        forest.insert(forest.end(),
+                      m_finishedForest.begin(),
+                      m_finishedForest.end());
+        m_finishedForest.clear();
     }
     catch (const EAnalyze &e)
     {
@@ -63,7 +85,8 @@ void SinglePass::analyzeTree(
     Context context;
     context.setTimeSeries(&ts);
     context.setParseTree(&tree);
-    context.setOutputTree(&tree);
+    //context.setOutputTree(&tree);
+    context.setOutputTree(tree.copy());
     context.setCandidateNode(new Node());
 
     // Look for applicable patterns in each position of tree
@@ -72,6 +95,19 @@ void SinglePass::analyzeTree(
         if (!match(matcher, context))
             context.advanceCurrentRoot(1);
     }
+
+
+    size_t oldForestSize = m_forest.size() + m_finishedForest.size();
+    if (m_metrics->filter(context.outputTree(), m_forest))
+        m_forest.push_back(&context.outputTree());
+    else
+        m_finishedForest.push_back(&context.outputTree());
+    // - Why not just ++m_result.treesAdded?
+    // - Because metrics could delete any trees in forest
+    m_result.treesAdded +=
+            int(m_forest.size() + m_finishedForest.size() - oldForestSize);
+
+
     delete context.candidateNode();
 }
 
@@ -84,36 +120,52 @@ bool SinglePass::match(Patterns::Matcher &matcher, Context &context)
     {
         // Pattern sequence that was applied (use only one
         // with maximal length)
-        CISequence *seq;
+        size_t seqIdx;
         size_t maxSeqSize = 0;
-        std::vector<CheckInfo::ApplicableSeq>::const_iterator itseq;
-        forall(itseq, ci.applicableSequences)
+
+        for(size_t i = 0; i < ci.applicableSequences.size(); ++i)
         {
-            if (itseq->seq->size() > maxSeqSize)
+            if (ci.applicableSequences[i].seq->size() > maxSeqSize)
             {
-                seq = itseq->seq;
-                maxSeqSize = seq->size();
+                seqIdx = i;
+                maxSeqSize = ci.applicableSequences[i].seq->size();
             }
         }
 
         Node *candidate = context.candidateNode();
+        candidate->setId(ci.applicableSequences[seqIdx].pattern->id());
+        if (ci.applicableSequences[seqIdx].isFinished)
+            candidate->setStatus(nsFinished);
+        else
+            candidate->setStatus(nsUnfinished);
 
         // Insert candidate node into output tree
-        context.buildLastParsed(*seq);
+        context.buildLastParsed(*ci.applicableSequences[seqIdx].seq);
         Layer::Iterator child;
         forall(child, context.lastParsed())
             (*child)->setParent(candidate);
         context.outputTree().add(candidate);
 
-        candidate->setId(ci.applicableSequences[0].pattern->id());
-
         // Remember modification
         //context.modification().push_back(context.candidateNode());
 
         // Update result, advance current roots position
-        context.advanceCurrentRoot(seq->size());
+        context.advanceCurrentRoot(ci.applicableSequences[seqIdx].seq->size());
         m_result.nodesAdded += 1;
         context.setCandidateNode(new Node());
+    }
+
+    return result;
+}
+
+int SinglePass::maxLevel(const Forest &forest)
+{
+    int result = 0;
+    Forest::ConstIterator tree;
+    forall(tree, forest)
+    {
+        if ((*tree)->levelCount() > result)
+            result = (*tree)->levelCount();
     }
 
     return result;

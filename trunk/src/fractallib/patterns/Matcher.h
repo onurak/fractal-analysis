@@ -13,9 +13,23 @@ namespace FL { namespace Patterns {
 class Matcher
 {
 public:
+    Matcher()
+    {
+        m_allowUnfinished = false;
+    }
+
     virtual ~Matcher() {}
 
     virtual bool match(Context &context, CheckInfo &ci) = 0;
+
+    //! Is also look for incomplete matching patterns in the end of layer
+    inline bool isAllowUnfinished() const { return m_allowUnfinished; }
+
+    //! Set if also look for incomplete matching patterns in the end of layer
+    inline void setAllowUnfinished(bool value) { m_allowUnfinished = value; }
+
+private:
+    bool m_allowUnfinished;
 };
 
 }} // namespaces

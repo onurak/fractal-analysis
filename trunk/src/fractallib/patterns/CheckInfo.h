@@ -49,15 +49,18 @@ struct CheckInfo
     //! Describes single sequence and its owner
     struct ApplicableSeq
     {
-        ApplicableSeq(CISequence* seq, Pattern *pattern)
-            : seq(seq), pattern(pattern) {}
+        ApplicableSeq(CISequence* seq, Pattern *pattern, bool isFinished)
+            : seq(seq), pattern(pattern), isFinished(isFinished) {}
 
         CISequence* seq;
         Pattern *pattern;
+        bool isFinished;
     };
 
-    //! Sequences of symbol, applicable at the point of layer
-    std::vector<ApplicableSeq> applicableSequences;
+    typedef std::vector<ApplicableSeq> ASVec;
+
+    //! Sequences of symbols, applicable at the point of layer
+    ASVec applicableSequences;
 };
 
 }} // namepsace

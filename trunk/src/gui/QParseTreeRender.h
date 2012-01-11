@@ -14,6 +14,8 @@
 #include "Utils.h"
 #include <cmath>
 
+Q_DECLARE_METATYPE(FL::Trees::Node)
+
 class QParseTreeScene: public QGraphicsScene
 {
     Q_OBJECT
@@ -104,6 +106,12 @@ public:
         timeSeriesChanged();
     }
 
+    void setMousePos(double x, double y);
+    double currentValue(bool *ok) const;
+    double currentTime(bool *ok) const;
+
+    const FL::Trees::Node* currentNode() const;
+
 protected:
     void draw();
     void drawCoordinateSystem();
@@ -123,25 +131,36 @@ protected:
 
     inline double toy(const double &y)
     {
-        double r = ((fabs(y) - m_tsMinValue) / (m_tsMaxValue - m_tsMinValue) / 2);
-        return y >= 0 ? r : -r;
+        return y / m_yHalfRange;
     }
 
 private:
     int m_currentTree;
     bool m_showRoots;
+
+    static const int ASSIGNED_NODE = 1;
 private:
     QParseTreeScene *m_scene;
     QGraphicsView *m_view;
     FL::TimeSeries *m_ts;
     FL::Trees::Forest *m_forest;
     FL::Forecast *m_forecast;
+
+    QGraphicsLineItem *m_horCoordLine, *m_vertCoordLine;
+
     double m_tsMinValue;
     double m_tsMaxValue;
     double m_tsMinTime;
     double m_tsMaxTime;
     double m_yMult;
     bool m_isShowAllForecasts;
+
+    double m_mouseX, m_mouseY;
+
+    FL::Trees::Node m_currentNode;
+    bool m_haveCurrentNode;
+
+    double m_yHalfRange;
     //QLinkedList<QGraphicsItem*> m_tsItems;
     //QLinkedList<QGraphicsItem*> m_coordSystemItems;
 };

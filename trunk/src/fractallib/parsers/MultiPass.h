@@ -38,7 +38,7 @@ protected:
 
     FL::ParseResult m_result;
     const TimeSeries *m_ts;
-    Trees::Forest m_forest;
+    Trees::Forest m_forest, m_finishedForest;
     std::vector<Patterns::Context*> m_branches;
     bool m_interruption;
     Trees::MetricsSet *m_metrics;

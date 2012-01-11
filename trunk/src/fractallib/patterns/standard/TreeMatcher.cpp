@@ -54,7 +54,7 @@ void TreeMatcher::addTreePath(
     {
         //node->patterns.push_back(&pattern);
         node->sequences.push_back(
-                    CheckInfo::ApplicableSeq(&seq, &pattern));
+                    CheckInfo::ApplicableSeq(&seq, &pattern, true));
         return;
     }
 
@@ -91,11 +91,12 @@ bool TreeMatcher::match(Context &context, CheckInfo &ci)
     TMNode *treeNode = m_root;
     TMChildren::const_iterator itNextNode;
 
+    // While not reached end of tree or roots layer
     while (treeNode != NULL &&
            itLayerNode != context.roots().end())
     {
         // Found some patterns? - check guards and add them to result
-        std::vector<CheckInfo::ApplicableSeq>::iterator itAs;
+        CheckInfo::ASVec::iterator itAs;
         forall(itAs, treeNode->sequences)
         {
             context.buildLastParsed(*itAs->seq);
@@ -117,35 +118,54 @@ bool TreeMatcher::match(Context &context, CheckInfo &ci)
             treeNode = NULL;
     }
 
-    // End of root sequence reached, but there are completed pattern
+    // End of root sequence reached,
+    // but some completed patterns were founded
     if (treeNode != NULL)
     {
-        std::vector<CheckInfo::ApplicableSeq>::iterator itAs;
+        CheckInfo::ASVec::iterator itAs;
         forall(itAs, treeNode->sequences)
         {
             context.buildLastParsed(*itAs->seq);
             if (itAs->pattern->guard()->check(context))
                 ci.applicableSequences.push_back(*itAs);
         }
+
+        // Also look for unfinished patterns
+        if (isAllowUnfinished())
+            getUnfinishedPatterns(context, treeNode, ci.applicableSequences);
     }
 
     return ci.applicableSequences.size() > 0;
 }
 
+void TreeMatcher::getUnfinishedPatterns(Context &context, TMNode *node, CheckInfo::ASVec &result)
+{
+    std::queue<TMNode*> paths;
+    TMChildren::iterator itChild;
+    forall(itChild, node->children)
+        paths.push(itChild->second);
 
+    while (paths.size() > 0)
+    {
+        TMNode *treeNode = paths.front();
+        paths.pop();
 
+        // Found some patterns? - check guards and add them to result
+        CheckInfo::ASVec::iterator itAs;
+        forall(itAs, treeNode->sequences)
+        {
+            context.buildLastParsed(*itAs->seq);
+            if (itAs->pattern->guard()->check(context))
+            {
+                result.push_back(*itAs);
+                result.back().isFinished = false;
+            }
+        }
 
-
-
-
-
-
-
-
-
-
-
-
+        forall(itChild, treeNode->children)
+            paths.push(itChild->second);
+    }
+}
 
 
 
