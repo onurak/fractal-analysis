@@ -47,7 +47,12 @@ protected:
         Patterns::Matcher &matcher,
         Patterns::Context &context);
 
+    int maxLevel(const FL::Trees::Forest &forest);
+
     FL::ParseResult m_result;
+
+    Trees::Forest m_forest, m_finishedForest;
+    Trees::MetricsSet *m_metrics;
 };
 
 }} // namespaces

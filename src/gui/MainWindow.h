@@ -96,6 +96,9 @@ protected:
     QList< QPair<double, double> > m_timeSeriesCache; // Arrived values that hasn't been analyzed yet
     QMutex addDataMutex;
     QVector<QThread*> m_backgroundTasks;
+
+    QLabel *m_lbCurrentTime, *m_lbCurrentValue;
+    QLabel *m_lbCurrentNode;
 protected:
     void setUiEnables(bool enabled);
     void addBackgroundTask(QThread *task);

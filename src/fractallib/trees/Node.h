@@ -29,13 +29,18 @@ namespace FL {
     //! Type of tree node
     enum NodeStatus
     {
-        nsFixed,    //!< Node fixed in tree structure forever
+        //! Node fixed in tree structure forever
+        nsFinished,
 
-        nsFloating, //!< Node have all of its children and guards are still executable,
-                    //!< but some parameters of node could be changed ("almost fixed")
+        //! Node have all of its children and node's
+        //! guards are still executable, but some
+        //! parameters of node could be changed ("almost fixed")
+        nsFloating,
 
-        nsPossible  //!< Not all children of node are exists, this node could be
-                    //!< deleted from tree structure in future
+        //! Not all children of node are exists, this node
+        //! could be deleted from tree structure in future
+        nsUnfinished
+
     };
 }
 
@@ -51,7 +56,7 @@ class Node
 public:
     //! Default constructor
     Node(Node *parent = NULL, int id = -1, int begin = -1, int end = -1,
-         int level = -1, NodeStatus ns = nsFixed);
+         int level = -1, NodeStatus ns = nsFinished);
 
     //! Copy constructor
     /*! Warning! Invalid usage of copy constructor may lead to tree cache
@@ -61,6 +66,9 @@ public:
 
     //! Destructor
     ~Node();
+
+    //! Assign operator. Copy only integral fields.
+    Node& operator=(const Node &node);
 
     //! Get parent of node
     inline Node* parent() const { return m_parent; }

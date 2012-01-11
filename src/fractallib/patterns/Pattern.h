@@ -63,9 +63,6 @@ public:
     //! Get id of name of pattern
     int id() const;
 
-    //! Get maximal length of pattern's symbols sequence
-    int maxSequenceLength() const;
-
     Guard* guard() const;
     Description* description() const;
 
@@ -111,8 +108,14 @@ public:
     //! Clear and delete all patterns
     void cleanup() { FL::cleanup(*this); }
 
-    //! Get max size of sequence of symbols in pattern set
-    int maxSequenceLength() const;
+    //! Check for left recursion in patterns set
+    /*! Currently it performs only situations like this:
+      *    A = A ...
+      * and can't find indirect recusion like this:
+      *    A = B
+      *    B = A
+      */
+    bool haveLeftRecursion() const;
 };
 
 } } // namepsace

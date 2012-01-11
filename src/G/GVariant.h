@@ -1243,10 +1243,6 @@ inline std::ostream& operator<<(std::ostream &o, const GVariant &v)
     return o << (v._type == G_VAR_NULL ? "NULL" : (char*)v);
 }
 
-//! Predefined NULL-variant constant
-const GVariant GVARNULL(G_VAR_NULL);
-
-
 /*@}*/
 
 #endif // GVariant_H

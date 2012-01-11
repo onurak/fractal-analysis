@@ -33,13 +33,12 @@ FL::ParseResult MultiPass::analyze(
         // Init
         m_ts       = &ts;
         m_metrics  = &metrics;
-        m_forest.clear();
 
 
         int newLevelsCount,  prevLevelsCount = maxLevel(forest);
 
         // Search for new levels while we can
-        while (true)
+        for (int iter = 0; true; ++iter)
         {
             m_result.reset();
 
@@ -47,6 +46,7 @@ FL::ParseResult MultiPass::analyze(
             Forest::Iterator tree;
             forall(tree, forest)
                 newAnalysisBranchForTree(**tree);
+
 
             // Analyse all branches
             while (m_branches.size() > 0 && !m_interruption)
@@ -78,8 +78,12 @@ FL::ParseResult MultiPass::analyze(
                 prevLevelsCount = newLevelsCount;
             else
                 break;
-
         }
+
+        forest.insert(forest.end(),
+                      m_finishedForest.begin(),
+                      m_finishedForest.end());
+        m_finishedForest.clear();
 
         // Remove subtrees from forest
         removeSubtrees(forest);
@@ -103,15 +107,19 @@ void MultiPass::runBranch(Patterns::Context *context, Patterns::Matcher &matcher
     }
 
     // Check metrics of output tree and another trees in forest
-    int oldForestSize = (int) m_forest.size();
+    size_t oldForestSize = m_forest.size() + m_finishedForest.size();
     if (m_metrics->filter(context->outputTree(), m_forest))
+    {
         m_forest.push_back(&context->outputTree());
+    }
     else
-        delete &context->outputTree();
+        //delete &context->outputTree();
+        m_finishedForest.push_back(&context->outputTree());
 
     // - Why not just ++m_result.treesAdded?
     // - Because metrics could delete any trees in forest
-    m_result.treesAdded += int(m_forest.size() - oldForestSize);
+    m_result.treesAdded +=
+            int(m_forest.size() + m_finishedForest.size() - oldForestSize);
 
     delete context->candidateNode();
     delete context;
@@ -137,14 +145,18 @@ bool MultiPass::match(Matcher &matcher, Context &context)
             Context* newContext = new Context(context);
             Node *candidate = newContext->candidateNode();
 
+            candidate->setId(itSequence->pattern->id());
+            if (itSequence->isFinished)
+                candidate->setStatus(nsFinished);
+            else
+                candidate->setStatus(nsUnfinished);
+
             // Insert candidate node into output tree
             newContext->buildLastParsed(seq);
             Layer::Iterator child;
             forall(child, newContext->lastParsed())
                 (*child)->setParent(candidate);
             newContext->outputTree().add(candidate);
-
-            candidate->setId(itSequence->pattern->id());
 
             // Remember modification
             //context.modification().push_back(context.candidateNode());

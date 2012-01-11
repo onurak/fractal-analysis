@@ -42,3 +42,40 @@ void TimeSeries::setLinearTime()
         m_time.push_back(i);
     header()[1] = "";
 }
+
+void TimeSeries::getMinMaxTime(double *min, double *max) const
+{
+    if (size() == 0)
+    {
+        if (min) *min = 0;
+        if (max) *max = 0;
+    }
+    else
+    {
+        if (min) *min = time(0);
+        if (max) *max = time(-1);
+    }
+}
+
+void TimeSeries::getMinMaxValue(double *min, double *max) const
+{
+    if (size() == 0)
+    {
+        if (min) *min = 0;
+        if (max) *max = 0;
+    }
+    else
+    {
+        double dMin = value(0), dMax = value(0);
+
+        Data::const_iterator v;
+        forall(v, m_values)
+        {
+            if (dMin > *v) dMin = *v;
+            if (dMax < *v) dMax = *v;
+        }
+
+        if (min) *min = dMin;
+        if (max) *max = dMax;
+    }
+}

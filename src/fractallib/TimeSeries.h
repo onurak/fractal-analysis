@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <string>
+#include "Common.h"
 
 namespace FL {
 
@@ -118,6 +119,10 @@ public:
         m_values.erase(m_values.begin() + index, m_values.begin() + index + count);
         m_time.erase(m_time.begin() + index, m_time.begin() + index + count);
     }
+
+    void getMinMaxTime(double *min, double *max) const;
+    void getMinMaxValue(double *min, double *max) const;
+
 
     void setLinearTime();
 

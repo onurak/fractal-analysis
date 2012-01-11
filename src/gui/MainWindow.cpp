@@ -10,6 +10,10 @@ MainWindow::MainWindow(QWidget *parent) :
     m_wantInterrupt = false;
     ui->setupUi(this);
 
+    ui->statusBar->addPermanentWidget(m_lbCurrentTime = new QLabel());
+    ui->statusBar->addPermanentWidget(m_lbCurrentValue = new QLabel());
+    ui->statusBar->addPermanentWidget(m_lbCurrentNode = new QLabel());
+
     m_matcher = NULL;
     m_preprocessingMatcher = NULL;
 
@@ -50,10 +54,48 @@ MainWindow::~MainWindow()
 
 void MainWindow::onSceneMouseEvent(QGraphicsSceneMouseEvent *event)
 {
+    double x = event->lastScenePos().x();
+    double y = event->lastScenePos().y();
+    m_render->setMousePos(x, y);
 
-    QString pos = QString("(%1, %2)").arg(event->lastScenePos().x())
-                                     .arg(event->lastScenePos().y());
-    ui->statusBar->showMessage(pos, 1000);
+    bool ok_t, ok_v;
+    double time  = m_render->currentTime(&ok_t);
+    double value = m_render->currentValue(&ok_v);
+
+    if (ok_t)
+        m_lbCurrentTime->setText(QString("Time: %1").arg(time));
+    else
+        m_lbCurrentTime->setText("");
+
+    if (ok_v)
+        m_lbCurrentValue->setText(QString("Value: %1").arg(value));
+    else
+        m_lbCurrentValue->setText("");
+
+    const FL::Trees::Node *node = m_render->currentNode();
+    if (node != NULL)
+    {
+        QString nodeStatus;
+        switch (node->status())
+        {
+            case FL::nsFinished:   nodeStatus = "finished"; break;
+            case FL::nsFloating:   nodeStatus = "floating"; break;
+            case FL::nsUnfinished: nodeStatus = "not finished"; break;
+        }
+
+        QString msg =
+            QString("Current node: %1, %2, at %3 - %4")
+                .arg(QString().fromStdString(FL::IDGenerator::nameOf(node->id())))
+                .arg(nodeStatus)
+                .arg(m_timeSeries.time(node->begin()), 0, 'f', 2)
+                .arg(m_timeSeries.time(node->end()), 0, 'f', 2);
+
+        m_lbCurrentNode->setText(msg);
+    }
+    else
+    {
+        m_lbCurrentNode->setText("");
+    }
 }
 
 void MainWindow::onSceneWheelEvent(QGraphicsSceneWheelEvent *event)
@@ -107,6 +149,16 @@ void MainWindow::on_actionOpen_patterns_triggered()
                  m_patterns,
                  &m_matcher,
                  ui->lbPatternsFile);
+    if (m_matcher != NULL)
+        m_matcher->setAllowUnfinished(true);
+
+    if (m_patterns.haveLeftRecursion())
+    {
+        QMessageBox::warning(this, "Warning",
+            "Patterns set contains left recursion.\n\n"
+            "It is recomended to enable \"Max levels count\" metric,\n"
+            "otherwise analysis process may become infinite.");
+    }
 }
 
 void MainWindow::on_actionOpen_preprocessing_patterns_triggered()
@@ -126,6 +178,7 @@ void MainWindow::on_actionOpen_preprocessing_patterns_triggered()
                  m_preprocessingPatterns,
                  &m_preprocessingMatcher,
                  ui->lbPreprocessingPatternsFile);
+    m_preprocessingMatcher->setAllowUnfinished(false);
 }
 
 void MainWindow::loadPatterns(
@@ -365,12 +418,14 @@ void MainWindow::readSettings()
                 m_patterns,
                 &m_matcher,
                 ui->lbPatternsFile);
+    m_matcher->setAllowUnfinished(true);
 
     loadPatterns(
                 m_settings.value("gui/patterns/PreprocessingFile", "").toString(),
                 m_preprocessingPatterns,
                 &m_preprocessingMatcher,
                 ui->lbPreprocessingPatternsFile);
+    m_preprocessingMatcher->setAllowUnfinished(false);
 
 
     m_markerName = ui->cbMarker->currentText();
@@ -833,6 +888,7 @@ void MainWindow::on_bnRefreshPreprocessingPatterns_clicked()
                 m_preprocessingPatterns,
                 &m_preprocessingMatcher,
                 ui->lbPreprocessingPatternsFile);
+    m_preprocessingMatcher->setAllowUnfinished(false);
 }
 
 void MainWindow::on_bnRefreshPatterns_clicked()
@@ -842,6 +898,7 @@ void MainWindow::on_bnRefreshPatterns_clicked()
                 m_patterns,
                 &m_matcher,
                 ui->lbPatternsFile);
+    m_matcher->setAllowUnfinished(true);
 }
 
 void MainWindow::on_bnHalt_clicked()
