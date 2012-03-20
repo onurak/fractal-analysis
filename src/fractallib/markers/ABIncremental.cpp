@@ -66,8 +66,8 @@ FL::ParseResult ABIncremental::analyze(
             }
 
             // Apply patterns to floating time series segment
-            growTree(ts, *tree, matcher, tree->floatingBegin(), end);
-            //growTree(ts, *tree, matcher, begin-3, end);
+            //growTree(ts, *tree, matcher, tree->floatingBegin(), end);
+            growTree(ts, *tree, matcher, std::min(end-3, 0), end);
         }
     }
     catch (const EAnalyze &e)
@@ -103,7 +103,7 @@ void ABIncremental::clamp(Trees::Tree &tree, Trees::Layer &nodes)
         }
 
         node->children().clear();
-        tree.updateLevel(node, 0);
+        tree.updateNodeLevel(node, 0);
     }
 }
 
@@ -144,37 +144,91 @@ bool ABIncremental::match(Matcher &matcher, Context &context)
 
     if ((result = matcher.match(context, ci)) == true)
     {
-        // Pattern sequence that was applied (use only one)
-        CISequence &seq = *ci.applicableSequences[0].seq;
-
-        Node *candidate = context.candidateNode();
-
-        // Insert candidate node into output tree
-        context.buildLastParsed(seq);
-        Layer::Iterator child;
-        forall(child, context.lastParsed())
+        // Try to insert node into tree. If tree is still valid then do
+        // nothing, otherwise rollback everything as if we cannot
+        // insert this node
+        if (tryInsertNode(context, ci))
         {
-            //(*child)->setParent(candidate);
-            context.outputTree().remove(*child);
-            (*child)->setParent(NULL);
-            delete *child;
+            // Update result, advance current roots position
+            context.advanceCurrentRoot(ci.applicableSequences[0].seq->size());
+            context.setCandidateNode(new Node());
+            context.candidateNode()->setStatus(nsFloating);
+            result = true;
+        }
+        else
+        {
+            result = false;
         }
 
-        candidate->setLevel(0);
-        context.outputTree().add(candidate);
+    }
+    else
+    {
 
-        candidate->setId(ci.applicableSequences[0].pattern->id());
-
-        // Remember modification
-        //context.modification().push_back(context.candidateNode());
-
-        // Update result, advance current roots position
-        context.advanceCurrentRoot(seq.size());
-        context.setCandidateNode(new Node());
-        context.candidateNode()->setStatus(nsFloating);
-
-        result = true;
     }
 
     return result;
+}
+
+
+bool ABIncremental::tryInsertNode(Patterns::Context &context, Patterns::CheckInfo &ci)
+{
+    // Pattern sequence that was applied (use only one)
+    CISequence &seq = *ci.applicableSequences[0].seq;
+    context.buildLastParsed(seq);
+    Layer::Iterator child;
+
+    // If nodes among last parsed have different parents then
+    // new node cannot be inserted. Also get new parent for
+    // newly inserted node
+
+    // Find first non-NULL parent and compare it to other non-NULLs.
+    // NULL parents don't really a problem.
+    Node *parent = NULL;
+    forall(child, context.lastParsed())
+    {
+        if ((*child)->parent() != NULL)
+        {
+            parent = (*child)->parent();
+            break;
+        }
+    }
+
+    // Compare this non-NULL to rest of non-NULLs
+    Layer::Iterator child1 = child;
+    for (++child1; child1 != context.lastParsed().end(); ++child1)
+    {
+        if ((*child1)->parent() != NULL && (*child1)->parent() != parent)
+            return false;
+    }
+
+
+    // Insert candidate node into output tree
+    Node *candidate = context.candidateNode();
+    candidate->setId(ci.applicableSequences[0].pattern->id());
+
+    forall(child, context.lastParsed())
+    {
+        context.outputTree().remove(*child);
+        (*child)->setParent(NULL);
+        delete *child;
+    }
+
+    candidate->setLevel(0);
+    candidate->setParent(parent);
+    context.outputTree().add(candidate);
+
+    // Now check that parent nodes are still valid
+    while (parent != NULL)
+    {
+        if (!parent->origPattern()->guard()->check(context))
+        {
+            // Restore structure of tree
+
+            //return false;
+        }
+        parent = parent->parent();
+    }
+
+    // Everything ok
+    return true;
 }

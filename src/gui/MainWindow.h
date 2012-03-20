@@ -12,6 +12,7 @@
 #include <QMutex>
 #include <QMutexLocker>
 #include <QTime>
+#include <QResizeEvent>
 #include "QParseTreeRender.h"
 #include "Utils.h"
 #include "../fractallib/FL.h"
@@ -105,8 +106,8 @@ protected:
     friend class BackgroundParserTask;
 private slots:
     void onParsingBegin();
-    bool onParsingProgress(FL::ParseResult result, FL::Trees::Forest *forest);
-    bool onParsingFinished(FL::Parsers::AbstractParser *parser);
+    bool onParsingProgress(FL::Trees::Forest *forest);
+    void onParsingFinished(FL::Parsers::AbstractParser *parser);
     void onNewTimeSeriesData(const QList< QPair<double, double> > &data);
     void onBackgroundTaskFinished();
 protected:
@@ -134,6 +135,7 @@ private slots:
     void on_bnRefreshPreprocessingPatterns_clicked();
     void on_bnRefreshPatterns_clicked();
     void on_bnHalt_clicked();
+    void on_actionQuit_triggered();
 };
 
 /* Background analysis task */

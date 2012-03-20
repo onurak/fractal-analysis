@@ -1,6 +1,6 @@
 #include "TreeMatcher.h"
-#include "..\..\Common.h"
-#include "..\..\trees\Layer.h"
+#include "../../Common.h"
+#include "../../trees/Layer.h"
 
 using namespace FL::Patterns;
 using namespace FL::Patterns::Standard;

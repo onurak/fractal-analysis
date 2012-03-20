@@ -65,22 +65,12 @@ public:
     //! Another way to execute predicate (same as operator())
     inline const GVariant& call(Patterns::Context& context, FunctionArgs& args)
     {
-        return this->operator ()(context, args);
+        return this->operator()(context, args);
     }
 
     //! Getter of predicate's name
     const std::string& name() const { return m_name; }
 protected:
-    //! Define optional argument of function.
-    /*! \param argName Name of argument that makes it enabled. It automaically
-      *                add argument with name "no<argName>" that makes it disabled
-      * \param defaultValue default value of argument used if it is not specified
-      */
-    void defineArg(const std::string &argName, GVariant defaultValue);
-
-    //! Parse optional arguments defined by defineArg method
-    void parseArgs(FunctionArgs& args);
-
     //! Check that argument is the valid FL::Trees::Node*
     inline void checkValidNode(GVariant *arg)
     {

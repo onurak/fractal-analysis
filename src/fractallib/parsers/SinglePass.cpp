@@ -19,6 +19,8 @@ FL::ParseResult SinglePass::analyze(
     m_result.reset();
     FL::ParseResult commonResult;
 
+    m_interruption = false;
+
     try
     {
         if (ts.size() < 2)
@@ -51,7 +53,7 @@ FL::ParseResult SinglePass::analyze(
             }
             else
                 break;
-                */
+            */
             // Was new level parsed from last operation?
             // If no then quit - everything that can be found is founded
             newLevelsCount = maxLevel(forest);

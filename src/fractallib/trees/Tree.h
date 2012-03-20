@@ -66,7 +66,7 @@ public:
     void remove(Node *node);
 
     //! Update level of node
-    void updateLevel(Node *node, int newLevel);
+    void updateNodeLevel(Node *node, int newLevel);
 
     //! Make copy of tree
     Tree* copy() const;
@@ -92,6 +92,12 @@ protected:
     //! Insert one node to children's sequence of another at right place
     //! according to position in time series
     void insertChild(Node *dst, Node *src);
+
+    //! Remove top levels without nodes
+    void removeEmptyTopLevels() const;
+
+    //! Remove node from leveled cache
+    void removeNodeFromLeveledCache(Node *node);
 private:
     //! All nodes of tree
     Layer m_allNodes;

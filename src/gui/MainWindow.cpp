@@ -34,8 +34,8 @@ MainWindow::MainWindow(QWidget *parent) :
             ui->actionOpen_preprocessing_patterns, SLOT(trigger()));
 
     readSettings();
-
     initMetrics();
+    updateForestInfo();
 
     ui->statusBar->showMessage(tr("Ready"), 5000);
     m_isInitializing = false;
@@ -178,7 +178,8 @@ void MainWindow::on_actionOpen_preprocessing_patterns_triggered()
                  m_preprocessingPatterns,
                  &m_preprocessingMatcher,
                  ui->lbPreprocessingPatternsFile);
-    m_preprocessingMatcher->setAllowUnfinished(false);
+    if (m_preprocessingMatcher)
+        m_preprocessingMatcher->setAllowUnfinished(false);
 }
 
 void MainWindow::loadPatterns(
@@ -384,10 +385,13 @@ void MainWindow::showError(const std::string &text)
 
 void MainWindow::readSettings()
 {
+    // This code lead to unexpected behaviour in Qt 4.7.x and MacOS Lion
+    /*
     if (m_settings.value("gui/mainform/maximized", true).toBool())
-        setWindowState(windowState() ^  Qt::WindowMaximized);
+        setWindowState(windowState() ^ Qt::WindowMaximized);
     else
         setWindowState( QFlags<Qt::WindowState>(windowState() ^ ~Qt::WindowMaximized) );
+    */
 
     int x = m_settings.value("gui/mainform/x", 100).toInt();
     if (x >= QApplication::desktop()->geometry().width())
@@ -418,14 +422,16 @@ void MainWindow::readSettings()
                 m_patterns,
                 &m_matcher,
                 ui->lbPatternsFile);
-    m_matcher->setAllowUnfinished(true);
+    if (m_matcher != NULL)
+        m_matcher->setAllowUnfinished(true);
 
     loadPatterns(
                 m_settings.value("gui/patterns/PreprocessingFile", "").toString(),
                 m_preprocessingPatterns,
                 &m_preprocessingMatcher,
                 ui->lbPreprocessingPatternsFile);
-    m_preprocessingMatcher->setAllowUnfinished(false);
+    if (m_preprocessingMatcher != NULL)
+        m_preprocessingMatcher->setAllowUnfinished(false);
 
 
     m_markerName = ui->cbMarker->currentText();
@@ -551,6 +557,7 @@ void MainWindow::on_actionMarkup_with_roots_triggered()
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
     on_actionFitAll_triggered();
+    QMainWindow::resizeEvent(event);
 }
 
 
@@ -623,8 +630,7 @@ void MainWindow::onParsingBegin()
     m_lastUpdateTime = QTime::currentTime();
 }
 
-bool MainWindow::onParsingProgress(
-    FL::ParseResult result, FL::Trees::Forest *forest)
+bool MainWindow::onParsingProgress(FL::Trees::Forest *forest)
 {
     const int MAX_CALC_TIME_SECS = 1;
 
@@ -638,7 +644,7 @@ bool MainWindow::onParsingProgress(
     return m_wantInterrupt;
 }
 
-bool MainWindow::onParsingFinished(FL::Parsers::AbstractParser *parser)
+void MainWindow::onParsingFinished(FL::Parsers::AbstractParser *parser)
 {
     setUiEnables(true);
 
@@ -749,10 +755,6 @@ void MainWindow::initMetrics()
         ui->tableMetrics->setItem(i, 2, itemLimit);
     }
 }
-
-
-
-
 
 
 void MainWindow::on_tableMetrics_cellChanged(int row, int column)
@@ -868,9 +870,9 @@ void MainWindow::on_action_Dynamic_step_triggered()
 
 void MainWindow::on_bnDeleteCurrentTree_clicked()
 {
-    size_t treeIndex = size_t(ui->sbParseTreeIndex->value()) - 1;
+    int treeIndex = ui->sbParseTreeIndex->value() - 1;
 
-    if (m_forest.size() == 0 || treeIndex < 0 || treeIndex >= m_forest.size())
+    if (m_forest.size() == 0 || treeIndex < 0 || treeIndex >= int(m_forest.size()))
         return;
 
     delete m_forest[treeIndex];
@@ -878,7 +880,7 @@ void MainWindow::on_bnDeleteCurrentTree_clicked()
     updateForestInfo();
 
     if (m_forest.size() > 0)
-        ui->sbParseTreeIndex->setValue(std::min(treeIndex+1, m_forest.size()));
+        ui->sbParseTreeIndex->setValue(std::min(treeIndex+1, int(m_forest.size())));
 }
 
 void MainWindow::on_bnRefreshPreprocessingPatterns_clicked()
@@ -906,4 +908,9 @@ void MainWindow::on_bnHalt_clicked()
     m_wantInterrupt = true;
     ui->lbState->setText("Aborting...");
     qApp->processEvents();
+}
+
+void MainWindow::on_actionQuit_triggered()
+{
+    this->close();
 }

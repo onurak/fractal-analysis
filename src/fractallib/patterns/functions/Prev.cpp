@@ -22,14 +22,12 @@ using namespace FL::Patterns::Functions;
 Prev::Prev()
 {
     m_name = "Prev";
-    defineArg("samelevel", false);
 }
 
 const GVariant& Prev::operator()(Patterns::Context& context, FunctionArgs& args)
 {
     if (args.size() > 1)
         throw FL::Exceptions::EArguments(m_name, 0, 1, args.size());
-    parseArgs(args);
 
     FL::Trees::Node *prevNode =
             context.outputTree().roots().getPrevNearestTo(context.candidateNode()->begin());
@@ -37,13 +35,12 @@ const GVariant& Prev::operator()(Patterns::Context& context, FunctionArgs& args)
     if (prevNode == NULL)
         return m_result = NULL;
 
-    if (args.size() == 0)
-        return m_result = prevNode;
-
     if (args.size() >= 1)
     {
         int nodeId = *args[0];
         return m_result = (prevNode->id() == nodeId) ? prevNode : NULL;
     }
+
+    return m_result = prevNode;
 
 }

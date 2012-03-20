@@ -559,7 +559,7 @@ void AbstractCompiler::vgl()
         /////////////////////////////////
         // LEX_COMMENT
         /////////////////////////////////
-        if (wantLexeme(LEX_COMMENT) && isNextSymbols(m_oneLineCommentBegin))
+        if (wantLexeme(LEX_COMMENT))
         {
 
         }
@@ -571,10 +571,6 @@ void AbstractCompiler::vgl()
     }
 }
 
-bool AbstractCompiler::isNextSymbols(const std::string &s)
-{
-    return false;
-}
 
 int AbstractCompiler::addSymbol(const GVariant& v)
 {

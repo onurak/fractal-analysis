@@ -131,9 +131,7 @@ void Tree::remove(Node *node)
         if (search(m_allNodes, node, i))
         {
             m_allNodes.erase(i);
-
-            if (search(m_nodesByLevel[node->level()], node, i))
-                m_nodesByLevel[node->level()].erase(i);
+            removeNodeFromLeveledCache(node);
         }
 
         // It could be among roots
@@ -142,16 +140,30 @@ void Tree::remove(Node *node)
     }
 }
 
-void Tree::updateLevel(Node *node, int newLevel)
+void Tree::updateNodeLevel(Node *node, int newLevel)
 {
     if (node && node->level() != newLevel)
     {
-        Layer::Iterator i;
-        if (search(m_nodesByLevel[node->level()], node, i))
-            m_nodesByLevel[node->level()].erase(i);
+        removeNodeFromLeveledCache(node);
 
         node->setLevel(newLevel);
         m_nodesByLevel[newLevel].push_back(node);
+    }
+}
+
+void Tree::removeNodeFromLeveledCache(Node *node)
+{
+    std::map<int, Layer>::iterator itnbLayer = m_nodesByLevel.find(node->level());
+    if (itnbLayer != m_nodesByLevel.end())
+    {
+        Layer::Iterator i;
+        Layer &layer = itnbLayer->second;
+        if (search(layer, node, i))
+        {
+            layer.erase(i);
+            if (layer.size() == 0)
+                m_nodesByLevel.erase(itnbLayer);
+        }
     }
 }
 
@@ -247,17 +259,23 @@ int Tree::getLastUnmarkedSegment() const
 
 int Tree::floatingBegin() const
 {
-    if (levelCount() == 0)
-        return 0;
-
-    int r = 0;
     const Layer &leafs = this->leafs();
+    int r = m_timeSeries.size();
+
+    if (levelCount() == 0)
+        return r;
+
     Layer::ConstIterator node;
 
     forall(node, leafs)
     {
-        if ((*node)->status() == nsFloating && (*node)->begin() < r)
-            r = (*node)->begin();
+        if ((*node)->status() == nsFloating)
+        {
+            if ((*node)->begin() < r)
+                r = (*node)->begin();
+        }
+        else
+            return r;
     }
 
     return r;
@@ -336,13 +354,16 @@ TreeCompareResult Tree::compare(const Tree &tree) const
     return tcr;
 }
 
-
-int Tree::levelCount() const
+void Tree::removeEmptyTopLevels() const
 {
     while (m_nodesByLevel.size() != 0 &&
            m_nodesByLevel[m_nodesByLevel.size()-1].size() == 0)
         m_nodesByLevel.erase(m_nodesByLevel.size()-1);
+}
 
+int Tree::levelCount() const
+{
+    removeEmptyTopLevels();
     m_levelsCount = m_nodesByLevel.size();
     return m_levelsCount;
 }

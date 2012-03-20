@@ -41,7 +41,7 @@ namespace FL { namespace Parsers {
   *
   * It must return true to continue parsing and false for interruption.
   */
-typedef GDelegate2<bool, FL::ParseResult, FL::Trees::Forest*> NotifyProgress;
+typedef GDelegate1<bool, FL::Trees::Forest*> NotifyProgress;
 
 class AbstractParser
 {

@@ -21,7 +21,7 @@
 #include <list>
 
 /*! \file
-  * \brief Реализация делегатов с RSDN
+  * \brief Delegates realization from RSDN
   */
 
 #define COMBINE_(a,b)     a##b
@@ -33,11 +33,7 @@
 #define G_DELEGATE        COMBINE(GDelegate, SUFFIX)
 
 /*! \class GIDelegateX
-  * \brief Базовый интерфейс одиночного делегата. Вместо X автоматически подставляется число
-  *  параметров делегата
-  *
-  * Имеет всего два метода: invoke(), служащий для вызова делегата как функции, и
-  * compare(), сравнивающий два делигата
+  * \brief Base interface for single delegate.
   */
 template <class TRet TEMPLATE_PARAMS>
 class GI_DELEGATE
@@ -49,7 +45,7 @@ public:
 };
 
 /*! \class GStaticDelegateX
-  * \brief Делегат статической или функции-не члена класса
+  * \brief Delegate for simple non-member function or static member function.
   */
 template <class TRet TEMPLATE_PARAMS>
 class G_STATIC_DELEGATE: public GI_DELEGATE<TRet TEMPLATE_ARGS>
@@ -72,7 +68,7 @@ private:
 };
 
 /*! \class GMethodDelegateX
-  * \brief Делегат функции-члена
+  * \brief Delegate for member function
   */
 template <class TObj, class TRet TEMPLATE_PARAMS>
 class G_METHOD_DELEGATE: public GI_DELEGATE<TRet TEMPLATE_ARGS>
@@ -102,14 +98,14 @@ private:
     PMethod m_pMethod;
 };
 
-//! Функция, создающая делегат для обычной функции или статическоой функции-члена класса
+//! Function that create static function delegate
 template <class TRet TEMPLATE_PARAMS>
 GI_DELEGATE<TRet TEMPLATE_ARGS>* delegate(TRet (*pFunc)(PARAMS))
 {
     return new G_STATIC_DELEGATE<TRet TEMPLATE_ARGS>(pFunc);
 }
 
-//! Функция, создающая делегат для нестатического метода класса
+//! Function that create member-function delegate
 template <class TObj, class TRet TEMPLATE_PARAMS>
 GI_DELEGATE<TRet TEMPLATE_ARGS>* delegate(TObj *pObj, TRet (TObj::*pMethod)(PARAMS))
 {
@@ -117,10 +113,10 @@ GI_DELEGATE<TRet TEMPLATE_ARGS>* delegate(TObj *pObj, TRet (TObj::*pMethod)(PARA
 }
 
 /*! \class GDelegateX
-  * \brief Обобщенный делегат
+  * \brief Generic delegate (contains list of single delegates)
   *
-  * Содрежит массив делегатов - указателей на статические и/или динамические функции-члены и не
-  * члены. Повзволяет добавлять новые функции и вызывать их. Синтаксис подобен делегатам в C#
+  * It holds list of single delegates, allow to invoke them at once.
+  * Syntax is C#-like.
   */
 template <class TRet TEMPLATE_PARAMS>
 class G_DELEGATE

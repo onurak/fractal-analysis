@@ -8,6 +8,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 namespace FL {
 
@@ -125,7 +127,9 @@ private:
 inline std::string intToString(int v)
 {
     char buf[100];
-    return itoa(v, buf, 10);
+    //return itoa(v, buf, 10);
+    sprintf(buf, "%d", v);
+    return std::string(buf);
 }
 
 //std::string upperCase(const std::string &s);

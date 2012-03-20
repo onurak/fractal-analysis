@@ -1027,7 +1027,10 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
             for (int i = 0; i < (int) m_program->pd().vars.size(); ++i)
             {
                 GVariant &v = m_program->pd().vars[i];
-                if (v.type() == op.type() && v == op)
+                if (v.type() == op.type() &&
+                    v.type() != G_VAR_CUSTOM &&
+                    op.type() != G_VAR_CUSTOM &&
+                    v == op)
                 {
                     opIndex = i;
                     break;
