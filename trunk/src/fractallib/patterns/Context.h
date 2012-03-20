@@ -136,6 +136,9 @@ public:
 
     //! Nodes, added during analysis
     FL::Trees::Layer& modification();
+
+    //! Call unused() to avoid unused parameter warning
+    inline void unused() {}
 private:
     void copyRoots(Trees::Tree *newOutputTree, const Context& c);
 

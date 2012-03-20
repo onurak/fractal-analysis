@@ -38,7 +38,7 @@ FL::ParseResult DynamicMultiPass::analyze(
     m_result.reset();
     forecast.clear();
 
-
+    return this->m_result;
 }
 
 

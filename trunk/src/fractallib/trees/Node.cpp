@@ -46,6 +46,7 @@ Node& Node::operator=(const Node &node)
     m_internalParent = NULL;
     m_origSequence = NULL;
     m_origPattern = NULL;
+    return *this;
 }
 
 Node::~Node()

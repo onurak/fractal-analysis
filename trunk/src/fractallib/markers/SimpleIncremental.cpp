@@ -33,7 +33,8 @@ SimpleIncremental::~SimpleIncremental()
 FL::ParseResult SimpleIncremental::analyze(
     const TimeSeries &ts, Trees::Forest &forest, Patterns::PatternsSet &patterns)
 {
-//    ParseResult result;
+    ParseResult result;
+    return result;
 
 //    try
 //    {

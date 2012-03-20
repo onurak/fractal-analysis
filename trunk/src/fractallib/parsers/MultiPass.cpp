@@ -55,7 +55,7 @@ FL::ParseResult MultiPass::analyze(
                 m_branches.erase(m_branches.begin());
 
                 if (!onProgress.isNull())
-                    m_interruption = onProgress(m_result, &m_forest);
+                    m_interruption = onProgress(&m_forest);
             }
 
             // Clear interrupted branches

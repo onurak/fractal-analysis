@@ -15,6 +15,8 @@
  */
 
 #include "AtOneLine.h"
+#include "../../trees/Tree.h"
+#include <cmath>
 
 using namespace FL::Patterns::Functions;
 
@@ -26,5 +28,49 @@ AtOneLine::AtOneLine()
 
 const GVariant& AtOneLine::operator()(Patterns::Context& context, FunctionArgs& args)
 {
-    return m_result;
+    context.unused();
+
+    if (args.size() < 6)
+        throw FL::Exceptions::EArguments(m_name, -6, 0);
+
+    for (size_t i = 0; i < args.size(); ++i)
+        if (!args[i]->canCastTo(G_VAR_DOUBLE))
+            throw FL::Exceptions::EArguments(m_name, GVariant::typeName(G_VAR_DOUBLE), args[i]->typeName(), i);
+
+    // Last parameter is available error
+    size_t argsCount = args.size();
+    double eps = 0.0;
+    if (args.size() % 2 == 1)
+    {
+        eps = double(*args.back());
+        argsCount--;
+    }
+
+    /* Find line params (k,b) from first two nodes: y(x) = k*x + b.
+       Solve system for (k,b):
+          { y1 = k*x1 + b,
+          { y2 = k*x2 + b
+       Solution:
+            k = (y1 - y2) / (x1 - x2)
+            b = y2 - k*x2
+     */
+    double x1 = double(*args[0]);
+    double y1 = double(*args[1]);
+    double x2 = double(*args[2]);
+    double y2 = double(*args[3]);
+
+    double k = (y1 - y1) / (x1 - x2);
+    double b = y2 - k*x2;
+
+    // Check if all other points are close enoght to the same line
+    for (size_t i = 4; i < argsCount; ++i)
+    {
+        double x = double(*args[i]);
+        double y = double(*args[++i]);
+        if (fabs(k*x + b - y) > eps)
+            return m_result = false;
+    }
+
+
+    return m_result = true;
 }

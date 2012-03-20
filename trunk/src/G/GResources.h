@@ -46,10 +46,7 @@ const int G_INVALID_VARIANT_INIT  = 12;
 
 const int G_INDEX_OUT_OF_BOUNDS = 100;
 
-//! Приводит строку к нижнему регистру. Использует стандартную функцию tolower
-/*! \param s Строка, которую нужно привести к нижнему регистру
-  * \return Та же строка, но в нижнем регистре
-  */
+//! Convert string to lower case
 inline std::string lowerCase(const std::string &s)
 {
 

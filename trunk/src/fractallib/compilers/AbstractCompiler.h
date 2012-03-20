@@ -161,7 +161,6 @@ protected:
     int addSymbol(const GVariant& v);
     bool wantLexeme(LexemeId lex);
     void filterLexeme(LexemeId lex, bool filter);
-    bool isNextSymbols(const std::string &s);
 private:
     Exceptions::EParsing m_lastError;
 

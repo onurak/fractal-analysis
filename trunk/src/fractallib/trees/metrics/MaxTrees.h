@@ -32,6 +32,7 @@ public:
 
     virtual bool filter(Tree &tree, Forest &forest)
     {
+        tree.roots();
         int limit = (int) m_value;
         while ((int) forest.size() >= limit)
             forest.erase(forest.begin());

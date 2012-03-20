@@ -21,6 +21,9 @@
 
 namespace FL { namespace Patterns { namespace Functions {
 
+/** \class AtOneLine
+  * \brief Check if few nodes are on the same value line.
+  */
 class AtOneLine : public Function
 {
 public:

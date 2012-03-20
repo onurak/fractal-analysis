@@ -46,6 +46,8 @@ protected:
     void clamp(Trees::Tree &tree, Trees::Layer &nodes);
 
     bool match(Patterns::Matcher &matcher, Patterns::Context &context);
+
+    bool tryInsertNode(Patterns::Context &context, Patterns::CheckInfo &ci);
 };
 
 }} // namespaces

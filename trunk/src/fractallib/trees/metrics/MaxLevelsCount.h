@@ -32,6 +32,7 @@ public:
 
     virtual bool filter(Tree &tree, Forest &forest)
     {
+        forest.size();
         return tree.levelCount() <= (int) m_value;
     }
 

@@ -74,14 +74,21 @@ inline bool doesStringMeansTrue(const char* s)
 {
     if (s == NULL)
         return false;
-    return !strcmpi(s, "1")        ||
-           !strcmpi(s, "true")     ||
-           !strcmpi(s, "yes")      ||
-           !strcmpi(s, "y")        ||
-           !strcmpi(s, "on")       ||
-           !strcmpi(s, "ok")       ||
-           !strcmpi(s, "enable")   ||
-           !strcmpi(s, "enabled");
+    size_t len = strlen(s);
+    if (len > 10)
+        return false;
+    char buf[11];
+    for (size_t i = 0; i < len+1; ++i)
+        buf[i] = tolower(s[i]);
+
+    return !strcmp(buf, "1")        ||
+           !strcmp(buf, "true")     ||
+           !strcmp(buf, "yes")      ||
+           !strcmp(buf, "y")        ||
+           !strcmp(buf, "on")       ||
+           !strcmp(buf, "ok")       ||
+           !strcmp(buf, "enable")   ||
+           !strcmp(buf, "enabled");
 }
 
 //! Does string means false constant?
@@ -89,13 +96,21 @@ inline bool doesStringMeansFalse(const char* s)
 {
     if (s == NULL)
         return false;
-    return !strcmpi(s, "0")         ||
-           !strcmpi(s, "false")     ||
-           !strcmpi(s, "no")        ||
-           !strcmpi(s, "n")         ||
-           !strcmpi(s, "off")       ||
-           !strcmpi(s, "disnable")  ||
-           !strcmpi(s, "disnabled");
+
+    size_t len = strlen(s);
+    if (len > 10)
+        return false;
+    char buf[11];
+    for (size_t i = 0; i < len+1; ++i)
+        buf[i] = tolower(s[i]);
+
+    return !strcmp(buf, "0")         ||
+           !strcmp(buf, "false")     ||
+           !strcmp(buf, "no")        ||
+           !strcmp(buf, "n")         ||
+           !strcmp(buf, "off")       ||
+           !strcmp(buf, "disnable")  ||
+           !strcmp(buf, "disnabled");
 }
 
 const int G_VAR_CAST_VALIDNESS_TABLE[8][8] =
@@ -626,6 +641,17 @@ public:
         return *this;
     }
 
+    //! Assign long int
+    /*! Old data will be deleted (in case of known variant type)
+      */
+    GVariant& operator=(const long &value)
+    {
+        freeVarData();
+        _type = G_VAR_INT;
+        _data.i = int(value);
+        return *this;
+    }
+
     /* Math operators */
     /*! \brief Sum operator. It have special sematics for strings.
       *
@@ -1040,7 +1066,6 @@ inline GVariant operator/(const GVariant &left, const GVariant &right)
     }
 }
 
-/* Операторы сравнения */
 
 /*! \brief Equality operator
   *
@@ -1213,7 +1238,7 @@ inline bool operator>=(const GVariant &left, const GVariant &right)
     }
 }
 
-/* Булевы операторы */
+/* Boolean operators */
 
 /*! \brief Boolean not operator
   *
