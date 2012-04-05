@@ -22,7 +22,7 @@ using namespace FL::Trees;
 Node::Node(Node *parent, int id, int begin, int end, int level, NodeStatus ns)
     : m_id(id), m_index(-1), m_begin(begin), m_end(end), m_level(level),
       m_parent(parent), m_status(ns), m_relativeNode(NULL),
-      m_internalParent(NULL), m_origSequence(NULL), m_origPattern(NULL)
+      m_internalParent(NULL), m_origSequence(NULL)
 {
     m_children = new Layer();
 }
@@ -40,12 +40,10 @@ Node& Node::operator=(const Node &node)
     m_level = node.level();
     m_begin = node.begin();
     m_end = node.end();
-    m_status = node.status();
     m_parent = NULL;
     m_relativeNode = NULL;
     m_internalParent = NULL;
-    m_origSequence = NULL;
-    m_origPattern = NULL;
+    m_origSequence = node.origSequence();
     return *this;
 }
 
@@ -82,4 +80,9 @@ void Node::setParent(Node* value)
         if (m_parent->end() < m_end)
             m_parent->setEnd(m_end);
     }
+}
+
+bool Node::isFinished() const
+{
+    return m_level == 0 || m_children->size() == m_origSequence.size();
 }

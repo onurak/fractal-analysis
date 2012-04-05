@@ -75,14 +75,7 @@ void MainWindow::onSceneMouseEvent(QGraphicsSceneMouseEvent *event)
     const FL::Trees::Node *node = m_render->currentNode();
     if (node != NULL)
     {
-        QString nodeStatus;
-        switch (node->status())
-        {
-            case FL::nsFinished:   nodeStatus = "finished"; break;
-            case FL::nsFloating:   nodeStatus = "floating"; break;
-            case FL::nsUnfinished: nodeStatus = "not finished"; break;
-        }
-
+        QString nodeStatus = node->isFinished() ? "finished" : "unfinished";
         QString msg =
             QString("Current node: %1, %2, at %3 - %4")
                 .arg(QString().fromStdString(FL::IDGenerator::nameOf(node->id())))
@@ -102,6 +95,8 @@ void MainWindow::onSceneWheelEvent(QGraphicsSceneWheelEvent *event)
 {
     double s = event->delta() < 0 ? 0.9 : 1.0/0.9;
     ui->graphicsView->scale(s, s);
+    ui->graphicsView->ensureVisible(event->pos().x(), event->pos().y(), 50, 50);
+    //m_render->setScale(m_render->scale() * s);
 }
 
 void MainWindow::on_actionOpen_time_series_triggered()
@@ -361,6 +356,7 @@ bool MainWindow::loadTimeSeries(
 
         ui->lbTimeSeriesFile->setText(QFileInfo(fileName).fileName());
         ui->lbTimeSeriesSize->setNum(m_timeSeries.size());
+        m_render->setScale(1.0);
     }
     catch (const QString &err)
     {
@@ -543,7 +539,7 @@ void MainWindow::buildTrees()
 
 void MainWindow::on_actionFitAll_triggered()
 {
-    ui->graphicsView->fitInView(0.0, -1.0, 1.0, 2.0);
+    ui->graphicsView->fitInView(0, -1.0, 1.0, 2.0);
 }
 
 void MainWindow::on_actionMarkup_with_roots_triggered()
@@ -834,7 +830,7 @@ void MainWindow::dynamicStep()
     FL::ParseResult pr;
 
     FL::Markers::AbstractMarker *marker = NULL;
-    FL::Parsers::AbstractDynamicParser *parser = NULL;
+    FL::Parsers::AbstractParser *parser = NULL;
 
     try
     {
@@ -844,11 +840,11 @@ void MainWindow::dynamicStep()
             throw "Can not markup";
 
 
-        parser = new FL::Parsers::DynamicMultiPass();
-        //pr = parser->analyze(
-        //            m_timeSeries, m_forest, m_patterns, m_metrics, *m_matcher, m_forecast);
-        //if (!parser->wasOk())
-          //  throw "Can not parse";
+        parser = new FL::Parsers::MultiPass();
+        pr = parser->analyze(
+                    m_timeSeries, m_forest, m_patterns, *m_matcher, m_metrics, 0);
+        if (!parser->wasOk())
+            throw "Can not parse";
     }
     catch (const char *s)
     {
@@ -860,7 +856,7 @@ void MainWindow::dynamicStep()
     delete parser;
 
     updateForestInfo();
-    on_actionFitAll_triggered();
+    //on_actionFitAll_triggered();
 }
 
 void MainWindow::on_action_Dynamic_step_triggered()

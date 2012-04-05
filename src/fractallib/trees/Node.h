@@ -94,9 +94,11 @@ public:
     inline int level() const { return m_level; }
     inline void setLevel(int value) { m_level = value; }
 
+    bool isFinished() const;
+
     //! Get status of node
-    inline FL::NodeStatus status() const { return m_status; }
-    inline void setStatus(FL::NodeStatus value) { m_status = value; }
+//    inline FL::NodeStatus status() const { return m_status; }
+//    inline void setStatus(FL::NodeStatus value) { m_status = value; }
 
     //! Get children of node
     inline Layer& children() { return *m_children; }
@@ -104,18 +106,9 @@ public:
     //! Get cached relative node (warning)
     inline Node *relativeNode() const { return m_relativeNode; }
 
-    //! Get original sequence for node that have status nsPossible
-    inline Patterns::CISequence *origSequence() { return m_origSequence; }
-
-    //! Set original sequence for node that have status nsPossible
-    inline void setOrigSequence(Patterns::CISequence *sequence) { m_origSequence = sequence; }
-
-    //! Get original pattern for node that have status nsPossible
-    inline Patterns::Pattern *origPattern() { return m_origPattern; }
-
-    //! Set original pattern for node that have status nsPossible
-    inline void setOrigPattern(FL::Patterns::Pattern *pattern) { m_origPattern = pattern; }
-
+    //! Get node's original sequence
+    inline const Patterns::CISequence &origSequence() const { return m_origSequence; }
+    inline Patterns::CISequence &origSequence() { return m_origSequence; }
 
     friend class Tree;
     friend class FL::Patterns::Context;
@@ -158,9 +151,7 @@ private:
       * store original sequence that is possible for children of
       * this node
       */
-    Patterns::CISequence *m_origSequence;
-
-    Patterns::Pattern *m_origPattern;
+    Patterns::CISequence m_origSequence;
 };
 
 }}

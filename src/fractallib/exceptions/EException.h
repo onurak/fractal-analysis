@@ -21,10 +21,11 @@
 
 namespace FL {
 
-    static const int E_OK = 0;
-    static const int E_INVALID_COUNT = 1;
-    static const int E_INVALID_TYPE  = 2;
-    static const int E_UNKNOWN_ARG   = 3;
+    static const int E_OK                = 0;
+    static const int E_INVALID_COUNT     = 1;
+    static const int E_INVALID_TYPE      = 2;
+    static const int E_INVALID_PATTERNS  = 3;
+    static const int E_UNKNOWN_ARG       = 4;
 
 } // namespaces
 

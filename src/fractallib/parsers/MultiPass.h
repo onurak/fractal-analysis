@@ -20,9 +20,10 @@ public:
         Trees::Forest &forest,
         Patterns::PatternsSet &patterns,
         Patterns::Matcher &matcher,
-        Trees::MetricsSet &metrics);
+        Trees::MetricsSet &metrics,
+        int tsBegin = 0);
 protected:
-    void newAnalysisBranchForTree(FL::Trees::Tree &tree);
+    void newAnalysisBranchForTree(FL::Trees::Tree &tree, int tsBegin);
 
     void newAnalysisBranch(Patterns::Context *context);
 

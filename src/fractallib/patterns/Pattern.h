@@ -50,9 +50,7 @@ class Pattern
 {
 public:
     Pattern(const PatternConstructor &pc);
-    Pattern(const std::string &name, const PatternConstructor &pc);
-    Pattern(const PatternConstructor *pc, bool autoDeleteConstructor = true);
-    Pattern(const std::string &name, const PatternConstructor *pc, bool autoDeleteConstructor = true);
+    virtual ~Pattern();
 
     //! Get pattern name
     const std::string& name() const;
@@ -87,6 +85,9 @@ public:
                          FL::Trees::Tree &tree,
                          FL::TimeSeries &ts,
                          FL::ForecastItem &forecast);
+
+    //! Get max length of description sequences
+    int maxLength() const;
 private:
     Pattern(const Pattern &p);
 private:
@@ -116,6 +117,63 @@ public:
       *    B = A
       */
     bool haveLeftRecursion() const;
+
+    //! Get max length of patterns sequences
+    int maxLength() const;
+};
+
+/*! @class PatternsRegistry
+  * @brief Registry of patterns which can return any pattern registered in current
+  * session by its id.
+  */
+class PatternsRegistry
+{
+public:
+    typedef std::map< int, std::vector<Pattern*> > Storage;
+
+public:
+    //! Get registered pattern by its id.
+    /** If more then one pattern with such id registered then
+      * only one random pattern will be returned.
+      */
+    static inline Pattern* patternById(int id)
+    {
+        Storage::const_iterator i = m_registry.find(id);
+        if (i == m_registry.end() || i->second.size() == 0)
+            return NULL;
+        return i->second[0];
+    }
+
+    //! Get pattern by its name
+    static Pattern* patternByName(const std::string &name)
+    {
+        return patternById(IDGenerator::idOf(name));
+    }
+
+    //! Register pattern (must be called in Pattern constructor)
+    static void registerPattern(int id, Pattern *pattern)
+    {
+        Storage::iterator i = m_registry.find(id);
+        if (i == m_registry.end())
+            m_registry[id].push_back(pattern);
+        else
+            i->second.push_back(pattern);
+    }
+
+    //! Unregister pattern (must be called in Pattern destructor)
+    static void unregisterPattern(int id, Pattern *pattern)
+    {
+        Storage::iterator i = m_registry.find(id);
+        if (i != m_registry.end())
+        {
+            std::vector<Pattern*>::iterator j;
+            if (search(i->second, pattern, j))
+                i->second.erase(j);
+        }
+    }
+
+private:
+    static Storage m_registry;
 };
 
 } } // namepsace

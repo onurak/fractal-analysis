@@ -86,18 +86,34 @@ bool Context::isAtTime(int time) const
     return (*m_currentRoot)->begin() >= time;
 }
 
-void Context::buildLastParsed(const CISequence& seq, int nodesCount)
+void Context::buildLastParsed(const CISequence& seq, int nodesCount, const Trees::Layer *baseLayer)
 {
     if (nodesCount <= 0 || nodesCount > (int) seq.size())
         nodesCount = seq.size();
 
-
-    m_lastParsed->clear();
-    Layer::const_iterator      lanode = currentRoot();
+    Layer::const_iterator      lanode;
     CISequence::const_iterator cinode = seq.begin();
 
+    // We will use layer if std::list type because roots()
+    // is a std::list while baseLayer is Trees::Layer
+    const std::list<Trees::Node*> *layer;
+
+    if (baseLayer == NULL)
+    {
+        layer = &roots();
+        lanode = currentRoot();
+    }
+    else
+    {
+        layer = baseLayer;
+        lanode = baseLayer->begin();
+    }
+
+    m_lastParsed->clear();
+
+
     for (int i = 0;
-         i < nodesCount && lanode != roots().end();
+         i < nodesCount && lanode != layer->end();
          ++lanode, ++cinode, ++i)
     {
         Node *node = *lanode;

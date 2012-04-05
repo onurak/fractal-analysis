@@ -36,18 +36,19 @@ public:
         Trees::Forest &forest,
         Patterns::PatternsSet &patterns,
         Patterns::Matcher &matcher,
-        Trees::MetricsSet &metrics);
+        Trees::MetricsSet &metrics,
+        int tsBegin = 0);
 protected:
     void analyzeTree(
         const TimeSeries &ts,
         Trees::Tree &tree,
-        Patterns::Matcher &matcher);
+        Patterns::Matcher &matcher,
+        int tsBegin);
 
     bool match(
         Patterns::Matcher &matcher,
         Patterns::Context &context);
 
-    int maxLevel(const FL::Trees::Forest &forest);
 
     FL::ParseResult m_result;
 

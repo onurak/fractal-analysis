@@ -59,7 +59,8 @@ public:
                       Trees::Forest &forest,
                       Patterns::PatternsSet &patterns,
                       Patterns::Matcher &matcher,
-                      Trees::MetricsSet &metrics) = 0;
+                      Trees::MetricsSet &metrics,
+                      int tsBegin = 0) = 0;
 
     //! Get last error
     const Exceptions::EAnalyze& lastError() const { return m_lastError; }
