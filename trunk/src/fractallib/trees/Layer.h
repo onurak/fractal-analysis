@@ -23,13 +23,11 @@ public:
       */
     Node* getPrevNearestTo(int position) const;
 
-    //! Check that layer is valid
-    /*! Debug mostly
-      */
-    void checkValidness()
-    {
+    //! Get first node (by time)
+    Node* firstNode() const;
 
-    }
+    //! Get last node (by time)
+    Node* lastNode() const;
 };
 
 }} // namespace

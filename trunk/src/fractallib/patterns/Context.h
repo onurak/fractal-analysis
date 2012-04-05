@@ -53,8 +53,10 @@ public:
       * \param seq Sequence that must be used to build lastParsed
       * \param nodesCount if greater then zero then only first nodesCount
       *        will be used
+      * \param baseLayer layer from where nodes must be used to create last parsed sequence.
+      *        If it's NULL then roots() sequence will be used.
       */
-    void buildLastParsed(const CISequence& seq, int nodesCount = 0);
+    void buildLastParsed(const CISequence& seq, int nodesCount = 0, const Trees::Layer *baseLayer = NULL);
 
     //! Get first node from last parsed sequence with specified parameters
     Trees::Node* getNode(int nameId, int index) const;

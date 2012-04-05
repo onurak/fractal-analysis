@@ -100,6 +100,7 @@ protected:
 
     QLabel *m_lbCurrentTime, *m_lbCurrentValue;
     QLabel *m_lbCurrentNode;
+
 protected:
     void setUiEnables(bool enabled);
     void addBackgroundTask(QThread *task);

@@ -14,7 +14,8 @@ FL::ParseResult SinglePass::analyze(
     Trees::Forest &forest,
     Patterns::PatternsSet &patterns,
     Patterns::Matcher &matcher,
-    Trees::MetricsSet &metrics)
+    Trees::MetricsSet &metrics,
+    int tsBegin)
 {
     m_result.reset();
     FL::ParseResult commonResult;
@@ -31,14 +32,14 @@ FL::ParseResult SinglePass::analyze(
             throw EAnalyze(E_EMPTY_PATTERNS);
 
         m_metrics = &metrics;
-        int newLevelsCount,  prevLevelsCount = maxLevel(forest);
+        int newLevelsCount,  prevLevelsCount = forest.maxLevelCount();
 
 
-        for (int iter = 0; true; ++iter)
+        for (int iter = 0;; ++iter)
         {
             Forest::Iterator tree;
             forall(tree, forest)
-                analyzeTree(ts, **tree, matcher);
+                analyzeTree(ts, **tree, matcher, tsBegin);
 
             forest.cleanup();
             forest = m_forest;
@@ -56,7 +57,7 @@ FL::ParseResult SinglePass::analyze(
             */
             // Was new level parsed from last operation?
             // If no then quit - everything that can be found is founded
-            newLevelsCount = maxLevel(forest);
+            newLevelsCount = forest.maxLevelCount();
             if (newLevelsCount != prevLevelsCount && !m_interruption)
                 prevLevelsCount = newLevelsCount;
             else
@@ -81,7 +82,8 @@ FL::ParseResult SinglePass::analyze(
 void SinglePass::analyzeTree(
     const TimeSeries &ts,
     Tree &tree,
-    Patterns::Matcher &matcher)
+    Patterns::Matcher &matcher,
+    int tsBegin)
 {
     // Initialize analyse context
     Context context;
@@ -90,6 +92,7 @@ void SinglePass::analyzeTree(
     //context.setOutputTree(&tree);
     context.setOutputTree(tree.copy());
     context.setCandidateNode(new Node());
+    context.advanceCurrentRootToPos(tsBegin);
 
     // Look for applicable patterns in each position of tree
     while (!context.isAtEnd())
@@ -134,40 +137,24 @@ bool SinglePass::match(Patterns::Matcher &matcher, Context &context)
             }
         }
 
+        CheckInfo::ApplicableSeq& ciseq = ci.applicableSequences[seqIdx];
+
+        // Fill candidate node's fields
         Node *candidate = context.candidateNode();
-        candidate->setId(ci.applicableSequences[seqIdx].pattern->id());
-        if (ci.applicableSequences[seqIdx].isFinished)
-            candidate->setStatus(nsFinished);
-        else
-            candidate->setStatus(nsUnfinished);
+        candidate->setId(ciseq.pattern->id());
+        candidate->origSequence() = *(ciseq.seq);
 
         // Insert candidate node into output tree
-        context.buildLastParsed(*ci.applicableSequences[seqIdx].seq);
+        context.buildLastParsed(*ciseq.seq);
         Layer::Iterator child;
         forall(child, context.lastParsed())
             (*child)->setParent(candidate);
         context.outputTree().add(candidate);
 
-        // Remember modification
-        //context.modification().push_back(context.candidateNode());
-
         // Update result, advance current roots position
-        context.advanceCurrentRoot(ci.applicableSequences[seqIdx].seq->size());
-        m_result.nodesAdded += 1;
+        context.advanceCurrentRoot(ciseq.seq->size());
         context.setCandidateNode(new Node());
-    }
-
-    return result;
-}
-
-int SinglePass::maxLevel(const Forest &forest)
-{
-    int result = 0;
-    Forest::ConstIterator tree;
-    forall(tree, forest)
-    {
-        if ((*tree)->levelCount() > result)
-            result = (*tree)->levelCount();
+        m_result.nodesAdded += 1;
     }
 
     return result;

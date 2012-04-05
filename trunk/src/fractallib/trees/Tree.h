@@ -31,6 +31,13 @@ struct TreeCompareResult
 };
 
 
+enum FindNodeOptions
+{
+    fnoNone             = 0x0,
+    fnoSameOrigSequence = 0x1
+};
+
+
 /*! \class Tree
   * \brief Represents Parse Tree - result of time series analysis.
   */
@@ -81,10 +88,13 @@ public:
     TreeCompareResult compare(const Tree &tree) const;
 
     //! Look for node with identical id, level, begin, end
-    Node* findNode(Node *patternNode) const;
+    Node* findNode(Node *patternNode, FindNodeOptions options = fnoNone) const;
 
     //! Get begining of last unmarked segment
     int getLastUnmarkedSegment() const;
+
+    //! Get unfinished node at specified level (last node with unfinished EBNF)
+    Node* getUnfinishedNode(int level) const;
 
     //! Get time of first floating node at zero level
     int floatingBegin() const;

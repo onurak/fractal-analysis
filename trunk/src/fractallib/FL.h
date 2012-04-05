@@ -21,7 +21,6 @@
 #include "markers/ABIncremental.h"
 #include "markers/SimpleIncremental.h"
 #include "parsers/MultiPass.h"
-#include "parsers/DynamicMultiPass.h"
 #include "parsers/SinglePass.h"
 #include "TimeSeries.h"
 #include "patterns/Pattern.h"

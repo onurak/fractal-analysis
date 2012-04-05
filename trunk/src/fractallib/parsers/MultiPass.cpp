@@ -16,7 +16,8 @@ FL::ParseResult MultiPass::analyze(
     Trees::Forest &forest,
     Patterns::PatternsSet &patterns,
     Patterns::Matcher &matcher,
-    Trees::MetricsSet &metrics)
+    Trees::MetricsSet &metrics,
+    int tsBegin)
 {
     FL::ParseResult commonResult;
     m_interruption = false;
@@ -45,13 +46,14 @@ FL::ParseResult MultiPass::analyze(
             // For each tree create analysis branch
             Forest::Iterator tree;
             forall(tree, forest)
-                newAnalysisBranchForTree(**tree);
+                newAnalysisBranchForTree(**tree, tsBegin);
 
 
             // Analyse all branches
             while (m_branches.size() > 0 && !m_interruption)
             {
-                runBranch(m_branches.front(), matcher);
+                Context *context = m_branches.front();
+                runBranch(context, matcher);
                 m_branches.erase(m_branches.begin());
 
                 if (!onProgress.isNull())
@@ -145,11 +147,8 @@ bool MultiPass::match(Matcher &matcher, Context &context)
             Context* newContext = new Context(context);
             Node *candidate = newContext->candidateNode();
 
+            candidate->origSequence() = seq;
             candidate->setId(itSequence->pattern->id());
-            if (itSequence->isFinished)
-                candidate->setStatus(nsFinished);
-            else
-                candidate->setStatus(nsUnfinished);
 
             // Insert candidate node into output tree
             newContext->buildLastParsed(seq);
@@ -172,7 +171,7 @@ bool MultiPass::match(Matcher &matcher, Context &context)
     return matched;
 }
 
-void MultiPass::newAnalysisBranchForTree(FL::Trees::Tree &tree)
+void MultiPass::newAnalysisBranchForTree(FL::Trees::Tree &tree, int tsBegin)
 {
     // Initialize analyse context
     Context *context = new Context();
@@ -180,6 +179,7 @@ void MultiPass::newAnalysisBranchForTree(FL::Trees::Tree &tree)
     context->setParseTree(&tree);
     context->setOutputTree(tree.copy());
     context->setCandidateNode(new Node());
+    context->advanceCurrentRootToPos(tsBegin);
     newAnalysisBranch(context);
 }
 

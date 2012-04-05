@@ -7,6 +7,9 @@
 using namespace FL::Patterns;
 using namespace FL::Exceptions;
 
+std::map< int, std::vector<Pattern*> > PatternsRegistry::m_registry;
+
+
 namespace Internal
 {
     using namespace FL::Compilers;
@@ -46,34 +49,8 @@ namespace Internal
 
 } // namespace Internal
 
-Pattern::Pattern(const PatternConstructor *pc, bool autoDeleteConstructor)
-{
-    assert(pc != NULL);
-    m_description = pc->createDescription();
-    m_guard = pc->createGuard(*m_description);
-    if (autoDeleteConstructor)
-        delete pc;
-}
-
-Pattern::Pattern(const std::string &name, const PatternConstructor *pc, bool autoDeleteConstructor)
-{
-    assert(pc != NULL);
-    setName(name);
-    m_description = pc->createDescription();
-    m_guard = pc->createGuard(*m_description);
-    if (autoDeleteConstructor)
-        delete pc;
-}
-
 Pattern::Pattern(const PatternConstructor &pc)
 {
-    m_description = pc.createDescription();
-    m_guard = pc.createGuard(*m_description);
-}
-
-Pattern::Pattern(const std::string &name, const PatternConstructor &pc)
-{
-    setName(name);
     m_description = pc.createDescription();
     m_guard = pc.createGuard(*m_description);
 }
@@ -84,6 +61,11 @@ Pattern::Pattern(const Pattern &p)
 
 }
 
+Pattern::~Pattern()
+{
+    PatternsRegistry::unregisterPattern(id(), this);
+}
+
 const std::string& Pattern::name() const
 {
     return m_description->name();
@@ -91,7 +73,9 @@ const std::string& Pattern::name() const
 
 void Pattern::setName(const std::string& name)
 {
+    PatternsRegistry::unregisterPattern(id(), this);
     m_description->setName(name);
+    PatternsRegistry::registerPattern(id(), this);
 }
 
 int Pattern::id() const
@@ -109,22 +93,45 @@ Description* Pattern::description() const
     return m_description;
 }
 
+int Pattern::maxLength() const
+{
+    size_t result = 0;
+    CISet::const_iterator i;
+    forall(i, m_description->sequences())
+    {
+        if (i->size() > result)
+            result = i->size();
+    }
+
+    return int(result);
+}
+
 EParsing Pattern::compile(const std::string &s)
 {
+    PatternsRegistry::unregisterPattern(id(), this);
+
     Internal::Compiler compiler(*m_description, *m_guard);
     if (!compiler.compile(s, cfPartialInput))
         return compiler.lastError();
     else
+    {
+        PatternsRegistry::registerPattern(id(), this);
         return EParsing(E_OK);
+    }
 }
 
 EParsing Pattern::compile(Compilers::Input *input)
 {
+    PatternsRegistry::unregisterPattern(id(), this);
+
     Internal::Compiler compiler(*m_description, *m_guard);
     if (!compiler.compile(input, cfPartialInput))
         return compiler.lastError();
     else
+    {
+        PatternsRegistry::registerPattern(id(), this);
         return EParsing(E_OK);
+    }
 }
 
 //CheckResult Pattern::check(Context &c, CheckInfo &info)
@@ -179,6 +186,21 @@ bool PatternsSet::haveLeftRecursion() const
     }
 
     return false;
+}
+
+int PatternsSet::maxLength() const
+{
+    int result = 0;
+
+    ConstIterator itPattern;
+    forall(itPattern, *this)
+    {
+        int pLength = (*itPattern)->maxLength();
+        if (pLength > result)
+            result = pLength;
+    }
+
+    return result;
 }
 
 

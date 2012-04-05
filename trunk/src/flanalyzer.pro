@@ -21,8 +21,6 @@ SOURCES += gui/main.cpp\
     fractallib/patterns/functions/Self.cpp \
     fractallib/patterns/functions/IsPrev.cpp \
     fractallib/patterns/functions/Near.cpp \
-    fractallib/parsers/DynamicMultiPass.cpp \
-    fractallib/parsers/AbstractDynamicParser.cpp \
     fractallib/trees/Metrics.cpp \
     fractallib/Forecast.cpp \
     fractallib/markers/SimpleIncremental.cpp \
@@ -43,8 +41,6 @@ HEADERS  += gui/MainWindow.h \
     fractallib/patterns/functions/IsPrev.h \
     fractallib/patterns/functions/Near.h \
     gui/Utils.h \
-    fractallib/parsers/DynamicMultiPass.h \
-    fractallib/parsers/AbstractDynamicParser.h \
     fractallib/trees/Metrics.h \
     fractallib/Forecast.h \
     fractallib/trees/metrics/Subtree.h \

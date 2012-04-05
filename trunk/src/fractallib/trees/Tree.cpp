@@ -94,12 +94,15 @@ void Tree::add(Node *node)
             Layer::Iterator i;
             forall(i, layer)
             {
-                if ((*i)->end() <= node->begin())
+                if ((*i)->end() < node->begin())
                 {
                     layer.insert(i, node);
                     break;
                 }
             }
+
+            if (i == layer.end())
+                layer.push_back(node);
         }
         else
             layer.push_back(node);
@@ -211,7 +214,7 @@ void Tree::markupWithRoots()
     }
 }
 
-Node* Tree::findNode(Node *patternNode) const
+Node* Tree::findNode(Node *patternNode, FindNodeOptions options) const
 {
     if (patternNode == NULL)
         return NULL;
@@ -230,6 +233,11 @@ Node* Tree::findNode(Node *patternNode) const
             if (node->end() == patternNode->end() &&
                 node->id() == patternNode->id())
             {
+                if ((options & fnoSameOrigSequence)  &&
+                    node->origSequence() != patternNode->origSequence())
+                {
+                    continue;
+                }
                 return node;
             }
         }
@@ -259,24 +267,25 @@ int Tree::getLastUnmarkedSegment() const
 
 int Tree::floatingBegin() const
 {
-    const Layer &leafs = this->leafs();
     int r = m_timeSeries.size();
+//    const Layer &leafs = this->leafs();
 
-    if (levelCount() == 0)
-        return r;
+//    if (levelCount() == 0)
+//        return r;
 
-    Layer::ConstIterator node;
 
-    forall(node, leafs)
-    {
-        if ((*node)->status() == nsFloating)
-        {
-            if ((*node)->begin() < r)
-                r = (*node)->begin();
-        }
-        else
-            return r;
-    }
+//    Layer::ConstIterator node;
+
+//    forall(node, leafs)
+//    {
+//        if ((*node)->status() == nsFloating)
+//        {
+//            if ((*node)->begin() < r)
+//                r = (*node)->begin();
+//        }
+//        else
+//            return r;
+//    }
 
     return r;
 }
@@ -307,7 +316,7 @@ TreeCompareResult Tree::compare(const Tree &tree) const
     // Perform deep analysis of non zero levels
     ///////////////////////////////////////////////
 
-    // Nodes from usnique levels
+    // Nodes from unique levels
     if (this->levelCount() > tree.levelCount())
     {
         int treeLevelCount = this->levelCount();
@@ -333,7 +342,7 @@ TreeCompareResult Tree::compare(const Tree &tree) const
         // remember nodes that already been checked
         forall(node, frstLevel)
         {
-            Node *secondNode = tree.findNode(*node);
+            Node *secondNode = tree.findNode(*node, fnoSameOrigSequence);
             if (secondNode != NULL)
             {
                 tcr.totalCommonNodes++;
@@ -352,6 +361,19 @@ TreeCompareResult Tree::compare(const Tree &tree) const
     }
 
     return tcr;
+}
+
+Node* Tree::getUnfinishedNode(int level) const
+{
+    if (level < 0 || level >= levelCount())
+        return NULL;
+
+    const Layer &layer = this->nodesByLevel(level);
+    Node *node = layer.back();
+    if (node->children().size() < node->origSequence().size())
+        return node;
+
+    return NULL;
 }
 
 void Tree::removeEmptyTopLevels() const

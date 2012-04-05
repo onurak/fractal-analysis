@@ -512,8 +512,8 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
       *
       * Node         = Name ["_" digit+]
       * MaskedNode   = NodeMask ["_" NodeIndex]
-      * NodeMask     = (Name | "?")
-      * NodeIndex    = digit+ | "?"
+      * NodeMask     = (Name | "*")
+      * NodeIndex    = digit+ | "*"
       * Name         = alpha (digit | alpha)*
       * Number       = digit* ["." digit*] | "." digit+
       * BoolConst    = "true" | "false"
@@ -611,7 +611,7 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
                         m_l = LEX_NAME;
                 }
                 // wildcard
-                else if (c() == '?')
+                else if (c() == '*')
                 {
                     gc();
 
@@ -622,7 +622,7 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
                         if (c() != '_')
                             throw EParsing(E_SYNTAX_ERROR, m_input->line(), m_input->column(),
                                            "Name wildcard must have an index");
-                        m_name = "?";
+                        m_name = "*";
                         m_l = LEX_INDEXED_WILDCARD;
                         gc();
                     }
@@ -844,7 +844,7 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
                 {
                     /*
                     int nameId =
-                            m_name != "?" ?
+                            m_name != "*" ?
                                 IDGenerator::idOf(m_name) :
                                 IDGenerator::WILDCARD;
                     */
@@ -977,7 +977,7 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
             else if (m_l == LEX_INDEXED_NAME || m_l == LEX_INDEXED_WILDCARD)
             {
                 m_cinode.id =
-                        m_name != "?" ?
+                        m_name != "*" ?
                             IDGenerator::idOf(m_name) :
                             IDGenerator::WILDCARD;
                 gl();

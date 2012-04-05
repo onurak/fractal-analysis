@@ -19,3 +19,40 @@ Node* Layer::getPrevNearestTo(int position) const
     }
     return back();
 }
+
+Node* Layer::lastNode() const
+{
+    if (size() == 0) return NULL;
+
+    Node *node = front();
+
+    Layer::ConstIterator i;
+    forall(i, *this)
+    {
+        if ((*i)->end() > node->end())
+            node = *i;
+    }
+
+    return node;
+}
+
+Node* Layer::firstNode() const
+{
+    if (size() == 0) return NULL;
+
+    Node *node = front();
+    if (node->begin() == 0)
+        return node;
+
+    Layer::ConstIterator i;
+    forall(i, *this)
+    {
+        if ((*i)->begin() == 0)
+            return *i;
+
+        if ((*i)->end() > node->end())
+            node = *i;
+    }
+
+    return node;
+}

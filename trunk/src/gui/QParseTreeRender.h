@@ -89,13 +89,6 @@ public:
         forestChanged();
     }
 
-    double yMult() const { return m_yMult; }
-    void setYMult(double value)
-    {
-        m_yMult = value;
-        timeSeriesChanged();
-    }
-
     bool isShowAllForecasts() const
     {
         return m_isShowAllForecasts;
@@ -105,6 +98,13 @@ public:
         m_isShowAllForecasts = value;
         timeSeriesChanged();
     }
+
+    double scale() const { return m_scale; }
+    void setScale(double value) {
+        m_scale = value;
+        forestChanged();
+    }
+
 
     void setMousePos(double x, double y);
     double currentValue(bool *ok) const;
@@ -124,15 +124,16 @@ protected:
                        LayerDrawingOptions options = ldoNone);
     void prepare();
 
-    inline double tox(const double &x)
+    inline double tox(const double &x) const
     {
-        return (x - m_tsMinTime) / (m_tsMaxTime - m_tsMinTime);
+        return ((x - m_tsMinTime) / (m_tsMaxTime - m_tsMinTime));
     }
 
-    inline double toy(const double &y)
+    inline double toy(const double &y) const
     {
-        return y / m_yHalfRange;
+        return (y / m_yHalfRange);
     }
+
 
 private:
     int m_currentTree;
@@ -152,7 +153,7 @@ private:
     double m_tsMaxValue;
     double m_tsMinTime;
     double m_tsMaxTime;
-    double m_yMult;
+    double m_scale;
     bool m_isShowAllForecasts;
 
     double m_mouseX, m_mouseY;

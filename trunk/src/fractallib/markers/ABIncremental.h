@@ -37,17 +37,28 @@ public:
 protected:
     void growTree(
         const TimeSeries &ts, Trees::Tree &tree,
-        Patterns::Matcher &matcher, int begin, int end);
+        Patterns::Matcher &matcher, int begin, int end,
+        Patterns::PatternsSet &patterns,
+        Trees::Node oldLastSymbol);
 
     bool growLayer(
         const TimeSeries &ts, Trees::Tree &tree,
-        Patterns::Matcher &matcher, int begin, int end);
+        Patterns::Matcher &matcher, int begin, int end, Patterns::PatternsSet &patterns);
 
-    void clamp(Trees::Tree &tree, Trees::Layer &nodes);
+    bool match(Patterns::Matcher &matcher, Patterns::Context &context, Patterns::PatternsSet &patterns);
 
-    bool match(Patterns::Matcher &matcher, Patterns::Context &context);
+    void insertNode(Patterns::Context &context, Patterns::CheckInfo &ci,
+                    Patterns::PatternsSet &patterns);
 
-    bool tryInsertNode(Patterns::Context &context, Patterns::CheckInfo &ci);
+    bool recheckNodeGuard(Patterns::Context &context, Trees::Node *node);
+
+    //! Update and check that node's parents (direct and indirect) are still valid
+    /**
+      * @returns NULL if ok or first parent that is invalid
+      */
+    Trees::Node* recheckNodeParents(Patterns::Context &context, Trees::Node *node);
+
+    void eraseNode(Trees::Tree &tree, Trees::Node *node);
 };
 
 }} // namespaces

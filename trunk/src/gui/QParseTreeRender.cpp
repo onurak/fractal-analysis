@@ -110,7 +110,7 @@ void QParseTreeRender::drawTreeLayer(
         tmpNode.setBegin(node->begin());
         tmpNode.setEnd(node->end());
         tmpNode.setLevel(node->level());
-        tmpNode.setStatus(node->status());
+        //tmpNode.setStatus(node->status());
 
         QVariant varNode;
         varNode.setValue(tmpNode);
@@ -120,7 +120,7 @@ void QParseTreeRender::drawTreeLayer(
         qreal x1 = tox(m_ts->time(node->begin()));
         qreal x2 = tox(m_ts->time(node->end()));
 
-        if (node->status() == FL::nsFinished)
+        if (node->isFinished())
         {
             m_scene->addLine(x1, y, x2, y, finishedNodePen);
         }
@@ -138,14 +138,31 @@ void QParseTreeRender::drawTreeLayer(
         QString nodeName = QStr(FL::IDGenerator::nameOf(node->id()));
         if (nodeName.isEmpty())
             nodeName = "?";
+        if (!node->isFinished())
+        {
+            nodeName += "  (";
+            for (size_t i = node->children().size(); i < node->origSequence().size(); ++i)
+            {
+                QString cinodeName = QStr(FL::IDGenerator::nameOf(node->origSequence()[i].id));
+                if (cinodeName.isEmpty())
+                    cinodeName = "?";
+
+                nodeName += cinodeName;
+                if (i != node->origSequence().size()-1)
+                    nodeName += ", ";
+            }
+            nodeName += ")";
+        }
+
         QGraphicsSimpleTextItem *item = m_scene->addSimpleText(nodeName, font);
         item->setData(ASSIGNED_NODE, varNode);
         item->setBrush(color);
         //item->setPos((x1 + x2)/2, y);
         item->setPos(x1, y);
-        qreal hScale = 0.5/(m_view->matrix().m11());
-        qreal vScale = 0.5/(m_view->matrix().m22());
-
+//        qreal hScale = 0.5/(m_view->matrix().m11());
+//        qreal vScale = 0.5/(m_view->matrix().m22());
+        qreal hScale = 0.003;
+        qreal vScale = -0.009;
         item->scale(hScale, vScale);
 
         // Draw node connections
@@ -157,13 +174,13 @@ void QParseTreeRender::drawTreeLayer(
                 m_scene->addLine(x1, y, x1, tsY1, dotPen)->setData(ASSIGNED_NODE, varNode);
             }
             qreal tsY2 = toy(m_ts->value(node->end()));
-            if (node->status() != FL::nsUnfinished)
+            if (node->isFinished())
                 m_scene->addLine(x2, y, x2, tsY2, dotPen)->setData(ASSIGNED_NODE, varNode);
         }
         else
         {
             m_scene->addLine(x1, y, x1, y+0.01, finishedNodePen);
-            if (node->status() != FL::nsUnfinished)
+            if (node->isFinished())
                 m_scene->addLine(x2, y, x2, y+0.01, finishedNodePen)->setData(ASSIGNED_NODE, varNode);
         }
 
@@ -249,8 +266,8 @@ void QParseTreeRender::drawCoordinateSystem()
     m_vertCoordLine->setVisible(false);
 
     // Fit scene
-    if (m_view)
-        m_view->fitInView(0.0, -1.0, 1.0, 2.0);
+//    if (m_view)
+//        m_view->fitInView(-0.5, -1.5, 2.0, 3.0);
 }
 
 void QParseTreeRender::prepare()
@@ -282,13 +299,13 @@ void QParseTreeRender::setMousePos(double x, double y)
 
     if (m_horCoordLine)
     {
-        m_horCoordLine->setVisible(y >= -1 && y <= 1);
+//        m_horCoordLine->setVisible(y >= -1 && y <= 1);
         m_horCoordLine->setLine(0, y, 1, y);
     }
 
     if (m_vertCoordLine)
     {
-        m_vertCoordLine->setVisible(x >= 0 && x <= 1);
+//        m_vertCoordLine->setVisible(x >= 0 && x <= 1);
         m_vertCoordLine->setLine(x, -1, x, 1);
     }
 
