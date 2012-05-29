@@ -894,7 +894,7 @@ protected:
     {
         static char **varBuffers = NULL;
         static int varBuffersPos;
-        static int const varBuffersMax = 1000;
+        static int const varBuffersMax = 10000;
         // first call? - create buffers pull
         if (varBuffers == NULL)
         {

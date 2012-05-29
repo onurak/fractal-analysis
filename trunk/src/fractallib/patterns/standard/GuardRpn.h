@@ -53,12 +53,37 @@ public:
             return NULL;
         }
     };
+
+
+    enum VisualAttributeType
+    {
+        vatLine
+    };
+
+    struct RawVisualAttribute
+    {
+        VisualAttributeType type;
+        std::vector<Internal::Program*> points;
+    };
+
+    typedef std::vector<RawVisualAttribute> RawVisualAttributes;
+
+    struct VisualAttribute
+    {
+        VisualAttributeType type;
+        std::vector<double> points;
+    };
+
+    typedef std::vector<VisualAttribute> VisualAttributes;
+
 public:
     GuardRpn(const FL::Patterns::Description &description);
     virtual ~GuardRpn();
 
     virtual FL::Exceptions::EParsing compile(Compilers::Input &i);
     virtual bool check(Context &c);
+
+    virtual VisualAttributes visualAttributes();
 private:
     //! Find guards suitable for node.
     /*! List of guard programs will be returned into
@@ -74,9 +99,15 @@ private:
       */
     bool getGuardsForNode(FL::Trees::Node *node);
 
+    //! Internal temporary variable where getGuardsForNode()
+    //! returns the result
     std::vector<Internal::Program*> m_nodeGuards;
 
+    //! List of programs for nodes
     GuardSet m_rpnPrograms;
+
+    //! List of visual attributes
+    RawVisualAttributes m_visualAttributes;
 };
 
 }}} // namespaces

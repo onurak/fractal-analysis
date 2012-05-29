@@ -161,7 +161,7 @@ void Forecaster::forecastMaxLength(TimeSeries &ts, Tree &tree, Forecast &forecas
 
             fi.pos = ts.size()-1;
             fi.tree = &tree;
-            fi.node = lastNode;
+            fi.patternName = IDGenerator::nameOf(lastNode->id());
             forecast.push_back(fi);
         }
 

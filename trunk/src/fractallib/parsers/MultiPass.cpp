@@ -145,17 +145,30 @@ bool MultiPass::match(Matcher &matcher, Context &context)
 
             // New context for new branch
             Context* newContext = new Context(context);
+            newContext->buildLastParsed(seq);
+
             Node *candidate = newContext->candidateNode();
 
             candidate->origSequence() = seq;
             candidate->setId(itSequence->pattern->id());
 
             // Insert candidate node into output tree
-            newContext->buildLastParsed(seq);
             Layer::Iterator child;
             forall(child, newContext->lastParsed())
                 (*child)->setParent(candidate);
             newContext->outputTree().add(candidate);
+
+            // Node isn't finished and starts with itselves - skip it
+            if (!candidate->isFinished())
+            {
+                if (candidate->children().front()->id() == itSequence->pattern->id())
+                {
+                    delete newContext->candidateNode();
+                    delete newContext;
+                    continue;
+                }
+            }
+
 
             // Remember modification
             //context.modification().push_back(context.candidateNode());

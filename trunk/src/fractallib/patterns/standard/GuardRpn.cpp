@@ -494,7 +494,8 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
       *
       * Grammar:
       * \code
-      * S            = [NodeCond ("," NodeCond)*] ";"
+      * S            = [Attribute ("," Attribute)*] ";"
+      * Attribute    = NodeCond | VisualAttribute
       * NodeCond     = MaskedNode ":" Expr
       * Expr         = BoolOr | IfThenElse
       * BoolOr       = BoolAnd ("||" BoolAnd)*
@@ -517,6 +518,9 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
       * Name         = alpha (digit | alpha)*
       * Number       = digit* ["." digit*] | "." digit+
       * BoolConst    = "true" | "false"
+      *
+      * VisualAttribute = "visual" ":" VisualFigure ("," VisualFigure)*
+      * VisualFigure    = "line" "(" Expr "," Expr "," Expr "," Expr ")"
       * \endcode
       */
 
@@ -542,6 +546,8 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
             m_reservedWords["not"]     = LEX_NOT;
             m_reservedWords["or"]      = LEX_OR;
             m_reservedWords["and"]     = LEX_AND;
+            m_reservedWords["visual"]  = LEX_VISUAL;
+            m_reservedWords["line"]    = LEX_VISUAL_LINE;
 
             // enable standard lexems
             filterLexeme(LEX_PLUS,      true);
@@ -654,6 +660,8 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
         static const LexemeId LEX_INDEXED_NAME      = 23;
         static const LexemeId LEX_WILDCARD          = 24;
         static const LexemeId LEX_INDEXED_WILDCARD  = 25;
+        static const LexemeId LEX_VISUAL            = 50;
+        static const LexemeId LEX_VISUAL_LINE       = 51;
 
         int LEX2OP(LexemeId lex)
         {
@@ -680,17 +688,60 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
 
             if (m_l != LEX_SEMICOLON)
             {
-                NodeCond();
+                Attribute();
 
                 while (m_l == LEX_COMMA)
                 {
                     gl();
-                    NodeCond();
+                    Attribute();
                 }
 
                 if (m_l != LEX_SEMICOLON)
                     throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), ";");
             }
+        }
+
+        void Attribute()
+        {
+            if (m_l == LEX_NAME || m_l == LEX_INDEXED_NAME || m_l == LEX_INDEXED_WILDCARD)
+                NodeCond();
+            else if (m_l == LEX_VISUAL)
+                VisualAttribute();
+            else
+                throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), "attribute");
+        }
+
+        void VisualAttribute()
+        {
+            if (m_l != LEX_VISUAL)
+                throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), "visual");
+            gl();
+            if (m_l != LEX_COLON)
+                throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), ":");
+            gl();
+            if (m_l == LEX_VISUAL_LINE)
+            {
+                gl();
+                VisualLine();
+            }
+            else
+                throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), "line");
+
+            while (m_l == LEX_COMMA)
+            {
+                if (m_l == LEX_VISUAL_LINE)
+                {
+                    gl();
+                    VisualLine();
+                }
+                else
+                    throw EParsing(E_EXPECTED_TOKEN, m_input->line(), m_input->column(), "line");
+            }
+        }
+
+        void VisualLine()
+        {
+
         }
 
         void NodeCond()
@@ -1089,6 +1140,13 @@ GuardRpn::~GuardRpn()
     forall(i, m_rpnPrograms)
         delete i->program;
     m_rpnPrograms.clear();
+
+    RawVisualAttributes::iterator a;
+    std::vector<Internal::Program*>::iterator p;
+    forall(a, m_visualAttributes)
+        forall(p, a->points)
+            delete *p;
+    m_visualAttributes.clear();
 }
 
 
@@ -1174,4 +1232,24 @@ bool GuardRpn::check(Context &c)
     }
 
     return true;
+}
+
+GuardRpn::VisualAttributes GuardRpn::visualAttributes()
+{
+    VisualAttributes attr;
+
+    RawVisualAttributes::iterator rattr;
+    forall(rattr, m_visualAttributes)
+    {
+        std::vector<double> points;
+        std::vector<Internal::Program*>::iterator p;
+        forall(p, rattr->points)
+        {
+            //points.push_back();
+        }
+
+        //attr.push_back(VisualAttribute(rattr->type, points));
+    }
+
+    return attr;
 }

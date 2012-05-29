@@ -35,7 +35,8 @@ FL::ParseResult ABIncremental::analyze(
     const TimeSeries &ts,
     Trees::Forest &forest,
     Patterns::Matcher &matcher,
-    Patterns::PatternsSet &patterns)
+    Patterns::PatternsSet &patterns,
+    Trees::MetricsSet &metrics)
 {
     ParseResult result;
 
@@ -80,8 +81,35 @@ FL::ParseResult ABIncremental::analyze(
             }
             else
                 ++itTree;
-
         }
+
+//        MetricsSet::iterator m;
+//        bool stEnabled = true;
+//        forall(m, metrics)
+//        {
+//            FL::Trees::Metric *metric = *m;
+//            if (metric->name() == "Subtree")
+//            {
+//                stEnabled = metric->isEnabled();
+//                metric->setEnabled(false);
+//            }
+//        }
+
+//        for (itTree = forest.begin(); itTree != forest.end(); )
+//        {
+//            FL::Trees::Tree *tree = *itTree;
+//            if (!metrics.filter(*tree, forest))
+//            {
+//                delete tree;
+//                itTree = forest.erase(itTree);
+//            }
+//            else
+//                ++itTree;
+//        }
+
+//        forall(m, metrics)
+//            if ((*m)->name() == "Subtree")
+//                (*m)->setEnabled(stEnabled);
     }
     catch (const EAnalyze &e)
     {
@@ -106,8 +134,8 @@ void ABIncremental::growTree(
 
     Node *newLastSymbol = leafs.getLastNode();
 
-    if (oldLastSymbol.id() == newLastSymbol->id() &&
-        oldLastSymbol.begin() == newLastSymbol->begin())
+    if ( (oldLastSymbol.id() == newLastSymbol->id()) &&
+         (oldLastSymbol.begin() == newLastSymbol->begin()))
         return;
 
     // Update unfinished nodes of higher level.
@@ -141,7 +169,8 @@ void ABIncremental::growTree(
             CINode expectedNode = unfinished->origSequence().at(ebnfLastPos);
 
             // Compare it to parsed symbol
-            if (expectedNode.id != newLastSymbol->id())
+            if (expectedNode.id != newLastSymbol->id() &&
+                !FL::IDGenerator::isSynonyms(expectedNode.id, newLastSymbol->id()))
             {
                 eraseNode(tree, unfinished);
                 break;
@@ -364,7 +393,7 @@ Node* ABIncremental::recheckNodeParents(Patterns::Context &context, Trees::Node 
     return NULL;
 }
 
-void ABIncremental::eraseNode(Tree &tree, Node *node, int level)
+void ABIncremental::eraseNode(Tree &tree, Node *node)
 {
     while (node->children().size() > 0)
         node->children().front()->setParent(tree.virtualRoot(), true);
@@ -374,7 +403,7 @@ void ABIncremental::eraseNode(Tree &tree, Node *node, int level)
     if (parent != NULL)
     {
         node->setParent(NULL);
-        eraseNode(tree, parent, 1);
+        eraseNode(tree, parent);
     }
 
     tree.remove(node);

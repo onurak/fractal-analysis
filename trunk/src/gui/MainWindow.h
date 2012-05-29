@@ -42,8 +42,8 @@ private:
     void readSettings();
     void writeSettings();
     void markup();
-    void buildTrees();
-    void dynamicStep();
+    void staticAnalysis();
+    void dynamicAnalysis();
     void updateForecast();
 
     void loadPatterns(const QString &fileName,
@@ -147,25 +147,6 @@ private slots:
     void on_actionLogScaleY_triggered();
     void on_actionIncFontSize_triggered();
     void on_actionDecFontSize_triggered();
-};
-
-/* Background analysis task */
-class BackgroundParserTask : public QThread
-{
-private:
-    FL::Parsers::AbstractParser *m_parser;
-    MainWindow &mw;
-public:
-    BackgroundParserTask(MainWindow &mw, FL::Parsers::AbstractParser *parser)
-        : m_parser(parser), mw(mw) {}
-
-protected:
-    virtual void run()
-    {
-        m_parser->analyze(
-              mw.m_timeSeries, mw.m_forest, mw.m_patterns, *mw.m_matcher, mw.m_metrics);
-        mw.onParsingFinished(m_parser);
-    }
 };
 
 #endif // MAINWINDOW_H

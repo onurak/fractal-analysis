@@ -33,7 +33,8 @@ public:
                       const TimeSeries &ts,
                       Trees::Forest &forest,
                       Patterns::Matcher &matcher,
-                      Patterns::PatternsSet &patterns);
+                      Patterns::PatternsSet &patterns,
+                      Trees::MetricsSet &metrics);
 protected:
     //! Grow tree using special patterns set for zero level
     void growTree(
@@ -64,7 +65,7 @@ protected:
     Trees::Node* recheckNodeParents(Patterns::Context &context, Trees::Node *node);
 
     //! Erase node from tree with all its parents
-    void eraseNode(Trees::Tree &tree, Trees::Node *node, int level=0);
+    void eraseNode(Trees::Tree &tree, Trees::Node *node);
 };
 
 }} // namespaces

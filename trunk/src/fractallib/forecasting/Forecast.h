@@ -30,9 +30,7 @@ class ForecastItem
 {
 public:
     ForecastItem():
-        pos(0),
-        minDuration(0), maxDuration(0), minValue(0), maxValue(0),
-        tree(NULL)
+        pos(0), minDuration(0), maxDuration(0), minValue(0), maxValue(0), tree(NULL)
     {}
 
     ~ForecastItem() {}
@@ -40,8 +38,8 @@ public:
     int pos;
     double minDuration, maxDuration;
     double minValue, maxValue;
-    Trees::Tree *tree;
-    Trees::Node *node;
+    std::string patternName;
+    FL::Trees::Tree *tree;
 };
 
 /*! \class Forecast
@@ -51,6 +49,13 @@ class Forecast : public std::vector<ForecastItem>
 {
 public:
     Forecast() {}
+
+    void nullTrees()
+    {
+        iterator i;
+        forall(i, *this)
+            i->tree = NULL;
+    }
 };
 
 }} // namespaces
