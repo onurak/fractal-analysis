@@ -369,9 +369,19 @@ Node* Tree::getUnfinishedNode(int level) const
         return NULL;
 
     const Layer &layer = this->nodesByLevel(level);
-    Node *node = layer.back();
-    if (node->children().size() < node->origSequence().size())
-        return node;
+    if (layer.size() == 0)
+        return NULL;
+
+    Node *lastNode = NULL;
+    for (Layer::ConstIterator i = layer.begin(); i != layer.end(); ++i)
+    {
+        Node *node = *i;
+        if (lastNode == NULL || lastNode->end() < node->end())
+            lastNode = node;
+    }
+
+    if (lastNode->children().size() < lastNode->origSequence().size())
+        return lastNode;
 
     return NULL;
 }

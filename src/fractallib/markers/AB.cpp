@@ -31,7 +31,7 @@ AB::~AB()
 }
 
 FL::ParseResult AB::analyze(
-        const TimeSeries &ts, Forest &forest, Patterns::Matcher &matcher, PatternsSet &patterns)
+        const TimeSeries &ts, Forest &forest, Patterns::Matcher &matcher, PatternsSet &patterns, MetricsSet &metrics)
 {
     ParseResult result;
 

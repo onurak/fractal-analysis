@@ -22,7 +22,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->graphicsView->scale(1, -1);
     m_render->setTimeSeries(&m_timeSeries);
     m_render->setForest(&m_forest);
-    m_render->setForecast(&m_forecast);
     m_render->setView(ui->graphicsView);
 
     connect(m_render->scene(), SIGNAL(onMouseEvent(QGraphicsSceneMouseEvent*)),
@@ -486,7 +485,7 @@ void MainWindow::markup()
     m_forecast.clear();
 
     FL::Markers::AbstractMarker *marker = new FL::Markers::AB();
-    marker->analyze(m_timeSeries, m_forest, *m_matcher, m_patterns);
+    marker->analyze(m_timeSeries, m_forest, *m_matcher, m_patterns, m_metrics);
     if (marker->wasOk())
     {
         if (m_preprocessingPatterns.size() > 0)
@@ -518,9 +517,11 @@ void MainWindow::markup()
     updateForestInfo();
 }
 
-void MainWindow::buildTrees()
+void MainWindow::staticAnalysis()
 {
     readMetrics();
+    if (m_matcher != NULL)
+        m_matcher->setAllowUnfinished(ui->cbAllowUnfinished->isChecked());
 
     FL::Parsers::AbstractParser *parser = NULL;
     if (m_staticParserName == "SinglePass")
@@ -535,8 +536,6 @@ void MainWindow::buildTrees()
           m_timeSeries, m_forest, m_patterns, *m_matcher, m_metrics);
 
     onParsingFinished(parser);
-
-    //addBackgroundTask(new BackgroundParserTask(*this, parser));
 }
 
 void MainWindow::on_actionFitAll_triggered()
@@ -570,7 +569,7 @@ void MainWindow::on_bnClearPatterns_clicked()
 
 void MainWindow::on_actionBuild_trees_triggered()
 {
-    buildTrees();
+    staticAnalysis();
 }
 
 
@@ -859,7 +858,7 @@ void MainWindow::updateMetrics(const QPair<double, double> newValue)
     ui->lbAccuracy->setText(QString("%1 %").arg(avgAccuracy * 100.0));
 }
 
-void MainWindow::dynamicStep()
+void MainWindow::dynamicAnalysis()
 {
     if (m_timeSeriesCache.size() == 0)
         return;
@@ -880,7 +879,7 @@ void MainWindow::dynamicStep()
     {
         // Markup
         marker = new FL::Markers::ABIncremental();
-        pr = marker->analyze(m_timeSeries, m_forest, *m_preprocessingMatcher, m_preprocessingPatterns);
+        pr = marker->analyze(m_timeSeries, m_forest, *m_preprocessingMatcher, m_preprocessingPatterns, m_metrics);
         if (!marker->wasOk())
             throw marker->lastError();
 
@@ -915,11 +914,12 @@ void MainWindow::updateForecast()
 {
     FL::Forecasting::Forecaster forecaster;
     forecaster.forecast(m_timeSeries, m_forest, m_forecast);
+    m_render->addForecast(m_forecast);
 }
 
 void MainWindow::on_action_Dynamic_step_triggered()
 {
-    dynamicStep();
+    dynamicAnalysis();
 }
 
 void MainWindow::on_bnDeleteCurrentTree_clicked()

@@ -76,7 +76,8 @@ public:
     void setForest(FL::Trees::Forest *forest);
     void forestChanged();
 
-    void setForecast(FL::Forecasting::Forecast *forecast);
+    void addForecast(const FL::Forecasting::Forecast &forecast);
+    void clearForecasts();
     void forecastChanged();
 
     void setView(QGraphicsView *view);
@@ -172,7 +173,7 @@ private:
     QGraphicsView *m_view;
     FL::TimeSeries *m_ts;
     FL::Trees::Forest *m_forest;
-    FL::Forecasting::Forecast *m_forecast;
+    QVector<FL::Forecasting::Forecast> m_forecasts;
 
     double m_tsMinValue;
     double m_tsMaxValue;

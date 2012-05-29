@@ -31,7 +31,8 @@ public:
                       const TimeSeries &ts,
                       Trees::Forest &forest,
                       Patterns::Matcher &matcher,
-                      Patterns::PatternsSet &patterns);
+                      Patterns::PatternsSet &patterns,
+                      Trees::MetricsSet &metrics);
 };
 
 }} // namespaces
