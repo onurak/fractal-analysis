@@ -72,7 +72,7 @@ public:
 
     //! Get parent of node
     inline Node* parent() const { return m_parent; }
-    void setParent(Node* value);
+    void setParent(Node* value, bool orderedInsert = false);
 
     //! Get Id of name of node
     inline int id() const { return m_id; }

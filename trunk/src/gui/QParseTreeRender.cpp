@@ -3,14 +3,16 @@
 QParseTreeRender::QParseTreeRender()
 {
     m_scene = new QParseTreeScene();
-    m_scene->setSceneRect(0.0, -1.0, 1.0, 2.0);
+    //m_scene->setSceneRect(0.0, -1.0, 1.0, 2.0);
     m_view = NULL;
     m_ts = NULL;
     m_forest = NULL;
     m_showRoots = true;
     m_mouseX = m_mouseY = 100;
-    m_horCoordLine = m_horCoordLine = NULL;
     m_haveCurrentNode = false;
+    m_forecastStyle = fsNone;
+    m_isYLogScale = false;
+    m_fontSize = 10;
 }
 
 QParseTreeRender::~QParseTreeRender()
@@ -35,7 +37,18 @@ void QParseTreeRender::setForest(FL::Trees::Forest *forest)
     forestChanged();
 }
 
+void QParseTreeRender::setForecast(FL::Forecasting::Forecast *forecast)
+{
+    m_forecast = forecast;
+    forecastChanged();
+}
+
 void QParseTreeRender::forestChanged()
+{
+    draw();
+}
+
+void QParseTreeRender::forecastChanged()
 {
     draw();
 }
@@ -48,6 +61,92 @@ void QParseTreeRender::draw()
     drawCoordinateSystem();
     drawTimeSeries();
     drawForest();
+    drawForecast();
+}
+
+struct TextRec {
+    QString s;
+    double x1, y1, x2, y2;
+    FL::Trees::Node *node;
+};
+
+void QParseTreeRender::drawForecast()
+{
+    using namespace FL::Forecasting;
+
+    if (m_forecast == NULL || m_forest == NULL || m_forest->size() == 0 || m_ts == NULL || m_forecast->size() == 0)
+        return;
+
+    double tx1 = 0.0, tx2 = 10e10, ty1 = -10e10, ty2 = 10e10;
+
+
+    QBrush brush(QColor(0, 0, 255, 100));
+    QPen pen;
+    QFont font("Arial");
+    font.setPixelSize(m_fontSize);
+
+    const FL::Trees::Tree *tree = m_forest->at(m_currentTree);
+
+    QStack<TextRec> textStack;
+
+    Forecast::const_iterator itfi;
+    forall(itfi, *m_forecast)
+    {
+        const FL::Forecasting::ForecastItem &fi = *itfi;
+        if (!(m_forecastStyle & fsAllForest) && fi.tree != tree)
+            continue;
+
+        double x = m_ts->time(fi.pos);
+        double y = m_ts->value(fi.pos);
+
+        double x1 = tox(x + fi.minDuration),  x2 = tox(x + fi.maxDuration);
+        double y1 = toy(y + fi.minValue),     y2 = toy(y + fi.maxValue);
+
+        if (!(m_forecastStyle & fsIntersectionOnly))
+        {
+            TextRec tr;
+            tr.s = QString("(%1: time: %2-%3, value: %4-%5)")
+                    .arg(QStr(FL::IDGenerator::nameOf(fi.node->id())))
+                    .arg(fi.minDuration, 0, 'f', 2)
+                    .arg(fi.maxDuration, 0, 'f', 2)
+                    .arg(fi.minValue, 0, 'f', 2)
+                    .arg(fi.maxValue, 0, 'f', 2);
+            tr.x1 = x1;
+            tr.x2 = x2;
+            tr.y1 = y1;
+            tr.y2 = y2;
+            tr.node = fi.node;
+            textStack.push(tr);
+
+            m_scene->addRect(x1, y1, x2-x1, y2-y1, pen, brush);
+        }
+        else
+        {
+            if (x1 > tx1)
+                tx1 = x1;
+            if (x2 < tx2)
+                tx2 = x2;
+            if (y1 > ty1)
+                ty1 = y1;
+            if (y2 < ty2)
+                ty2 = y2;
+        }
+    }
+
+    if (m_forecastStyle & fsIntersectionOnly)
+    {
+        m_scene->addRect(tx1, ty1, tx2-tx1, ty2-ty1, pen, brush);
+    }
+
+    for (QStack<TextRec>::iterator i = textStack.begin(); i != textStack.end(); ++i)
+    {
+        QGraphicsSimpleTextItem *item = m_scene->addSimpleText(i->s, font);
+        double x1 = i->x1, y1 = i->y1, x2 = i->x2, y2 = i->y2;
+        item->setPos(x1 + (x2-x1)/2, y1 + (y2-y1)/2 + (i->node->level()-1) * 1);
+        item->setBrush(Qt::yellow);
+        item->scale(0.1, -0.1);
+    }
+
 }
 
 void QParseTreeRender::drawForest()
@@ -95,9 +194,10 @@ void QParseTreeRender::drawTreeLayer(
     QPen finishedNodePen(color);
     QPen dotPen(Qt::DashDotLine);
     dotPen.setColor(color);
-    QFont font("Arial", 8);
-    const double treeOffset = 0.1;
-    const double delta = 0.1;
+    QFont font("Arial");
+    font.setPixelSize(m_fontSize);
+    const double treeOffset = 0.2*m_fontSize;
+    const double delta = 0.1*m_fontSize;
 
 
     FL::Trees::Layer::ConstIterator itNode;
@@ -161,9 +261,7 @@ void QParseTreeRender::drawTreeLayer(
         item->setPos(x1, y);
 //        qreal hScale = 0.5/(m_view->matrix().m11());
 //        qreal vScale = 0.5/(m_view->matrix().m22());
-        qreal hScale = 0.003;
-        qreal vScale = -0.009;
-        item->scale(hScale, vScale);
+        item->scale(0.1, -0.1);
 
         // Draw node connections
         if (node->level() == 0)
@@ -179,9 +277,9 @@ void QParseTreeRender::drawTreeLayer(
         }
         else
         {
-            m_scene->addLine(x1, y, x1, y+0.01, finishedNodePen);
+            m_scene->addLine(x1, y, x1, y+0.1, finishedNodePen);
             if (node->isFinished())
-                m_scene->addLine(x2, y, x2, y+0.01, finishedNodePen)->setData(ASSIGNED_NODE, varNode);
+                m_scene->addLine(x2, y, x2, y+0.1, finishedNodePen)->setData(ASSIGNED_NODE, varNode);
         }
 
         // Draw node time series
@@ -216,58 +314,50 @@ void QParseTreeRender::setView(QGraphicsView *view)
 
 void QParseTreeRender::drawCoordinateSystem()
 {
-//    double x_min = 0, x_max = 1000;
-//    double y_min = -500, y_max = 500;
-//    double x_step = 50;
-//    double y_step = 50;
-
-//    // Compute min/max values
-//    if (m_ts == NULL || m_ts->values().size() < 2)
-//    {
-//        x_min = 0;
-//        x_max = 100;
-//        y_min = -50;
-//        y_max = 50;
-//        x_step = y_step = 10;
-//    }
-//    else
-//    {
-//        x_min = 0;
-//        x_max = m_ts->values().size() * 7;
-//        x_step = (x_max - x_min) / 10;
-
-//        y_min = floor(m_tsYMin) - 10.;
-//        y_max = floor(m_tsYMax) + 10.;
-
-//        y_step = (y_max - y_min) / 10;
-//    }
-
-
     // Draw axis
     QPen penGrid(QColor(10, 50, 10));
     QPen penAxis(QColor(80, 170, 80));
-    QPen penCoords(QColor(5, 40, 5));
+    QPen penCoords(QColor(80, 170, 80));
+    QFont font("Arial");
+    font.setPixelSize(m_fontSize);
+
+    double minX = tox(m_tsMinTime), maxX = tox(m_tsMaxTime);
+    double minY = toy(m_tsMinValue), maxY = toy(m_tsMaxValue);
+
+    if (maxX - minX < 0.1)
+        maxX = minX + 1;
+    if (maxY - minY < 0.1)
+        maxY = minY + 1;
+    double xStep = (maxX-minX)/10;
+    double yStep = (maxY-minY)/20;
 
     // Ox
-    for (double x = 0.0; x <= 1.0; x += 0.1)
-        m_scene->addLine(x, -1.0, x, 1.0, penGrid);
+    for (double x = minX; x <= maxX; x += xStep)
+    {
+        m_scene->addLine(x, minY, x, maxY, penGrid);
+        QGraphicsSimpleTextItem *item = m_scene->addSimpleText(QString("%1").arg(x, 0, 'f', 2), font);
+        if (x != 0)
+        {
+            item->setPos(x + 0.005, (maxY-minY)/2. - 0.005);
+            item->scale(0.1, -0.1);
+            item->setBrush(penCoords.color());
+        }
+    }
 
     // Oy
-    for (double y = -1.0; y <= 1.0; y += 0.1)
-        m_scene->addLine(0, y, 1.0, y, penGrid);
+    for (double y = minY; y <= maxY; y += yStep)
+    {
+        m_scene->addLine(minX, y, maxX, y, penGrid);
+        QGraphicsSimpleTextItem *item = m_scene->addSimpleText(QString("%1").arg(y, 0, 'f', 2), font);
+        item->setPos(minX + 0.005, y);
+        item->scale(0.1, -0.1);
+        item->setBrush(penCoords.color());
+    }
 
     // Draw axis itselves
-    m_scene->addLine(0.0,-1.0, 0.0, 1.0, penAxis);
-    m_scene->addLine(0.0, 0.0, 1.0, 0.0, penAxis);
-
-    m_horCoordLine = m_scene->addLine(0, 0, 1, 0, penCoords);
-    m_horCoordLine->setVisible(false);
-    m_vertCoordLine = m_scene->addLine(0, -1, 0, 1, penCoords);
-    m_vertCoordLine->setVisible(false);
-
-    // Fit scene
-//    if (m_view)
-//        m_view->fitInView(-0.5, -1.5, 2.0, 3.0);
+    m_scene->addLine(minX, minY, minX, maxY, penAxis);
+    if (minY <= 0 && maxY >= 0)
+        m_scene->addLine(minX, 0, maxX, 0, penAxis);
 }
 
 void QParseTreeRender::prepare()
@@ -297,18 +387,6 @@ void QParseTreeRender::setMousePos(double x, double y)
     m_mouseX = x;
     m_mouseY = y;
 
-    if (m_horCoordLine)
-    {
-//        m_horCoordLine->setVisible(y >= -1 && y <= 1);
-        m_horCoordLine->setLine(0, y, 1, y);
-    }
-
-    if (m_vertCoordLine)
-    {
-//        m_vertCoordLine->setVisible(x >= 0 && x <= 1);
-        m_vertCoordLine->setLine(x, -1, x, 1);
-    }
-
     QGraphicsItem *item = m_scene->itemAt(x, y);
 
     if (item != NULL)
@@ -326,6 +404,15 @@ void QParseTreeRender::setMousePos(double x, double y)
         {
             m_haveCurrentNode = false;
         }
+    }
+}
+
+void QParseTreeRender::setYLogScale(bool value)
+{
+    if (m_isYLogScale != value)
+    {
+        m_isYLogScale = value;
+        draw();
     }
 }
 
@@ -366,3 +453,15 @@ const FL::Trees::Node* QParseTreeRender::currentNode() const
     else
         return NULL;
 }
+
+void QParseTreeRender::fitScene()
+{
+    double x = m_tsMinTime;
+    double y = m_isYLogScale ? log(m_tsMinValue) : m_tsMinValue;
+    double w = m_tsMaxTime-m_tsMinTime;
+    double h = m_isYLogScale ? log(m_tsMaxValue) - log(m_tsMinValue) : m_tsMaxValue-m_tsMinValue;
+
+    m_view->setSceneRect(QRectF(x-10, y-10, w+20, h+20));
+    m_view->fitInView(x, y, w, h, Qt::KeepAspectRatio);
+}
+

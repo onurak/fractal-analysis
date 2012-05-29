@@ -14,35 +14,34 @@ SOURCES += gui/main.cpp\
         gui/MainWindow.cpp \
     gui/QParseTreeRender.cpp \
     fractallib/patterns/functions/Value.cpp \
-    fractallib/patterns/functions/AtOneLine.cpp \
-    fractallib/patterns/functions/StartTime.cpp \
-    fractallib/patterns/functions/EndTime.cpp \
     fractallib/patterns/functions/Prev.cpp \
     fractallib/patterns/functions/Self.cpp \
     fractallib/patterns/functions/IsPrev.cpp \
     fractallib/patterns/functions/Near.cpp \
     fractallib/trees/Metrics.cpp \
-    fractallib/Forecast.cpp \
     fractallib/markers/SimpleIncremental.cpp \
     fractallib/patterns/standard/TreeMatcher.cpp \
     fractallib/markers/ABIncremental.cpp \
     fractallib/patterns/functions/CurNode.cpp \
     fractallib/patterns/functions/IsNode.cpp \
-    fractallib/patterns/functions/Length.cpp
+    fractallib/patterns/functions/Length.cpp \
+    fractallib/forecasting/Forecast.cpp \
+    fractallib/forecasting/Forecaster.cpp \
+    fractallib/patterns/functions/Abs.cpp \
+    fractallib/patterns/functions/IsLine.cpp \
+    fractallib/patterns/functions/Begin.cpp \
+    fractallib/patterns/functions/End.cpp \
+    fractallib/patterns/functions/TriangleType.cpp
 
 HEADERS  += gui/MainWindow.h \
     gui/QParseTreeRender.h \
     fractallib/patterns/functions/Value.h \
-    fractallib/patterns/functions/AtOneLine.h \
-    fractallib/patterns/functions/StartTime.h \
-    fractallib/patterns/functions/EndTime.h \
     fractallib/patterns/functions/Prev.h \
     fractallib/patterns/functions/Self.h \
     fractallib/patterns/functions/IsPrev.h \
     fractallib/patterns/functions/Near.h \
     gui/Utils.h \
     fractallib/trees/Metrics.h \
-    fractallib/Forecast.h \
     fractallib/trees/metrics/Subtree.h \
     fractallib/trees/metrics/MaxLevelsCount.h \
     fractallib/trees/metrics/MaxTrees.h \
@@ -53,7 +52,14 @@ HEADERS  += gui/MainWindow.h \
     fractallib/markers/ABIncremental.h \
     fractallib/patterns/functions/CurNode.h \
     fractallib/patterns/functions/IsNode.h \
-    fractallib/patterns/functions/Length.h
+    fractallib/patterns/functions/Length.h \
+    fractallib/forecasting/Forecaster.h \
+    fractallib/forecasting/Forecast.h \
+    fractallib/patterns/functions/Abs.h \
+    fractallib/patterns/functions/IsLine.h \
+    fractallib/patterns/functions/End.h \
+    fractallib/patterns/functions/Begin.h \
+    fractallib/patterns/functions/TriangleType.h
 
 FORMS    += gui/MainWindow.ui
 

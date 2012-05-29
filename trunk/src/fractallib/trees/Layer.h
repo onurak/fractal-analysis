@@ -27,7 +27,7 @@ public:
     Node* firstNode() const;
 
     //! Get last node (by time)
-    Node* lastNode() const;
+    Node* getLastNode() const;
 };
 
 }} // namespace

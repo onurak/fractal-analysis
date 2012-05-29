@@ -104,7 +104,7 @@ void ABIncremental::growTree(
     // Check that new symbol is the next in EBNF
     const Layer& leafs = tree.nodesByLevel(0);
 
-    Node *newLastSymbol = leafs.lastNode();
+    Node *newLastSymbol = leafs.getLastNode();
 
     if (oldLastSymbol.id() == newLastSymbol->id() &&
         oldLastSymbol.begin() == newLastSymbol->begin())
@@ -160,7 +160,9 @@ void ABIncremental::growTree(
             // Recheck parents
             Node *invalidParent = recheckNodeParents(context, unfinished);
             if (invalidParent != NULL)
+            {
                 eraseNode(tree, invalidParent);
+            }
 
             // We found unfinished node on this level so there is can't be any
             // other unfinished on higher level - break
@@ -346,10 +348,15 @@ Node* ABIncremental::recheckNodeParents(Patterns::Context &context, Trees::Node 
         // indirect parents manually
         parent->setEnd(node->end());
 
+        FL::Trees::Layer children = parent->children();
+
         // Check the guard. If it is invalid then erase
         // this node with all its parents
         if (!recheckNodeGuard(context, parent))
+        {
+            parent->children() = children;
             return parent;
+        }
 
         parent = parent->parent();
     }
@@ -357,14 +364,17 @@ Node* ABIncremental::recheckNodeParents(Patterns::Context &context, Trees::Node 
     return NULL;
 }
 
-void ABIncremental::eraseNode(Tree &tree, Node *node)
+void ABIncremental::eraseNode(Tree &tree, Node *node, int level)
 {
+    while (node->children().size() > 0)
+        node->children().front()->setParent(tree.virtualRoot(), true);
+
     Node *parent = node->parent();
 
     if (parent != NULL)
     {
         node->setParent(NULL);
-        eraseNode(tree, parent);
+        eraseNode(tree, parent, 1);
     }
 
     tree.remove(node);

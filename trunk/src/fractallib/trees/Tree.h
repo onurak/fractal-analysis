@@ -98,10 +98,13 @@ public:
 
     //! Get time of first floating node at zero level
     int floatingBegin() const;
-protected:
+
+    Node* virtualRoot() { return m_virtualRoot; }
+
     //! Insert one node to children's sequence of another at right place
     //! according to position in time series
     void insertChild(Node *dst, Node *src);
+protected:
 
     //! Remove top levels without nodes
     void removeEmptyTopLevels() const;

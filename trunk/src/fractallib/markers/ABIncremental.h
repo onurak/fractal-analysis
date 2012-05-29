@@ -35,21 +35,26 @@ public:
                       Patterns::Matcher &matcher,
                       Patterns::PatternsSet &patterns);
 protected:
+    //! Grow tree using special patterns set for zero level
     void growTree(
         const TimeSeries &ts, Trees::Tree &tree,
         Patterns::Matcher &matcher, int begin, int end,
         Patterns::PatternsSet &patterns,
         Trees::Node oldLastSymbol);
 
+    //! Grow layer of tree
     bool growLayer(
         const TimeSeries &ts, Trees::Tree &tree,
         Patterns::Matcher &matcher, int begin, int end, Patterns::PatternsSet &patterns);
 
+    //! Internal routing for matching patterns
     bool match(Patterns::Matcher &matcher, Patterns::Context &context, Patterns::PatternsSet &patterns);
 
+    //! Internal routing for nodes insertion
     void insertNode(Patterns::Context &context, Patterns::CheckInfo &ci,
                     Patterns::PatternsSet &patterns);
 
+    //! Internal routing for gurads checking
     bool recheckNodeGuard(Patterns::Context &context, Trees::Node *node);
 
     //! Update and check that node's parents (direct and indirect) are still valid
@@ -58,7 +63,8 @@ protected:
       */
     Trees::Node* recheckNodeParents(Patterns::Context &context, Trees::Node *node);
 
-    void eraseNode(Trees::Tree &tree, Trees::Node *node);
+    //! Erase node from tree with all its parents
+    void eraseNode(Trees::Tree &tree, Trees::Node *node, int level=0);
 };
 
 }} // namespaces

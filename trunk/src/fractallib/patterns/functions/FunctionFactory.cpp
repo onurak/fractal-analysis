@@ -18,9 +18,9 @@
 #include "Min.h"
 #include "Max.h"
 #include "Value.h"
-#include "AtOneLine.h"
-#include "StartTime.h"
-#include "EndTime.h"
+#include "IsLine.h"
+#include "Begin.h"
+#include "End.h"
 #include "Prev.h"
 #include "Self.h"
 #include "IsPrev.h"
@@ -28,6 +28,8 @@
 #include "CurNode.h"
 #include "IsNode.h"
 #include "Length.h"
+#include "Abs.h"
+#include "TriangleType.h"
 
 using namespace FL::Patterns::Functions;
 
@@ -73,9 +75,9 @@ void FunctionFactory::registerAll()
     registerFunction(new Max());
     registerFunction(new Min());
     registerFunction(new Value());
-    registerFunction(new AtOneLine());
-    registerFunction(new StartTime());
-    registerFunction(new EndTime());
+    registerFunction(new IsLine());
+    registerFunction(new Begin());
+    registerFunction(new End());
     registerFunction(new Prev());
     registerFunction(new Self());
     registerFunction(new IsPrev());
@@ -83,4 +85,6 @@ void FunctionFactory::registerAll()
     registerFunction(new CurNode());
     registerFunction(new IsNode());
     registerFunction(new Length());
+    registerFunction(new Abs());
+    registerFunction(new TriangleType());
 }

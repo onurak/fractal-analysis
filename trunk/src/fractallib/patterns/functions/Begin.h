@@ -14,42 +14,29 @@
  * along with Fractal Library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FORECAST_H
-#define FORECAST_H
+#ifndef BEGNI_H
+#define BEGIN_H
 
-#include "Common.h"
+#include "Function.h"
 
-namespace FL { namespace Trees { class Tree; }}
+namespace FL { namespace Patterns { namespace Functions {
 
-namespace FL {
-
-/*! \class ForecastItem
-  * \brief Rectangle where time series future values could appears.
+/*! \class Begin
+  * \brief Return start time of node of tree
   *
+  * It always has one argument of type FL::Trees::Node*.
+  * It returns its starting time.
   */
-class ForecastItem
+class Begin : public Function
 {
 public:
-    ForecastItem():
-        pos(0),
-        minDuration(0), maxDuration(0), minValue(0), maxValue(0), tree(NULL)
-    {}
+    Begin();
 
-    int pos;
-    double minDuration, maxDuration;
-    double minValue, maxValue;
-    FL::Trees::Tree *tree;
+    //! Main function of class
+    virtual const GVariant& operator()(Patterns::Context& context, FunctionArgs& args);
 };
 
-/*! \class Forecast
-  * \brief Forecast of time series future values
-  */
-class Forecast : public std::vector<ForecastItem>
-{
-public:
-    Forecast();
-};
+}}} // namespaces
 
-} // namespaces
 
-#endif // FORECAST_H
+#endif // BEGIN_H

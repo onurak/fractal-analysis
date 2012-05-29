@@ -86,9 +86,14 @@ void TreeMatcher::clearTree(TreeMatcher::TMNode *root)
 
 bool TreeMatcher::match(Context &context, CheckInfo &ci)
 {
+    return match(context, ci, m_root, context.currentRoot());
+}
 
-    Layer::ConstIterator itLayerNode = context.currentRoot();
-    TMNode *treeNode = m_root;
+bool TreeMatcher::match(Context &context,
+           CheckInfo &ci,
+           TMNode *treeNode,
+           std::list<Node*>::const_iterator itLayerNode)
+{
     TMChildren::const_iterator itNextNode;
 
     // While not reached end of tree or roots layer
@@ -104,18 +109,42 @@ bool TreeMatcher::match(Context &context, CheckInfo &ci)
                 ci.applicableSequences.push_back(*itAs);
         }
 
-        // If exists edge with specified symbol
+        // If exists edge with specified symbol or its synonym
         // then get to node pointed by this edge
 
-        itNextNode = treeNode->children.find((*itLayerNode)->id());
-
-        if (itNextNode != treeNode->children.end())
+        std::vector<int> allowedIds = IDGenerator::getSynonyms((*itLayerNode)->id());
+        if (allowedIds.size() == 1)
         {
-            treeNode = itNextNode->second;
-            ++itLayerNode;
+            itNextNode = treeNode->children.find(allowedIds[0]);
+
+            if (itNextNode != treeNode->children.end())
+            {
+                treeNode = itNextNode->second;
+                ++itLayerNode;
+            }
+            else
+                treeNode = NULL;
         }
         else
-            treeNode = NULL;
+        {
+            bool matched = false;
+            std::list<Node*>::const_iterator itNextLayerNode = itLayerNode;
+            ++itNextLayerNode;
+
+            std::vector<int>::iterator id;
+            forall(id, allowedIds)
+            {
+                itNextNode = treeNode->children.find(*id);
+
+                if (itNextNode != treeNode->children.end())
+                {
+                    if (match(context, ci, itNextNode->second, itNextLayerNode))
+                        matched = true;
+                }
+            }
+
+            return matched || ci.applicableSequences.size();
+        }
     }
 
     // End of root sequence reached,

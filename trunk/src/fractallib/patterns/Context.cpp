@@ -52,7 +52,7 @@ const Layer& Context::getNodes(int nameId, int index) const
     {
         forall(node, *m_lastParsed)
         {
-            if ((*node)->id() == nameId)
+            if ((*node)->id() == nameId || FL::IDGenerator::isSynonyms((*node)->id(), nameId))
                 m_cache->push_back(*node);
         }
     }
@@ -70,7 +70,8 @@ Node* Context::getNode(int nameId, int index) const
     forall(itNode, *m_lastParsed)
     {
         Node *node = *itNode;
-        if (node->id() == nameId && node->index() == index)
+        if ((node->id() == nameId || FL::IDGenerator::isSynonyms(node->id(), nameId))
+                && node->index() == index)
             return node;
     }
     return NULL;
@@ -199,7 +200,7 @@ void Context::copyRoots(Trees::Tree *newOutputTree, const Context& c)
     advanceCurrentRoot(c.currentRootPos());
 }
 
-const FL::TimeSeries* Context::timeSeries()
+const FL::TimeSeries* Context::timeSeries() const
 {
     return m_ts;
 }

@@ -1,42 +1,97 @@
 PATTERNS:
-    
-    ImpulseUP = 
-        up_1 dn_2 up_3 dn_4 up_5  |
-        ImpulseUP_1  ZigZagSDN_2  ImpulseUP_3  ZigZagSDN_2  ImpulseUP_5
-        @
-        dn_2: min(dn_2) > min(up_1),
-        up_3: max(up_3) >= max(up_1),
-        dn_4: min(dn_4) >= max(up_1),
-        up_5: (value(up_3) >= value(up_1) or value(up_3) >= value(up_5))
-              and
-              (max(up_5) >= max(up_3));
-              
+        
+        ##################################
+        # MOTIVE WAVES
+        ##################################
 
-    ImpulseDN = dn_1 up_2 dn_3 up_4 dn_5 @
-        up_2: max(up_2) < max(dn_1),
-        dn_3: min(dn_3) <= min(dn_1),
-        up_4: max(up_4) <= min(dn_1),
-        dn_5: (value(dn_3) >= value(dn_1) or value(dn_3) >= value(dn_5))
-              and
-              (min(dn_5) <= min(dn_3));
+        IMClassicUP = IMUP_1 CRDN_2 IMUP_3 CRDN_4 IMUP_5 @
+              CRDN_2: min(CRDN_2) >= min(IMUP_1),
+              IMUP_3: max(IMUP_3) >= max(IMUP_1),
+              CRDN_4: min(CRDN_4) >= max(IMUP_1),
+              IMUP_5: (value(IMUP_3) >= value(IMUP_1) or value(IMUP_3) >= value(IMUP_5))
+                    and
+                    (max(IMUP_5) >= max(IMUP_3));
+        
+#        IMFailedFifthUP = IMUP_1 CRDN_2 IMUP_3 CRDN_4 IMUP_5 @
+#                CRDN_4: min(CRDN_4) >= max(IMUP_1),
+#                IMUP_3: max(IMUP_3) >= max(IMUP_1),
+#                IMUP_5: (value(IMUP_3) >= value(IMUP_1) or value(IMUP_3) >= value(IMUP_5)) and
+#                      max(IMUP_5) < max(IMUP_3),
+#                CRDN_2: min(CRDN_2) >= min(IMUP_1);
 
-              
-              
-              
-    ZigZagSDN = 
-        dn_1 up_2 dn_3  |
-        ImpulseDN_1  ZigZagSUP_2  ImpulseDN_3
-        @
-        ?_1 : isprev(ImpulseUP),
-        up_2: max(up_2) < max(dn_1),
-        dn_3: (min(dn_3) < min(up_2))
-              and
-              (min(self()) < max(prev()));
-              
-    ZigZagSUP = up_1 dn_2 up_3 @ 
-        up_1: isprev(ImpulseDN),
-        dn_2: min(dn_2) > min(up_1),
-        up_3: (max(up_3) > max(dn_2))
-              and
-              (max(self()) > min(prev()));
-              
+
+        IMClassicDN = IMDN_1 CRUP_2 IMDN_3 CRUP_4 IMDN_5 @
+              CRUP_2: max(CRUP_2) <= max(IMDN_1),
+              IMDN_3: min(IMDN_3) <= min(IMDN_1),
+              CRUP_4: max(CRUP_4) <= min(IMDN_1),
+              IMDN_5: (value(IMDN_3) >= value(IMDN_1) or value(IMDN_3) >= value(IMDN_5))
+                    and
+                    (min(IMDN_5) <= min(IMDN_3));
+        
+#        IMFailedFifthDN = IMDN_1 CRUP_2 IMDN_3 CRUP_4 IMDN_5 @
+#              CRUP_2: max(CRUP_2) <= max(IMDN_1),
+#              IMDN_3: min(IMDN_3) <= min(IMDN_1),
+#              CRUP_4: max(CRUP_4) <= min(IMDN_1),
+#              IMDN_5: (value(IMDN_3) >= value(IMDN_1) or value(IMDN_3) >= value(IMDN_5))
+#                    and
+#                    (min(IMDN_5) >= min(IMDN_3));
+
+
+        LeadingDiagUP = IMUP_1 CRDN_2 IMUP_3 CRDN_4 IMUP_5 @
+              IMUP_5: IsLine( end(IMUP_1), max(IMUP_1),
+                              end(IMUP_1), max(IMUP_1), 
+
+
+        ##################################
+        # CORRECTIVE WAVES
+        ##################################
+
+        ZZDN = ZZDNStart_1   ZZDNMiddle_2   ZZDNEnd_3 @
+              ZZDNStart_1:   prev(ZZDNAllowedPrev),
+              ZZDNMiddle_2:  (max(ZZDNMiddle_2) < max(ZZDNStart_1)) and (value(ZZDNMiddle_2) < value(ZZDNStart_1)),
+              ZZDNEnd_3:     min(ZZDNEnd_3) < min(ZZDNMiddle_2);
+
+        ZZUP = ZZUPStart_1   ZZUPMiddle_2   ZZUPEnd_3 @
+              ZZUPStart_1:   prev(ZZUPAllowedPrev),
+              ZZUPMiddle_2:  (min(ZZUPMiddle_2) > min(ZZUPStart_1)) and (value(ZZUPMiddle_2) < value(ZZUPStart_1)),
+              ZZUPEnd_3:     max(ZZUPEnd_3) > max(ZZUPMiddle_2);
+
+
+
+        RegularFlatDN = RegularFlatDNStart_1  RegularFlatDNMiddle_2  RegularFlatDNEnd_3 @
+              RegularFlatDNStart_1:    prev(RegularFlatDNAllowedPrev),
+              RegularFlatDNMiddle_2:   abs(max(RegularFlatDNStart_1) - max(RegularFlatDNMiddle_2)) < 0.1*value(RegularFlatDNMiddle_2),
+              RegularFlatDNEnd_3:      abs(min(RegularFlatDNEnd_3) - min(RegularFlatDNMiddle_2)) < 0.1*value(RegularFlatDNMiddle_2);
+
+        RegularFlatUP = RegularFlatUPStart_1  RegularFlatUPMiddle_2  RegularFlatUPEnd_3 @
+              RegularFlatUPStart_1:    prev(RegularFlatUPAllowedPrev),
+              RegularFlatUPMiddle_2:   abs(max(RegularFlatUPStart_1) - max(RegularFlatUPMiddle_2)) < 0,
+              RegularFlatUPEnd_3:      abs(min(RegularFlatUPEnd_3) - min(RegularFlatUPMiddle_2)) < 0;
+
+
+SYNONYMS:
+  IMUP = up, IMClassicUP, IMFailedFifthUP, LeadingDiagUP;
+  IMDN = dn, IMClassicDN, IMFailedFifthDN, LeadingDiagDN;
+  CRUP = up, ZZUP, DoubleZZUP, RegularFlatUP, RuningFlatUP;
+  CRDN = dn, ZZDN, DoubleZZDN, RegularFlatDN, RuningFlatDN;
+
+  ZZDNAllowedPrev = IMClassicUP, IMFailedFifthUP, LeadingDiagUP;
+  ZZDNStart = dn, IMClassicDN;
+  ZZDNMiddle = up, ZZUP;
+  ZZDNEnd = dn, IMClassicDN;
+
+  ZZUPAllowedPrev = IMClassicDN, IMFailedFifthDN, LeadingDiagDN;
+  ZZUPStart = up, IMClassicUP;
+  ZZUPMiddle = dn, ZZDN;
+  ZZUPEnd = up, IMClassicUP;
+
+  RegularFlatDNAllowedPrev = IMClassicUP, IMFailedFifthUP, LeadingDiagUP;
+  RegularFlatDNStart = dn, ZZDN;
+  RegularFlatDNMiddle = up, ZZUP;
+  RegularFlatDNEnd = dn, IMClassicDN;
+
+
+  RegularFlatUPAllowedPrev = IMClassicDN, IMFailedFifthDN, LeadingDiagDN;
+  RegularFlatUPStart = up, ZZUP;
+  RegularFlatUPMiddle = dn, ZZDN;
+  RegularFlatUPEnd = up, IMClassicUP;
