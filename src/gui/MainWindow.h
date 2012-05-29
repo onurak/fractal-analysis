@@ -13,6 +13,7 @@
 #include <QMutexLocker>
 #include <QTime>
 #include <QResizeEvent>
+#include <numeric>
 #include "QParseTreeRender.h"
 #include "Utils.h"
 #include "../fractallib/FL.h"
@@ -43,6 +44,7 @@ private:
     void markup();
     void buildTrees();
     void dynamicStep();
+    void updateForecast();
 
     void loadPatterns(const QString &fileName,
                       FL::Patterns::PatternsSet &patterns,
@@ -66,6 +68,10 @@ private:
 
     void initMetrics();
     void readMetrics();
+
+    void updateMetrics(const QPair<double, double> newValue);
+    std::vector<double> m_efficiency;
+    std::vector<double> m_accuracy;
 private:
     Ui::MainWindow *ui;
     QSettings m_settings;
@@ -85,7 +91,7 @@ private:
     FL::Trees::MetricsSet       m_metrics;
     FL::Patterns::Matcher      *m_matcher;
     FL::Patterns::Matcher      *m_preprocessingMatcher;
-    FL::Forecast                m_forecast;
+    FL::Forecasting::Forecast   m_forecast;
     bool                        m_wantInterrupt;
     QTime                       m_lastUpdateTime;
 protected:
@@ -137,6 +143,10 @@ private slots:
     void on_bnRefreshPatterns_clicked();
     void on_bnHalt_clicked();
     void on_actionQuit_triggered();
+    void on_cbForecastStyle_currentIndexChanged(int index);
+    void on_actionLogScaleY_triggered();
+    void on_actionIncFontSize_triggered();
+    void on_actionDecFontSize_triggered();
 };
 
 /* Background analysis task */

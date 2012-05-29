@@ -20,7 +20,6 @@
 #include "Guard.h"
 #include "Description.h"
 #include "../Common.h"
-#include "../Forecast.h"
 
 namespace FL { namespace Patterns {
 
@@ -81,10 +80,10 @@ public:
       * \return true if limits calculated, false if some error occures (invalid
       *  parameters or guard never can't be applied to this node)
       */
-    bool calcGuardLimits(FL::Trees::Node *node,
-                         FL::Trees::Tree &tree,
-                         FL::TimeSeries &ts,
-                         FL::ForecastItem &forecast);
+//    bool calcGuardLimits(FL::Trees::Node *node,
+//                         FL::Trees::Tree &tree,
+//                         FL::TimeSeries &ts,
+//                         FL::ForecastItem &forecast);
 
     //! Get max length of description sequences
     int maxLength() const;

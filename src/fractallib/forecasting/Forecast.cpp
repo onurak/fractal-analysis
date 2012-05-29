@@ -14,21 +14,6 @@
  * along with Fractal Library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FL_H
-#define FL_H
+#include "Forecast.h"
 
-#include "markers/AB.h"
-#include "markers/ABIncremental.h"
-#include "markers/SimpleIncremental.h"
-#include "parsers/MultiPass.h"
-#include "parsers/SinglePass.h"
-#include "TimeSeries.h"
-#include "patterns/Pattern.h"
-#include "patterns/standard/EbnfRpnPattern.h"
-#include "patterns/standard/TreeMatcher.h"
-#include "trees/Forest.h"
-#include "io/FileCSV.h"
-#include "io/FilePAT.h"
-#include "forecasting/Forecaster.h"
-
-#endif // FL_H
+using namespace FL::Forecasting;

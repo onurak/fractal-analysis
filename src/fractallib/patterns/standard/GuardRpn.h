@@ -47,7 +47,7 @@ public:
         {
             GuardSet::const_iterator i;
             forall(i, *this)
-                if (i->id == id && i->index == index)
+                if ((i->id == id || FL::IDGenerator::isSynonyms(i->id, id)) && i->index == index)
                     return i->program;
 
             return NULL;

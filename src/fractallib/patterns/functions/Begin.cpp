@@ -14,15 +14,23 @@
  * along with Fractal Library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "AbstractDynamicParser.h"
+#include "Begin.h"
+#include "../../TimeSeries.h"
+#include "../../trees/Tree.h"
 
-using namespace FL::Parsers;
+using namespace FL::Patterns::Functions;
 
-AbstractDynamicParser::AbstractDynamicParser()
+Begin::Begin()
 {
+    m_name = "Begin";
 }
 
-AbstractDynamicParser::~AbstractDynamicParser()
-{
 
+const GVariant& Begin::operator()(Patterns::Context& context, FunctionArgs& args)
+{
+    if (args.size() != 1)
+        throw FL::Exceptions::EArguments(m_name, 1, args.size());
+    checkValidNode(args[0]);
+    FL::Trees::Node* node = *args[0];
+    return m_result = context.timeSeries()->time(node->begin());
 }

@@ -22,6 +22,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->graphicsView->scale(1, -1);
     m_render->setTimeSeries(&m_timeSeries);
     m_render->setForest(&m_forest);
+    m_render->setForecast(&m_forecast);
     m_render->setView(ui->graphicsView);
 
     connect(m_render->scene(), SIGNAL(onMouseEvent(QGraphicsSceneMouseEvent*)),
@@ -95,8 +96,8 @@ void MainWindow::onSceneWheelEvent(QGraphicsSceneWheelEvent *event)
 {
     double s = event->delta() < 0 ? 0.9 : 1.0/0.9;
     ui->graphicsView->scale(s, s);
-    ui->graphicsView->ensureVisible(event->pos().x(), event->pos().y(), 50, 50);
-    //m_render->setScale(m_render->scale() * s);
+    ui->graphicsView->centerOn(event->scenePos());
+    //ui->graphicsView->ensureVisible(event->scenePos().x(), event->scenePos().y(), 0, 0);
 }
 
 void MainWindow::on_actionOpen_time_series_triggered()
@@ -357,6 +358,7 @@ bool MainWindow::loadTimeSeries(
         ui->lbTimeSeriesFile->setText(QFileInfo(fileName).fileName());
         ui->lbTimeSeriesSize->setNum(m_timeSeries.size());
         m_render->setScale(1.0);
+        m_render->fitScene();
     }
     catch (const QString &err)
     {
@@ -481,6 +483,7 @@ void MainWindow::on_actionMarkup_triggered()
 void MainWindow::markup()
 {
     m_forest.cleanup();
+    m_forecast.clear();
 
     FL::Markers::AbstractMarker *marker = new FL::Markers::AB();
     marker->analyze(m_timeSeries, m_forest, *m_matcher, m_patterns);
@@ -512,7 +515,6 @@ void MainWindow::markup()
     }
     delete marker;
 
-
     updateForestInfo();
 }
 
@@ -539,7 +541,8 @@ void MainWindow::buildTrees()
 
 void MainWindow::on_actionFitAll_triggered()
 {
-    ui->graphicsView->fitInView(0, -1.0, 1.0, 2.0);
+    //ui->graphicsView->fitInView(ui->graphicsView->rect());
+    m_render->fitScene();
 }
 
 void MainWindow::on_actionMarkup_with_roots_triggered()
@@ -552,7 +555,7 @@ void MainWindow::on_actionMarkup_with_roots_triggered()
 
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
-    on_actionFitAll_triggered();
+    //on_actionFitAll_triggered();
     QMainWindow::resizeEvent(event);
 }
 
@@ -608,7 +611,6 @@ void MainWindow::setUiEnables(bool enabled)
     ui->bnRefreshPatterns->setEnabled(enabled);
     ui->bnRefreshPreprocessingPatterns->setEnabled(enabled);
     ui->cbStaticParser->setEnabled(enabled);
-    ui->cbDynamicParser->setEnabled(enabled);
     ui->cbMarker->setEnabled(enabled);
     ui->sbParseTreeIndex->setEnabled(enabled);
 
@@ -648,6 +650,7 @@ void MainWindow::onParsingFinished(FL::Parsers::AbstractParser *parser)
         showError(parser->lastError().arg());
     delete parser;
 
+    updateForecast();
     updateForestInfo();
     m_wantInterrupt = false;
     ui->lbState->setText("Ready");
@@ -818,12 +821,53 @@ void MainWindow::on_actionOpen_dynamic_time_series_triggered()
     }
 }
 
+void MainWindow::updateMetrics(const QPair<double, double> newValue)
+{
+    if (m_forecast.size() == 0)
+        return;
+
+    double time = newValue.first;
+    double value = newValue.second;
+    double time0 = m_timeSeries.time(-1);
+    double value0 = m_timeSeries.value(-1);
+
+    FL::Forecasting::Forecast::const_iterator ifcst;
+
+    double accuracy = 0.0, efficiency = 0.0;
+    forall(ifcst, m_forecast)
+    {
+        FL::Forecasting::ForecastItem fi = *ifcst;
+        if (time >= time0 + fi.minDuration && time <= time0 + fi.maxDuration &&
+            value >= value0 + fi.minValue && value <= value0 + fi.maxValue)
+        {
+            efficiency = 1.0;
+            double E = std::min(fi.maxValue - (value - value0),
+                                (value - value0) - fi.minValue)
+                    / (fi.maxValue - fi.minValue);
+            if (E > accuracy)
+                accuracy = E;
+        }
+    }
+
+    m_efficiency.push_back(efficiency);
+    m_accuracy.push_back(accuracy);
+
+    double avgEfficiency = std::accumulate(m_efficiency.begin(), m_efficiency.end(), 0.0) / m_efficiency.size();
+    double avgAccuracy = std::accumulate(m_accuracy.begin(), m_accuracy.end(), 0.0) / m_accuracy.size();
+
+    ui->lbEfficiency->setText(QString("%1 %").arg(avgEfficiency * 100.0));
+    ui->lbAccuracy->setText(QString("%1 %").arg(avgAccuracy * 100.0));
+}
+
 void MainWindow::dynamicStep()
 {
     if (m_timeSeriesCache.size() == 0)
         return;
 
     const QPair<double, double> p = m_timeSeriesCache.back();
+
+    updateMetrics(p);
+
     m_timeSeries.append(p.first, p.second);
     m_timeSeriesCache.pop_back();
 
@@ -834,21 +878,29 @@ void MainWindow::dynamicStep()
 
     try
     {
+        // Markup
         marker = new FL::Markers::ABIncremental();
         pr = marker->analyze(m_timeSeries, m_forest, *m_preprocessingMatcher, m_preprocessingPatterns);
         if (!marker->wasOk())
-            throw "Can not markup";
+            throw marker->lastError();
 
+        if (m_forest.size() == 0)
+            throw FL::Exceptions::EException(0, "Forest become empty");
 
+        // Parse
         parser = new FL::Parsers::MultiPass();
         pr = parser->analyze(
                     m_timeSeries, m_forest, m_patterns, *m_matcher, m_metrics, 0);
         if (!parser->wasOk())
-            throw "Can not parse";
+            throw parser->lastError();
+
+        // Forecast
+        updateForecast();
     }
-    catch (const char *s)
+    catch (FL::Exceptions::EException &e)
     {
-        showError(QString(s));
+        QString msg = "Error occures: " + QStr(e.arg());
+        showError(msg);
     }
 
 
@@ -857,6 +909,12 @@ void MainWindow::dynamicStep()
 
     updateForestInfo();
     //on_actionFitAll_triggered();
+}
+
+void MainWindow::updateForecast()
+{
+    FL::Forecasting::Forecaster forecaster;
+    forecaster.forecast(m_timeSeries, m_forest, m_forecast);
 }
 
 void MainWindow::on_action_Dynamic_step_triggered()
@@ -909,4 +967,34 @@ void MainWindow::on_bnHalt_clicked()
 void MainWindow::on_actionQuit_triggered()
 {
     this->close();
+}
+
+void MainWindow::on_cbForecastStyle_currentIndexChanged(int index)
+{
+    ForecastStyle style;
+    switch (index)
+    {
+        case 0: style = fsNone; break;
+        case 1: style = fsIntersectionOnly; break;
+        case 2: style = fsAllForest; break;
+        case 3: style = ForecastStyle(fsAllForest | fsIntersectionOnly); break;
+        default: style = fsNone; break;
+    }
+
+    m_render->setForecastStyle(style);
+}
+
+void MainWindow::on_actionLogScaleY_triggered()
+{
+    m_render->setYLogScale(!m_render->isYLogScale());
+}
+
+void MainWindow::on_actionIncFontSize_triggered()
+{
+    m_render->setFontSize(m_render->fontSize()+1);
+}
+
+void MainWindow::on_actionDecFontSize_triggered()
+{
+    m_render->setFontSize(m_render->fontSize()-1);
 }

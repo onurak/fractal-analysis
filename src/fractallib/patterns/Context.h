@@ -125,7 +125,7 @@ public:
     bool isAtTime(int time) const;
 
     //! Get analyzing time series
-    const FL::TimeSeries* timeSeries();
+    const FL::TimeSeries* timeSeries() const;
 
     //! Set analyzing time series
     void setTimeSeries(const FL::TimeSeries* ts);

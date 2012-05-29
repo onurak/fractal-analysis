@@ -14,21 +14,26 @@
  * along with Fractal Library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef FL_H
-#define FL_H
+#ifndef ISLINE_H
+#define ISLINE_H
 
-#include "markers/AB.h"
-#include "markers/ABIncremental.h"
-#include "markers/SimpleIncremental.h"
-#include "parsers/MultiPass.h"
-#include "parsers/SinglePass.h"
-#include "TimeSeries.h"
-#include "patterns/Pattern.h"
-#include "patterns/standard/EbnfRpnPattern.h"
-#include "patterns/standard/TreeMatcher.h"
-#include "trees/Forest.h"
-#include "io/FileCSV.h"
-#include "io/FilePAT.h"
-#include "forecasting/Forecaster.h"
+#include "Function.h"
 
-#endif // FL_H
+namespace FL { namespace Patterns { namespace Functions {
+
+/** \class AtOneLine
+  * \brief Check if few nodes are on the same value line.
+  */
+class IsLine : public Function
+{
+public:
+    IsLine();
+
+    //! Main function of class
+    virtual const GVariant& operator()(Patterns::Context& context, FunctionArgs& args);
+};
+
+}}} // namespaces
+
+
+#endif // ISLINE_H

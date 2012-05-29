@@ -39,7 +39,7 @@ void TimeSeries::setLinearTime()
 {
     m_time.clear();
     for (int i = 0; i < size(); ++i)
-        m_time.push_back(i);
+        m_time.push_back(i*2);
     header()[1] = "";
 }
 

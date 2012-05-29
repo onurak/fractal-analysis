@@ -32,6 +32,8 @@ namespace FL { namespace IO {
   *     pattern2 = description2 @ guard2.
   *     ....
   *     patternN = descriptionN @ guardN.
+  * SYNONYMS:
+  *     name1 = name2, name3;
   * @endverbatim
   */
 class FilePAT

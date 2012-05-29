@@ -546,7 +546,7 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
             // enable standard lexems
             filterLexeme(LEX_PLUS,      true);
             filterLexeme(LEX_MINUS,     true);
-            filterLexeme(LEX_MULT,      true);
+//            filterLexeme(LEX_MULT,      true);
             filterLexeme(LEX_COLON,     true);
             filterLexeme(LEX_LPAREN,    true);
             filterLexeme(LEX_RPAREN,    true);
@@ -610,7 +610,7 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
                     else
                         m_l = LEX_NAME;
                 }
-                // wildcard
+                // wildcard OR MULTIPLICATION
                 else if (c() == '*')
                 {
                     gc();
@@ -620,11 +620,17 @@ namespace FL { namespace Patterns { namespace Standard { namespace Internal
                         m_lexprev.id != LEX_INDEXED_NAME)
                     {
                         if (c() != '_')
-                            throw EParsing(E_SYNTAX_ERROR, m_input->line(), m_input->column(),
-                                           "Name wildcard must have an index");
-                        m_name = "*";
-                        m_l = LEX_INDEXED_WILDCARD;
-                        gc();
+                        {
+                            m_l = LEX_MULT;
+//                            throw EParsing(E_SYNTAX_ERROR, m_input->line(), m_input->column(),
+//                                           "Name wildcard must have an index");
+                        }
+                        else
+                        {
+                            m_name = "*";
+                            m_l = LEX_INDEXED_WILDCARD;
+                            gc();
+                        }
                     }
                     else
                     {
@@ -1130,14 +1136,15 @@ bool GuardRpn::check(Context &c)
     if (m_rpnPrograms.size() == 0)
         return true;
 
-    Layer::ConstIterator treeNode;
-    forall(treeNode, c.lastParsed())
+    Layer::ConstIterator itNode;
+    forall(itNode, c.lastParsed())
     {
+        Node *node = *itNode;
         // If program exists - execute it
-        if (getGuardsForNode(*treeNode))
+        if (getGuardsForNode(node))
         {
             // Remember node for Node() function
-            c.setCurrentItNode(*treeNode);
+            c.setCurrentItNode(node);
 
             std::vector<Internal::Program*>::iterator itGuardProgram;
             forall(itGuardProgram, m_nodeGuards)

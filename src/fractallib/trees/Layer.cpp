@@ -20,7 +20,7 @@ Node* Layer::getPrevNearestTo(int position) const
     return back();
 }
 
-Node* Layer::lastNode() const
+Node* Layer::getLastNode() const
 {
     if (size() == 0) return NULL;
 

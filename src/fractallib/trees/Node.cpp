@@ -55,7 +55,7 @@ Node::~Node()
     delete m_children;
 }
 
-void Node::setParent(Node* value)
+void Node::setParent(Node* value, bool orderedInsert)
 {
     if (m_parent)
         m_parent->children().remove(this);
@@ -70,7 +70,18 @@ void Node::setParent(Node* value)
             m_internalParent = NULL;
         }
 
-        m_parent->children().push_back(this);
+        if (!orderedInsert)
+            m_parent->children().push_back(this);
+        else
+        {
+            Layer::Iterator where;
+            forall(where, m_parent->children())
+            {
+                if ((*where)->begin() >= this->end())
+                    break;
+            }
+            m_parent->children().insert(where, this);
+        }
 
         // Adjust position of parent (level and time series indices)
         if (m_parent->level() <= m_level)
@@ -81,6 +92,7 @@ void Node::setParent(Node* value)
             m_parent->setEnd(m_end);
     }
 }
+
 
 bool Node::isFinished() const
 {

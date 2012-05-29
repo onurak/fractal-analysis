@@ -14,34 +14,23 @@
  * along with Fractal Library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Prev.h"
+#include "End.h"
+#include "../../TimeSeries.h"
 #include "../../trees/Tree.h"
 
 using namespace FL::Patterns::Functions;
 
-Prev::Prev()
+End::End()
 {
-    m_name = "Prev";
+    m_name = "End";
 }
 
-const GVariant& Prev::operator()(Patterns::Context& context, FunctionArgs& args)
+
+const GVariant& End::operator()(Patterns::Context& context, FunctionArgs& args)
 {
-    if (args.size() > 1)
-        throw FL::Exceptions::EArguments(m_name, 0, 1, args.size());
-
-    FL::Trees::Node *prevNode =
-            context.outputTree().roots().getPrevNearestTo(context.candidateNode()->begin());
-
-    if (prevNode == NULL)
-        return m_result = NULL;
-
-    if (args.size() >= 1)
-    {
-        int nodeId = *args[0];
-        return m_result = ((prevNode->id() == nodeId) || (FL::IDGenerator::isSynonyms(prevNode->id(), nodeId))) ?
-                        prevNode : NULL;
-    }
-
-    return m_result = prevNode;
-
+    if (args.size() != 1)
+        throw FL::Exceptions::EArguments(m_name, 1, args.size());
+    checkValidNode(args[0]);
+    FL::Trees::Node* node = *args[0];
+    return m_result = context.timeSeries()->time(node->end());
 }

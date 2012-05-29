@@ -14,10 +14,29 @@
  * along with Fractal Library. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "Forecast.h"
+#ifndef END_H
+#define END_H
 
-using namespace FL;
+#include "Function.h"
 
-Forecast::Forecast()
+namespace FL { namespace Patterns { namespace Functions {
+
+/*! \class End
+  * \brief Return end time of node of tree
+  *
+  * It always has one argument of type FL::Trees::Node*.
+  * It returns its ending time.
+  */
+class End : public Function
 {
-}
+public:
+    End();
+
+    //! Main function of class
+    virtual const GVariant& operator()(Patterns::Context& context, FunctionArgs& args);
+};
+
+}}} // namespaces
+
+
+#endif // END_H

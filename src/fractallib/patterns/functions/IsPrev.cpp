@@ -17,8 +17,6 @@ const GVariant& IsPrev::operator()(Patterns::Context &context, FunctionArgs &arg
         context.outputTree().roots().getPrevNearestTo(context.candidateNode()->begin());
     if (prevNode == NULL)
         return m_result = false;
-    int prevId = *args[0];
-    if (prevId == prevNode->id() )
-        m_result = (prevNode->id() == prevId);
-    return m_result = (prevNode->id() == prevId);
+    int prevNodeId = *args[0];
+    return m_result = ((prevNode->id() == prevNodeId) || (FL::IDGenerator::isSynonyms(prevNode->id(), prevNodeId)));
 }

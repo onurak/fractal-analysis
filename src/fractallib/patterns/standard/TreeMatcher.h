@@ -34,6 +34,11 @@ public:
     virtual bool match(Context &context, CheckInfo &ci);
 
 protected:
+    bool match(Context &context,
+               CheckInfo &ci,
+               TMNode *treeNode,
+               std::list<FL::Trees::Node*>::const_iterator itLayerNode);
+
     void buildTree(PatternsSet &patterns);
     void clearTree(TMNode *root);
     void addTreePath(Pattern &pattern, CISequence &seq);

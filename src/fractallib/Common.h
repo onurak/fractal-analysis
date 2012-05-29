@@ -118,9 +118,13 @@ public:
     static int idOf(const std::string &name);
     static const std::string& nameOf(int id);
     static void makeSynonyms(const std::string &name1, const std::string &name2);
+    static bool isSynonyms(int id1, int id2);
+    static void clearSynonyms();
+    static std::vector<int> getSynonyms(int id);
 private:
     static std::map<std::string, int> m_map;
     static std::map<int, std::string> m_invMap;
+    static std::map< int, std::vector<int> > m_synonyms;
     static int m_id;
 };
 
