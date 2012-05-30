@@ -72,6 +72,7 @@ private:
     void updateMetrics(const QPair<double, double> newValue);
     std::vector<double> m_efficiency;
     std::vector<double> m_accuracy;
+    std::vector<double> m_trend;
 private:
     Ui::MainWindow *ui;
     QSettings m_settings;
@@ -147,6 +148,7 @@ private slots:
     void on_actionLogScaleY_triggered();
     void on_actionIncFontSize_triggered();
     void on_actionDecFontSize_triggered();
+    void on_sbMaxRemeberedForecastsCount_valueChanged(int arg1);
 };
 
 #endif // MAINWINDOW_H

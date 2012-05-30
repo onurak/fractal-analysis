@@ -122,7 +122,8 @@ void Forecaster::forecastMaxLength(TimeSeries &ts, Tree &tree, Forecast &forecas
     for (int lvl = 1; lvl < tree.levelCount(); ++lvl)
     {
         Node *lastNode = tree.nodesByLevel(lvl).getLastNode();
-        if (lastNode == NULL || lastNode->end() < ts.size()-1)
+        if (lastNode == NULL || lastNode->end() < ts.size()-1 ||
+            lastNode->children().size() < lastNode->origSequence().size()-1)
             continue;
 
         double x1 = ts.time(lastNode->begin()), x2 = ts.time(lastNode->end());
@@ -159,9 +160,13 @@ void Forecaster::forecastMaxLength(TimeSeries &ts, Tree &tree, Forecast &forecas
             posOnLine(x1, y1, x2, y2, segLength, minLength, fi.minDuration, fi.minValue);
             posOnLine(x1, y1, x2, y2, segLength, maxLength, fi.maxDuration, fi.maxValue);
 
+            if (fi.minValue > fi.maxValue)
+                std::swap(fi.minValue, fi.maxValue);
+
             fi.pos = ts.size()-1;
             fi.tree = &tree;
             fi.patternName = IDGenerator::nameOf(lastNode->id());
+            fi.node = lastNode;
             forecast.push_back(fi);
         }
 
