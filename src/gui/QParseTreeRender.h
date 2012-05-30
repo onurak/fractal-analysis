@@ -77,7 +77,10 @@ public:
     void forestChanged();
 
     void addForecast(const FL::Forecasting::Forecast &forecast);
-    void clearForecasts();
+    void clearForecasts() { m_forecasts.clear(); }
+    int forecastCount() { return m_forecasts.size(); }
+    FL::Forecasting::Forecast getForecast(int i) { return m_forecasts[i]; }
+    void setMaxForecastCount(int value) { m_maxForecastCount = value; }
     void forecastChanged();
 
     void setView(QGraphicsView *view);
@@ -189,6 +192,8 @@ private:
 
     double m_yHalfRange;
     ForecastStyle m_forecastStyle;
+
+    int m_maxForecastCount;
     //QLinkedList<QGraphicsItem*> m_tsItems;
     //QLinkedList<QGraphicsItem*> m_coordSystemItems;
 };

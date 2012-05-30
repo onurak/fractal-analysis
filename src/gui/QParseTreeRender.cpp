@@ -13,6 +13,7 @@ QParseTreeRender::QParseTreeRender()
     m_forecastStyle = fsNone;
     m_isYLogScale = false;
     m_fontSize = 10;
+    m_maxForecastCount = 1;
 }
 
 QParseTreeRender::~QParseTreeRender()
@@ -42,7 +43,7 @@ void QParseTreeRender::addForecast(const FL::Forecasting::Forecast &forecast)
     if (m_forecasts.size() > 0)
         m_forecasts.back().nullTrees();
     m_forecasts.push_back(forecast);
-    if (m_forecasts.size() > 5)
+    if (m_forecasts.size() > m_maxForecastCount)
         m_forecasts.pop_front();
     forecastChanged();
 }

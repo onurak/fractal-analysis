@@ -30,7 +30,7 @@ class ForecastItem
 {
 public:
     ForecastItem():
-        pos(0), minDuration(0), maxDuration(0), minValue(0), maxValue(0), tree(NULL)
+        pos(0), minDuration(0), maxDuration(0), minValue(0), maxValue(0), tree(NULL), node(NULL)
     {}
 
     ~ForecastItem() {}
@@ -40,6 +40,7 @@ public:
     double minValue, maxValue;
     std::string patternName;
     FL::Trees::Tree *tree;
+    FL::Trees::Node *node;
 };
 
 /*! \class Forecast

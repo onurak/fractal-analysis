@@ -226,6 +226,16 @@ bool MainWindow::loadTimeSeries(
     ui->lbTimeSeriesFile->setText("");
     ui->lbTimeSeriesSize->setText("");
 
+    ui->lbAccuracy->setText("");
+    ui->lbEfficiency->setText("");
+    ui->lbTrend->setText("");
+
+    m_accuracy.clear();
+    m_efficiency.clear();
+    m_trend.clear();
+
+    m_render->clearForecasts();
+
     if (fileName.isEmpty())
         return false;
     try
@@ -820,6 +830,11 @@ void MainWindow::on_actionOpen_dynamic_time_series_triggered()
     }
 }
 
+int sign(double value)
+{
+    return value > 0.0 ? 1 : (value < 0 ? -1 : 0);
+}
+
 void MainWindow::updateMetrics(const QPair<double, double> newValue)
 {
     if (m_forecast.size() == 0)
@@ -827,35 +842,61 @@ void MainWindow::updateMetrics(const QPair<double, double> newValue)
 
     double time = newValue.first;
     double value = newValue.second;
-    double time0 = m_timeSeries.time(-1);
-    double value0 = m_timeSeries.value(-1);
 
     FL::Forecasting::Forecast::const_iterator ifcst;
 
+//    int motiveId = FL::IDGenerator::idOf("MOTIVE");
+
+    bool catched = false;
     double accuracy = 0.0, efficiency = 0.0;
-    forall(ifcst, m_forecast)
+    double trend = 0.0;
+
+    for (int i = 0; i < m_render->forecastCount(); ++i)
     {
-        FL::Forecasting::ForecastItem fi = *ifcst;
-        if (time >= time0 + fi.minDuration && time <= time0 + fi.maxDuration &&
-            value >= value0 + fi.minValue && value <= value0 + fi.maxValue)
+        const FL::Forecasting::Forecast &forecast = m_render->getForecast(i);
+
+        double time0 = m_timeSeries.time(-(m_render->forecastCount() - i));
+        double value0 = m_timeSeries.value(-(m_render->forecastCount() - i));
+
+        forall(ifcst, forecast)
         {
-            efficiency = 1.0;
-            double E = std::min(fi.maxValue - (value - value0),
-                                (value - value0) - fi.minValue)
-                    / (fi.maxValue - fi.minValue);
-            if (E > accuracy)
-                accuracy = E;
+            FL::Forecasting::ForecastItem fi = *ifcst;
+
+    //        if (!FL::IDGenerator::isSynonyms(motiveId, fi.node->id()))
+    //            continue;
+
+            catched = true;
+
+            trend += fi.minValue + fi.maxValue;
+
+            if (time >= time0 + fi.minDuration && time <= time0 + fi.maxDuration &&
+                value >= value0 + fi.minValue && value <= value0 + fi.maxValue)
+            {
+                efficiency = 1.0;
+                double E = std::min(fi.maxValue - (value - value0),
+                                    (value - value0) - fi.minValue)
+                        / (fi.maxValue - fi.minValue);
+                if (E > accuracy)
+                    accuracy = E;
+            }
         }
     }
 
-    m_efficiency.push_back(efficiency);
-    m_accuracy.push_back(accuracy);
+    if (catched)
+    {
+        double value0 = m_timeSeries.value(-1);
+        m_efficiency.push_back(efficiency);
+        m_accuracy.push_back(accuracy);
+        m_trend.push_back(sign(trend) == sign(value - value0) ? 1.0 : 0.0);
+    }
 
     double avgEfficiency = std::accumulate(m_efficiency.begin(), m_efficiency.end(), 0.0) / m_efficiency.size();
     double avgAccuracy = std::accumulate(m_accuracy.begin(), m_accuracy.end(), 0.0) / m_accuracy.size();
+    double avgTrend = std::accumulate(m_trend.begin(), m_trend.end(), 0.0) / m_trend.size();
 
     ui->lbEfficiency->setText(QString("%1 %").arg(avgEfficiency * 100.0));
     ui->lbAccuracy->setText(QString("%1 %").arg(avgAccuracy * 100.0));
+    ui->lbTrend->setText(QString("%1 %").arg(avgTrend * 100.0));
 }
 
 void MainWindow::dynamicAnalysis()
@@ -997,4 +1038,9 @@ void MainWindow::on_actionIncFontSize_triggered()
 void MainWindow::on_actionDecFontSize_triggered()
 {
     m_render->setFontSize(m_render->fontSize()-1);
+}
+
+void MainWindow::on_sbMaxRemeberedForecastsCount_valueChanged(int arg1)
+{
+    m_render->setMaxForecastCount(arg1);
 }
